@@ -5,6 +5,7 @@ import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { ContentInput } from "@/components/ContentInput";
 import { ContentResults } from "@/components/ContentResults";
 import { toast } from "sonner";
+import { projectSchema } from "@/lib/validations";
 
 interface GeneratedContent {
   twitter: string;
@@ -60,13 +61,16 @@ const Dashboard = () => {
     setLoading(true);
 
     try {
+      // Validate inputs one more time server-side
+      const validated = projectSchema.parse({ title, content });
+
       // Create project in database
       const { data: project, error: projectError } = await supabase
         .from("projects")
         .insert({
           user_id: user.id,
-          title,
-          original_text: content,
+          title: validated.title,
+          original_text: validated.content,
         })
         .select()
         .single();
