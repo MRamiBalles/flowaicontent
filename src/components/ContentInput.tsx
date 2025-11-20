@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
+import { projectSchema } from "@/lib/validations";
+import { z } from "zod";
+import { toast } from "sonner";
 
 interface ContentInputProps {
   onGenerate: (title: string, content: string) => void;
@@ -13,12 +16,31 @@ interface ContentInputProps {
 export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const handleGenerate = () => {
-    if (!title.trim() || !content.trim()) {
-      return;
+    setErrors({});
+    
+    try {
+      // Validate inputs
+      const validated = projectSchema.parse({
+        title: title.trim(),
+        content: content.trim(),
+      });
+      
+      onGenerate(validated.title, validated.content);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        const fieldErrors: { [key: string]: string } = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+        toast.error("Please fix the validation errors");
+      }
     }
-    onGenerate(title, content);
   };
 
   return (
@@ -38,8 +60,11 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
             placeholder="e.g., Q4 Product Launch"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="bg-card"
+            className={errors.title ? "bg-card border-destructive" : "bg-card"}
           />
+          {errors.title && (
+            <p className="text-sm text-destructive">{errors.title}</p>
+          )}
         </div>
 
         <div className="space-y-2 flex-1 flex flex-col">
@@ -49,8 +74,11 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
             placeholder="Paste your blog post, video transcript, or any long-form content here..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="flex-1 min-h-[300px] bg-card resize-none"
+            className={errors.content ? "flex-1 min-h-[300px] bg-card resize-none border-destructive" : "flex-1 min-h-[300px] bg-card resize-none"}
           />
+          {errors.content && (
+            <p className="text-sm text-destructive">{errors.content}</p>
+          )}
         </div>
 
         <Button
