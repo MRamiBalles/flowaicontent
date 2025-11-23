@@ -6,8 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, User, Calendar, Mail } from "lucide-react";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface GenerationHistory {
     id: string;
@@ -21,6 +25,9 @@ const Settings = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<any>(null);
+    const [profile, setProfile] = useState<any>(null);
+    const [displayName, setDisplayName] = useState("");
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [generationCount, setGenerationCount] = useState(0);
     const [history, setHistory] = useState<GenerationHistory[]>([]);
 
@@ -38,6 +45,18 @@ const Settings = () => {
     const fetchData = async (userId: string) => {
         setLoading(true);
         try {
+            // Fetch profile
+            const { data: profileData } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", userId)
+                .single();
+
+            if (profileData) {
+                setProfile(profileData);
+                setDisplayName(profileData.full_name || "");
+            }
+
             // Fetch generation count (last hour)
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
             const { count } = await supabase
@@ -72,6 +91,24 @@ const Settings = () => {
         }
     };
 
+    const handleUpdateProfile = async () => {
+        if (!user) return;
+        setIsUpdatingProfile(true);
+        try {
+            const { error } = await supabase
+                .from("profiles")
+                .update({ full_name: displayName })
+                .eq("id", user.id);
+
+            if (error) throw error;
+            toast.success("Profile updated successfully");
+        } catch (error) {
+            toast.error("Failed to update profile");
+        } finally {
+            setIsUpdatingProfile(false);
+        }
+    };
+
     if (!user) return null;
 
     const remainingGenerations = Math.max(0, 10 - generationCount);
@@ -92,24 +129,99 @@ const Settings = () => {
                         <p className="text-muted-foreground">Manage your account and view usage statistics</p>
                     </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Usage Limits</CardTitle>
-                            <CardDescription>Your generation usage for the current hour</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="font-medium">Generations Used</span>
-                                    <span className="text-muted-foreground">{generationCount} / 10</span>
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Profile Information</CardTitle>
+                                <CardDescription>Update your account details</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email Address</Label>
+                                    <div className="flex items-center gap-2">
+                                        <div className="relative flex-1">
+                                            <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="email"
+                                                value={user.email}
+                                                disabled
+                                                className="pl-9 bg-muted"
+                                            />
+                                        </div>
+                                        {user.email_confirmed_at ? (
+                                            <div className="flex items-center text-green-600 text-xs font-medium bg-green-100 px-2 py-1 rounded-full whitespace-nowrap">
+                                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                Verified
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center text-yellow-600 text-xs font-medium bg-yellow-100 px-2 py-1 rounded-full whitespace-nowrap">
+                                                <XCircle className="w-3 h-3 mr-1" />
+                                                Unverified
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <Progress value={rateLimitStatus} className="h-2" />
-                                <p className="text-xs text-muted-foreground">
-                                    {remainingGenerations} generations remaining this hour. Limit resets hourly.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="displayName">Display Name</Label>
+                                    <div className="relative">
+                                        <User className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="displayName"
+                                            value={displayName}
+                                            onChange={(e) => setDisplayName(e.target.value)}
+                                            placeholder="Enter your name"
+                                            className="pl-9"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Account Created</Label>
+                                    <div className="flex items-center text-sm text-muted-foreground bg-muted p-2 rounded-md">
+                                        <Calendar className="w-4 h-4 mr-2" />
+                                        {user.created_at ? format(new Date(user.created_at), "MMMM d, yyyy") : "Unknown"}
+                                    </div>
+                                </div>
+
+                                <Button
+                                    onClick={handleUpdateProfile}
+                                    disabled={isUpdatingProfile}
+                                    className="w-full"
+                                >
+                                    {isUpdatingProfile ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Updating...
+                                        </>
+                                    ) : (
+                                        "Save Changes"
+                                    )}
+                                </Button>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Usage Limits</CardTitle>
+                                <CardDescription>Your generation usage for the current hour</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="font-medium">Generations Used</span>
+                                        <span className="text-muted-foreground">{generationCount} / 10</span>
+                                    </div>
+                                    <Progress value={rateLimitStatus} className="h-2" />
+                                    <p className="text-xs text-muted-foreground">
+                                        {remainingGenerations} generations remaining this hour. Limit resets hourly.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <AnalyticsDashboard />
 
                     <Card>
                         <CardHeader>

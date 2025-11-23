@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, FileText, LogOut, Settings as SettingsIcon } from "lucide-react";
+import { Plus, FileText, LogOut, Settings as SettingsIcon, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -21,11 +21,33 @@ interface ProjectSidebarProps {
 export const ProjectSidebar = ({ selectedProjectId, onSelectProject, onNewProject }: ProjectSidebarProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProjects();
+    loadFavorites();
   }, []);
+
+  const loadFavorites = () => {
+    const savedFavorites = localStorage.getItem("favorite_projects");
+    if (savedFavorites) {
+      setFavorites(new Set(JSON.parse(savedFavorites)));
+    }
+  };
+
+  const toggleFavorite = (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(projectId)) {
+      newFavorites.delete(projectId);
+    } else {
+      newFavorites.add(projectId);
+    }
+    setFavorites(newFavorites);
+    localStorage.setItem("favorite_projects", JSON.stringify(Array.from(newFavorites)));
+  };
 
   const fetchProjects = async () => {
     try {
@@ -48,16 +70,29 @@ export const ProjectSidebar = ({ selectedProjectId, onSelectProject, onNewProjec
     navigate("/auth");
   };
 
+  const filteredProjects = showFavoritesOnly
+    ? projects.filter(p => favorites.has(p.id))
+    : projects;
+
   return (
     <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-screen">
       <div className="p-4 border-b border-sidebar-border">
         <h2 className="text-lg font-semibold text-sidebar-foreground">ContentFlow AI</h2>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 space-y-2">
         <Button onClick={onNewProject} className="w-full" size="sm">
           <Plus className="w-4 h-4 mr-2" />
           New Project
+        </Button>
+        <Button
+          variant={showFavoritesOnly ? "secondary" : "ghost"}
+          size="sm"
+          className="w-full justify-start"
+          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+        >
+          <Star className={`w-4 h-4 mr-2 ${showFavoritesOnly ? "fill-yellow-400 text-yellow-400" : ""}`} />
+          {showFavoritesOnly ? "Show All" : "Favorites Only"}
         </Button>
       </div>
 
@@ -65,21 +100,32 @@ export const ProjectSidebar = ({ selectedProjectId, onSelectProject, onNewProjec
         <div className="space-y-2 pb-4">
           {loading ? (
             <p className="text-sm text-muted-foreground">Loading projects...</p>
-          ) : projects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No projects yet</p>
+          ) : filteredProjects.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {showFavoritesOnly ? "No favorite projects" : "No projects yet"}
+            </p>
           ) : (
-            projects.map((project) => (
+            filteredProjects.map((project) => (
               <button
                 key={project.id}
                 onClick={() => onSelectProject(project.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedProjectId === project.id
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors group relative ${selectedProjectId === project.id
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                   }`}
               >
-                <div className="flex items-start gap-2">
+                <div className="flex items-start gap-2 pr-6">
                   <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span className="line-clamp-2">{project.title}</span>
+                </div>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => toggleFavorite(e, project.id)}
+                  className={`absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-sidebar-accent rounded ${favorites.has(project.id) ? "opacity-100 text-yellow-400" : "text-muted-foreground"
+                    }`}
+                >
+                  <Star className={`w-3 h-3 ${favorites.has(project.id) ? "fill-yellow-400" : ""}`} />
                 </div>
               </button>
             ))
