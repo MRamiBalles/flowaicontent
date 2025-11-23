@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, FileText, LogOut } from "lucide-react";
+import { Plus, FileText, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -72,11 +72,10 @@ export const ProjectSidebar = ({ selectedProjectId, onSelectProject, onNewProjec
               <button
                 key={project.id}
                 onClick={() => onSelectProject(project.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                  selectedProjectId === project.id
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                }`}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedProjectId === project.id
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  }`}
               >
                 <div className="flex items-start gap-2">
                   <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -89,6 +88,15 @@ export const ProjectSidebar = ({ selectedProjectId, onSelectProject, onNewProjec
       </ScrollArea>
 
       <div className="p-4 border-t border-sidebar-border">
+        <Button
+          onClick={() => navigate("/settings")}
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start mb-2"
+        >
+          <SettingsIcon className="w-4 h-4 mr-2" />
+          Settings
+        </Button>
         <Button
           onClick={handleSignOut}
           variant="outline"

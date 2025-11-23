@@ -6,7 +6,7 @@ import { ContentInput } from "@/components/ContentInput";
 import { ContentResults } from "@/components/ContentResults";
 import { toast } from "sonner";
 import { projectSchema } from "@/lib/validations";
-import { sanitizeForSocialMedia, detectPromptInjection } from "@/lib/ai-sanitization";
+import { detectPromptInjection } from "@/lib/ai-sanitization";
 
 interface GeneratedContent {
   twitter: string;
@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [generationCount, setGenerationCount] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -27,6 +28,7 @@ const Dashboard = () => {
         navigate("/auth");
       } else {
         setUser(session.user);
+        fetchGenerationCount(session.user.id);
       }
     });
 
@@ -35,11 +37,26 @@ const Dashboard = () => {
         navigate("/auth");
       } else {
         setUser(session.user);
+        fetchGenerationCount(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const fetchGenerationCount = async (userId: string) => {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+
+    const { count, error } = await supabase
+      .from("generation_attempts")
+      .select("*", { count: 'exact', head: true })
+      .eq("user_id", userId)
+      .gte("created_at", oneHourAgo);
+
+    if (!error && count !== null) {
+      setGenerationCount(count);
+    }
+  };
 
   const handleNewProject = () => {
     setSelectedProjectId(null);
@@ -101,8 +118,11 @@ const Dashboard = () => {
         validated.content,
         project.id
       );
-      
+
       setGeneratedContent(generated);
+
+      // Update generation count
+      fetchGenerationCount(user.id);
 
       // Save generated content to database
       const contentPromises = Object.entries(generated).map(([platform, text]) =>
@@ -119,7 +139,7 @@ const Dashboard = () => {
       toast.success("Content generated successfully!");
     } catch (error: any) {
       console.error('Generation error:', error);
-      
+
       // Handle rate limit errors
       if (error.message?.includes('Rate limit exceeded') || error.message?.includes('429')) {
         toast.error("You've reached the limit of 10 generations per hour. Please try again later.");
@@ -167,6 +187,9 @@ const Dashboard = () => {
     return null;
   }
 
+  const remainingGenerations = Math.max(0, 10 - generationCount);
+  const rateLimitStatus = Math.min(100, (generationCount / 10) * 100);
+
   return (
     <div className="flex h-screen overflow-hidden">
       <ProjectSidebar
@@ -174,14 +197,18 @@ const Dashboard = () => {
         onSelectProject={handleSelectProject}
         onNewProject={handleNewProject}
       />
-      
+
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 border-r border-border overflow-auto">
           <ContentInput onGenerate={handleGenerate} loading={loading} />
         </div>
 
         <div className="flex-1 overflow-auto bg-muted/30">
-          <ContentResults content={generatedContent} />
+          <ContentResults
+            content={generatedContent}
+            remainingGenerations={remainingGenerations}
+            rateLimitStatus={rateLimitStatus}
+          />
         </div>
       </div>
     </div>
