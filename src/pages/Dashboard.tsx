@@ -6,6 +6,7 @@ import { ContentInput } from "@/components/ContentInput";
 import { ContentResults } from "@/components/ContentResults";
 import { toast } from "sonner";
 import { projectSchema } from "@/lib/validations";
+import { sanitizeForSocialMedia, detectPromptInjection } from "@/lib/ai-sanitization";
 
 interface GeneratedContent {
   twitter: string;
@@ -46,14 +47,23 @@ const Dashboard = () => {
   };
 
   const generateMockContent = (originalText: string): GeneratedContent => {
-    const preview = originalText.substring(0, 100);
+    // Detect potential prompt injection attempts
+    const injectionCheck = detectPromptInjection(originalText);
+    if (injectionCheck.isInjection) {
+      console.warn("Potential prompt injection detected:", injectionCheck.patterns);
+      toast.warning("Your input contains patterns that may not process correctly. Please review your content.");
+    }
+
+    // Sanitize content for social media generation
+    const sanitizedText = sanitizeForSocialMedia(originalText);
+    const preview = sanitizedText.substring(0, 100);
     
     return {
       twitter: `1/ 🧵 Here's what you need to know:\n\n${preview}...\n\n2/ The key insight:\nThis changes everything about how we think about content creation.\n\n3/ Why it matters:\n• Saves hours of work\n• Increases engagement\n• Reaches more people\n\n4/ Action steps:\nTry this approach today and see the results.\n\n5/ What's next:\nLet me know your thoughts in the comments! 💬`,
       
       linkedin: `🚀 Here's what I learned about content transformation:\n\n${preview}...\n\n💡 Key Takeaway:\nThe most successful creators aren't just posting—they're repurposing strategically.\n\n📊 The data shows:\n• 3x more reach with multi-platform approach\n• 67% higher engagement rates\n• 50% less time spent creating\n\n✨ Here's the framework I use:\n1. Start with one solid piece\n2. Adapt to each platform's style\n3. Optimize for each audience\n4. Track and iterate\n\n💬 What's your content strategy? Drop a comment below.\n\n#ContentMarketing #DigitalStrategy #GrowthHacking`,
       
-      instagram: `🎬 SCRIPT FOR REEL:\n\n[HOOK - 0:00-0:02]\n"Stop wasting time creating content from scratch!"\n\n[SETUP - 0:03-0:06]\n"Here's the secret top creators use..."\n\n[VALUE - 0:07-0:15]\n${preview.substring(0, 50)}...\nOne piece = 10+ posts!\n\n[CTA - 0:16-0:20]\n"Save this for later & follow for more tips!"\n\n💎 Visual suggestions:\n• Fast cuts every 2-3 seconds\n• Text overlays for key points\n• Trending audio\n• Hook in first frame\n\n#ContentCreator #SocialMediaTips #Productivity`
+      instagram: `🎬 SCRIPT FOR REEL:\n\n[HOOK - 0:00-0:02]\n"Stop wasting time creating content from scratch!"\n\n[SETUP - 0:03-0:06]\n"Here's the secret top creators use..."\n\n[VALUE - 0:07-0:15]\n${sanitizedText.substring(0, 50)}...\nOne piece = 10+ posts!\n\n[CTA - 0:16-0:20]\n"Save this for later & follow for more tips!"\n\n💎 Visual suggestions:\n• Fast cuts every 2-3 seconds\n• Text overlays for key points\n• Trending audio\n• Hook in first frame\n\n#ContentCreator #SocialMediaTips #Productivity`
     };
   };
 
