@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Check, Zap, Star, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface PricingTier {
     id: string;
     name: string;
@@ -96,12 +98,21 @@ export const PricingPage = () => {
         setLoading(tierId);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to subscribe');
+                setLoading(null);
+                return;
+            }
+
             // Call backend to create checkout session
             const response = await fetch('http://localhost:8000/v1/subscriptions/checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     tier: tierId,
@@ -145,8 +156,8 @@ export const PricingPage = () => {
                             <Card
                                 key={tier.id}
                                 className={`relative p-6 bg-gradient-to-b from-zinc-900/90 to-black/90 border-2 transition-all duration-300 hover:scale-[1.02] ${isPopular
-                                        ? 'border-purple-500/50 shadow-lg shadow-purple-500/20'
-                                        : 'border-white/10 hover:border-white/20'
+                                    ? 'border-purple-500/50 shadow-lg shadow-purple-500/20'
+                                    : 'border-white/10 hover:border-white/20'
                                     }`}
                             >
                                 {/* Popular Badge */}
@@ -183,8 +194,8 @@ export const PricingPage = () => {
                                     onClick={() => handleSubscribe(tier.id)}
                                     disabled={loading === tier.id}
                                     className={`w-full ${isPopular
-                                            ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
-                                            : 'bg-white/10 hover:bg-white/20'
+                                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
+                                        : 'bg-white/10 hover:bg-white/20'
                                         } text-white font-bold`}
                                 >
                                     {loading === tier.id ? 'Processing...' : tier.id === 'free' ? 'Current Plan' : 'Get Started'}

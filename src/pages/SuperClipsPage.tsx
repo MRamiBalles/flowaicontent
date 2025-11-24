@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Rocket, Zap, Star, TrendingUp, Clock, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface BoostTier {
     cost: number;
     duration: number;
@@ -46,13 +48,18 @@ export const SuperClipsPage = () => {
             setTrendingClips(trendingData.clips);
 
             // Get my active boosts
-            const boostsRes = await fetch('http://localhost:8000/v1/super-clips/active', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                }
-            });
-            const boostsData = await boostsRes.json();
-            setMyBoosts(boostsData.boosts);
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (token) {
+                const boostsRes = await fetch('http://localhost:8000/v1/super-clips/active', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const boostsData = await boostsRes.json();
+                setMyBoosts(boostsData.boosts);
+            }
         } catch (error) {
             console.error('Failed to load data');
         }
@@ -60,11 +67,19 @@ export const SuperClipsPage = () => {
 
     const handleBoost = async (clipId: string, tier: string) => {
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to boost clips');
+                return;
+            }
+
             const response = await fetch('http://localhost:8000/v1/super-clips/boost', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     clip_id: clipId,
@@ -121,8 +136,8 @@ export const SuperClipsPage = () => {
                                 <Card
                                     key={key}
                                     className={`p-6 border-2 transition-all cursor-pointer ${selectedTier === key
-                                            ? `border-${color}-500 bg-${color}-500/10`
-                                            : 'border-white/10 hover:border-white/30'
+                                        ? `border-${color}-500 bg-${color}-500/10`
+                                        : 'border-white/10 hover:border-white/30'
                                         }`}
                                     onClick={() => setSelectedTier(key)}
                                 >
@@ -159,8 +174,8 @@ export const SuperClipsPage = () => {
                             <Card
                                 key={clip.id}
                                 className={`p-4 border ${clip.is_boosted
-                                        ? 'border-orange-500/50 bg-orange-500/5'
-                                        : 'border-white/10'
+                                    ? 'border-orange-500/50 bg-orange-500/5'
+                                    : 'border-white/10'
                                     }`}
                             >
                                 <div className="flex items-start justify-between mb-3">

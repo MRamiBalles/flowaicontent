@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Code, Key, BarChart3, Copy, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface APIKey {
     id: string;
     name: string;
@@ -29,19 +31,24 @@ export const DeveloperAPIPage = () => {
 
     const fetchAPIData = async () => {
         try {
-            // Get API keys
-            const keysRes = await fetch('http://localhost:8000/v1/api/keys', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-            });
-            const keysData = await keysRes.json();
-            setApiKeys(keysData.keys || []);
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
-            // Get usage stats
-            const usageRes = await fetch('http://localhost:8000/v1/api/usage', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-            });
-            const usageData = await usageRes.json();
-            setUsage(usageData);
+            if (token) {
+                // Get API keys
+                const keysRes = await fetch('http://localhost:8000/v1/api/keys', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const keysData = await keysRes.json();
+                setApiKeys(keysData.keys || []);
+
+                // Get usage stats
+                const usageRes = await fetch('http://localhost:8000/v1/api/usage', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const usageData = await usageRes.json();
+                setUsage(usageData);
+            }
         } catch (error) {
             console.error('Failed to load API data');
         }
@@ -55,11 +62,20 @@ export const DeveloperAPIPage = () => {
 
         setCreating(true);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to create API key');
+                setCreating(false);
+                return;
+            }
+
             const response = await fetch('http://localhost:8000/v1/api/keys', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     name: keyName,
@@ -141,8 +157,8 @@ export const DeveloperAPIPage = () => {
                             <div
                                 key={tier}
                                 className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedTier === tier
-                                        ? 'border-blue-500 bg-blue-500/10'
-                                        : 'border-white/10 hover:border-white/30'
+                                    ? 'border-blue-500 bg-blue-500/10'
+                                    : 'border-white/10 hover:border-white/30'
                                     }`}
                                 onClick={() => setSelectedTier(tier)}
                             >

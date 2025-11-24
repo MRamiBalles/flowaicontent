@@ -3,7 +3,7 @@
  * Adds authentication and FlowAI business logic endpoints
  */
 
-import { supabase } from './supabase'
+import { supabase } from '@/integrations/supabase/client'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/v1'
 

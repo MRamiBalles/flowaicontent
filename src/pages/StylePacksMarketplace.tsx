@@ -6,6 +6,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Palette, Download, Check, ShoppingCart, Star, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface StylePack {
     id: string;
     name: string;
@@ -28,9 +30,12 @@ export const StylePacksMarketplace = () => {
 
     const fetchStylePacks = async () => {
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const response = await fetch('http://localhost:8000/v1/style-packs', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
             const data = await response.json();
@@ -46,11 +51,20 @@ export const StylePacksMarketplace = () => {
         setPurchasing(packId);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to purchase');
+                setPurchasing(null);
+                return;
+            }
+
             const response = await fetch('http://localhost:8000/v1/style-packs/purchase', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     style_pack_id: packId,
@@ -74,9 +88,17 @@ export const StylePacksMarketplace = () => {
 
     const handleDownload = async (packId: string) => {
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to download');
+                return;
+            }
+
             const response = await fetch(`http://localhost:8000/v1/style-packs/download/${packId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
 

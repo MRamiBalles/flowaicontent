@@ -6,6 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { Trophy, Star, Lock, Zap, Target, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface Quest {
     id: string;
     title: string;
@@ -38,13 +40,18 @@ export const SeasonPassPage = () => {
     const fetchSeasonPassData = async () => {
         try {
             // Get current season pass
-            const passRes = await fetch('http://localhost:8000/v1/season-pass/current', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                }
-            });
-            const passData = await passRes.json();
-            setSeasonPass(passData);
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (token) {
+                const passRes = await fetch('http://localhost:8000/v1/season-pass/current', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const passData = await passRes.json();
+                setSeasonPass(passData);
+            }
 
             // Get tiers
             const tiersRes = await fetch('http://localhost:8000/v1/season-pass/tiers');
@@ -58,10 +65,18 @@ export const SeasonPassPage = () => {
 
     const upgradeToPremium = async () => {
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to upgrade');
+                return;
+            }
+
             const response = await fetch('http://localhost:8000/v1/season-pass/upgrade-premium', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
 
@@ -146,15 +161,15 @@ export const SeasonPassPage = () => {
                                 <Card
                                     key={quest.id}
                                     className={`p-4 ${quest.completed
-                                            ? 'border-green-500/50 bg-green-500/5'
-                                            : 'border-white/10'
+                                        ? 'border-green-500/50 bg-green-500/5'
+                                        : 'border-white/10'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div>
                                             <Badge className={`mb-2 text-xs ${quest.type === 'daily' ? 'bg-blue-500/20 text-blue-300' :
-                                                    quest.type === 'weekly' ? 'bg-purple-500/20 text-purple-300' :
-                                                        'bg-orange-500/20 text-orange-300'
+                                                quest.type === 'weekly' ? 'bg-purple-500/20 text-purple-300' :
+                                                    'bg-orange-500/20 text-orange-300'
                                                 }`}>
                                                 {quest.type}
                                             </Badge>
@@ -199,8 +214,8 @@ export const SeasonPassPage = () => {
                                 <Card
                                     key={tier.tier}
                                     className={`p-4 flex items-center gap-4 ${isCurrent ? 'border-blue-500 bg-blue-500/10' :
-                                            isUnlocked ? 'border-green-500/30 bg-green-500/5' :
-                                                'border-white/10 opacity-60'
+                                        isUnlocked ? 'border-green-500/30 bg-green-500/5' :
+                                            'border-white/10 opacity-60'
                                         }`}
                                 >
                                     <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xl">

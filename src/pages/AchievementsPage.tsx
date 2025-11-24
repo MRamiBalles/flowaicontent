@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,20 +34,25 @@ export const AchievementsPage = () => {
 
     const fetchData = async () => {
         try {
-            // Get user achievements
-            const achRes = await fetch('http://localhost:8000/v1/achievements/my-achievements', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                }
-            });
-            const achData = await achRes.json();
-            setAchievements(achData.achievements);
-            setStats(achData.stats);
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
-            // Get leaderboard
-            const lbRes = await fetch('http://localhost:8000/v1/achievements/leaderboard');
-            const lbData = await lbRes.json();
-            setLeaderboard(lbData.leaderboard);
+            if (token) {
+                // Get user achievements
+                const achRes = await fetch('http://localhost:8000/v1/achievements/my-achievements', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const achData = await achRes.json();
+                setAchievements(achData.achievements);
+                setStats(achData.stats);
+
+                // Get leaderboard
+                const lbRes = await fetch('http://localhost:8000/v1/achievements/leaderboard');
+                const lbData = await lbRes.json();
+                setLeaderboard(lbData.leaderboard);
+            }
         } catch (error) {
             console.error('Failed to load achievements');
         }
@@ -124,8 +130,8 @@ export const AchievementsPage = () => {
                         <Card
                             key={achievement.id}
                             className={`p-6 border ${achievement.unlocked
-                                    ? 'border-green-500/50 bg-green-500/5'
-                                    : 'border-white/10'
+                                ? 'border-green-500/50 bg-green-500/5'
+                                : 'border-white/10'
                                 }`}
                         >
                             <div className="flex items-start justify-between mb-4">
@@ -187,9 +193,9 @@ export const AchievementsPage = () => {
                                     className="flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                                 >
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${index === 0 ? 'bg-yellow-500 text-black' :
-                                            index === 1 ? 'bg-gray-400 text-black' :
-                                                index === 2 ? 'bg-orange-700 text-white' :
-                                                    'bg-zinc-700 text-white'
+                                        index === 1 ? 'bg-gray-400 text-black' :
+                                            index === 2 ? 'bg-orange-700 text-white' :
+                                                'bg-zinc-700 text-white'
                                         }`}>
                                         {index === 0 ? '🥇' :
                                             index === 1 ? '🥈' :

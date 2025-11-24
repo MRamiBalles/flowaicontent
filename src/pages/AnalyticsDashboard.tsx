@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import {
     DollarSign,
@@ -36,13 +37,18 @@ export const AnalyticsDashboard = () => {
 
     const fetchMetrics = async () => {
         try {
-            const response = await fetch('http://localhost:8000/v1/analytics/metrics', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                }
-            });
-            const data = await response.json();
-            setMetrics(data);
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (token) {
+                const response = await fetch('http://localhost:8000/v1/analytics/metrics', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                setMetrics(data);
+            }
         } catch (error) {
             console.error('Failed to load metrics');
         } finally {

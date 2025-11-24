@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Coins, ArrowUpRight, ArrowDownLeft, Zap, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface TokenPricing {
     base_rate: number;
     bonus_tiers: Array<{ min_purchase: number; bonus_percent: number }>;
@@ -25,9 +27,14 @@ export const TokenPurchasePage = () => {
 
     const fetchBalance = async () => {
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) return;
+
             const response = await fetch('http://localhost:8000/v1/tokens/balance', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
             const data = await response.json();
@@ -69,11 +76,19 @@ export const TokenPurchasePage = () => {
         setLoading(true);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to purchase tokens');
+                return;
+            }
+
             const response = await fetch('http://localhost:8000/v1/tokens/purchase', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     amount_usd: amount,
@@ -145,8 +160,8 @@ export const TokenPurchasePage = () => {
                                     onClick={() => setAmount(amt)}
                                     variant="outline"
                                     className={`${amount === amt
-                                            ? 'bg-yellow-500/20 border-yellow-500 text-yellow-300'
-                                            : 'border-white/20'
+                                        ? 'bg-yellow-500/20 border-yellow-500 text-yellow-300'
+                                        : 'border-white/20'
                                         }`}
                                 >
                                     ${amt}
@@ -205,8 +220,8 @@ export const TokenPurchasePage = () => {
                                     <div
                                         key={tier.min_purchase}
                                         className={`p-3 rounded-lg border ${amount >= tier.min_purchase
-                                                ? 'bg-yellow-500/10 border-yellow-500/50'
-                                                : 'bg-white/5 border-white/10'
+                                            ? 'bg-yellow-500/10 border-yellow-500/50'
+                                            : 'bg-white/5 border-white/10'
                                             }`}
                                     >
                                         <div className="flex justify-between items-center">

@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Users, Copy, Mail, TrendingUp, Award, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
+
 interface ReferralStats {
     total_invites: number;
     total_signups: number;
@@ -26,24 +28,29 @@ export const ReferralPage = () => {
 
     const fetchReferralData = async () => {
         try {
-            // Get referral code
-            const codeRes = await fetch('http://localhost:8000/v1/referrals/my-code', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                }
-            });
-            const codeData = await codeRes.json();
-            setCode(codeData.code);
-            setLink(codeData.link);
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
 
-            // Get stats
-            const statsRes = await fetch('http://localhost:8000/v1/referrals/stats', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                }
-            });
-            const statsData = await statsRes.json();
-            setStats(statsData);
+            if (token) {
+                // Get referral code
+                const codeRes = await fetch('http://localhost:8000/v1/referrals/my-code', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const codeData = await codeRes.json();
+                setCode(codeData.code);
+                setLink(codeData.link);
+
+                // Get stats
+                const statsRes = await fetch('http://localhost:8000/v1/referrals/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const statsData = await statsRes.json();
+                setStats(statsData);
+            }
         } catch (error) {
             toast.error('Failed to load referral data');
         }
@@ -63,13 +70,21 @@ export const ReferralPage = () => {
         setLoading(true);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                toast.error('Please login to send invites');
+                return;
+            }
+
             const emailList = emails.split(',').map(e => e.trim()).filter(e => e);
 
             const response = await fetch('http://localhost:8000/v1/referrals/invite', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ emails: emailList })
             });

@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   const checkAdminAccess = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast({
           title: "Unauthorized",
@@ -71,41 +71,31 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      // Get all profiles
+      const { data, error } = await supabase.functions.invoke('admin-list-users');
+
+      if (error) throw error;
+
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*");
 
       if (profilesError) throw profilesError;
 
-      // Get all user roles
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role") as { data: Array<{ user_id: string; role: string }> | null; error: any };
+      const usersData: UserProfile[] = data.users.map((u: any) => {
+        const profile = profiles?.find(p => p.id === u.id);
+        const role = u.app_metadata?.role || u.user_metadata?.role || 'user';
 
-      if (rolesError) throw rolesError;
-
-      // Get auth users to get emails
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
-
-      if (authError) throw authError;
-
-      // Combine data
-      const usersData: UserProfile[] = profiles?.map(profile => {
-        const authUser = authUsers?.find((u: any) => u.id === profile.id);
-        const userRoles = roles?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
-        
         return {
-          id: profile.id,
-          email: authUser?.email || "Unknown",
-          full_name: profile.full_name,
-          roles: userRoles,
+          id: u.id,
+          email: u.email || "Unknown",
+          full_name: profile?.full_name || u.user_metadata?.full_name,
+          roles: [role],
         };
-      }) || [];
+      });
 
       setUsers(usersData);
     } catch (error: any) {
+      console.error("Error loading users:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to load users",
@@ -118,16 +108,9 @@ const AdminDashboard = () => {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      // Remove existing roles
-      await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
-
-      // Add new role
-      const { error } = await supabase
-        .from("user_roles")
-        .insert([{ user_id: userId, role: newRole as "admin" | "moderator" | "user" }]);
+      const { error } = await supabase.functions.invoke('admin-change-role', {
+        body: { userId, newRole }
+      });
 
       if (error) throw error;
 
@@ -138,6 +121,7 @@ const AdminDashboard = () => {
 
       loadUsers();
     } catch (error: any) {
+      console.error("Error updating role:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update role",
