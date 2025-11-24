@@ -10,14 +10,15 @@ async def ingest_context(request: ContextIngestRequest):
     Ingesta de contexto multimodal (simulada por ahora).
     Aquí es donde el LRM procesaría el input para generar embeddings o estructuras.
     """
-    # TODO: Connect to LRM processing service
+    # Process with LRM
+    from app.services.lrm_service import lrm_service
+    result = lrm_service.process_context(request.content)
     
     ingestion_id = str(uuid.uuid4())
     
-    # Simulación de procesamiento
     return ContextIngestResponse(
         ingestion_id=ingestion_id,
         status="processed",
-        processed_tokens=len(request.content.split()),
-        summary=f"Ingested {request.source_type} content successfully."
+        processed_tokens=result.get("input_length", 0),
+        summary=f"Processed by LRM (Linear+MoE). Output shape: {result.get('output_shape')}"
     )
