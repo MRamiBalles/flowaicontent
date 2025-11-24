@@ -71,15 +71,18 @@ serve(async (req: Request) => {
         if (insertError) throw insertError
 
         // 3. Audit Log
-        await supabaseAdmin
-            .from('admin_audit_logs')
-            .insert({
-                admin_id: user.id,
-                action: 'change_role',
-                target_user_id: userId,
-                details: { new_role: newRole }
-            })
-            .catch(err => console.error('Audit log failed:', err))
+        try {
+            await supabaseAdmin
+                .from('admin_audit_logs')
+                .insert({
+                    admin_id: user.id,
+                    action: 'change_role',
+                    target_user_id: userId,
+                    details: { new_role: newRole }
+                })
+        } catch (auditError) {
+            console.error('Audit log failed:', auditError)
+        }
 
         return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
