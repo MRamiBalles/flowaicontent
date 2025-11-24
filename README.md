@@ -1,73 +1,102 @@
-# Welcome to your Lovable project
+# FlowAI Content Platform 🚀
 
-## Project info
+> **Advanced Multimodal Video Generation Platform**
+> *Powered by AI, Driven by Community.*
 
-**URL**: https://lovable.dev/projects/c57b25e8-ab6d-4d68-beb3-acc18d3a1aa8
+FlowAI is a next-generation video platform that combines **Generative AI (Text-to-Video)** with a robust **Social Layer** and an **Attention Economy**. It allows creators to generate high-quality video content using AI models (simulated Kandinsky 5.0) and monetize their engagement through a dual-token system.
 
-## How can I edit this code?
+## ✨ Key Features
 
-There are several ways of editing your application.
+### 🧠 The Brain (AI Core)
+- **Multimodal Ingestion**: Process text, scripts, and context to generate video prompts.
+- **Video Generation Engine**: Simulated diffusion models with support for **LoRA Adapters** (Cinematic, Cyberpunk, Anime).
+- **Training Pipeline**: Infrastructure for fine-tuning and style customization.
 
-**Use Lovable**
+### 🐝 The Hive (Social Layer)
+- **Real-time Interaction**: Live chat, comments, and direct messages (DMs).
+- **Moderation**: Integrated **COMPASS** system for content safety analysis.
+- **Community**: User profiles and social graph simulation.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c57b25e8-ab6d-4d68-beb3-acc18d3a1aa8) and start prompting.
+### 💎 Attention Economy
+- **Dual Monetization**: Rewards for both Creators (content quality) and Viewers (engagement).
+- **Proof-of-Attention (PoA)**: Verifiable tracking of user engagement.
+- **Wallet & Ledger**: Simulated blockchain ledger for token transactions and "Super Chat" tipping.
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🎨 Premium UI/UX
+- **Glassmorphism Design**: Modern, sleek interface with blur effects and animations.
+- **Immersive Experience**: Synthesized UI sound effects (SFX) and 3D holographic badges.
+- **Data Visualization**: Interactive neon charts for earnings tracking.
 
-**Use your preferred IDE**
+## 🛠️ Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React, Vite, TailwindCSS, Framer Motion, Recharts, Lucide Icons.
+- **Backend**: FastAPI (Python), Pydantic, Uvicorn.
+- **AI/ML**: PyTorch, Diffusers (Simulated), Accelerate.
+- **DevOps**: Docker, Nginx, Docker Compose.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Getting Started
 
-Follow these steps:
+### Prerequisites
+- Docker & Docker Compose
+- Node.js 18+ (for local dev)
+- Python 3.10+ (for local dev)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Quick Start (Production Mode)
+Run the entire stack with a single command:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+docker-compose up --build
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+Access the application at `http://localhost`.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 📚 API Documentation
+
+The backend provides automatic interactive documentation:
+
+- **Swagger UI**: `http://localhost:8000/docs` - Test endpoints directly.
+- **ReDoc**: `http://localhost:8000/redoc` - Alternative documentation view.
+
+### Local Development
+
+**1. Backend**
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+**2. Frontend**
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📂 Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+flowaicontent-1/
+├── backend/                # FastAPI Application
+│   ├── app/
+│   │   ├── api/            # REST Endpoints
+│   │   ├── services/       # Business Logic (Video Engine, Social, Ledger)
+│   │   ├── training/       # AI Training Scripts
+│   │   └── data/           # Data Processing
+│   └── main.py             # Entry Point
+├── src/                    # React Frontend
+│   ├── components/         # UI Components (VideoPlayer, Social, etc.)
+│   ├── hooks/              # Custom Hooks (useSoundEffects)
+│   └── lib/                # Utilities & API Clients
+├── docker-compose.yml      # Orchestration
+└── Dockerfile              # Frontend Build
+```
 
-**Use GitHub Codespaces**
+## 🤝 Contributing
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c57b25e8-ab6d-4d68-beb3-acc18d3a1aa8) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📄 License
+Distributed under the MIT License. See `LICENSE` for more information.

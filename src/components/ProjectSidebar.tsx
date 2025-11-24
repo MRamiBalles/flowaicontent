@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, FileText, LogOut, Settings as SettingsIcon, Star } from "lucide-react";
+import { Plus, FileText, LogOut, Settings as SettingsIcon, Star, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -85,6 +85,20 @@ export const ProjectSidebar = ({ selectedProjectId, onSelectProject, onNewProjec
           <Plus className="w-4 h-4 mr-2" />
           New Project
         </Button>
+
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10 group"
+          onClick={() => toast.info("Live Studio coming soon!")}
+        >
+          <div className="relative mr-2 flex items-center justify-center">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+            <Radio className="relative w-4 h-4" />
+          </div>
+          <span className="font-bold">LIVE NOW</span>
+          <span className="ml-auto text-[10px] bg-red-500/20 px-1.5 py-0.5 rounded text-red-400 font-mono">12.4k</span>
+        </Button>
+
         <Button
           variant={showFavoritesOnly ? "secondary" : "ghost"}
           size="sm"
