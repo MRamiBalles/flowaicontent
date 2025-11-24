@@ -5,6 +5,8 @@ export interface IngestResponse {
     status: string;
     processed_tokens: number;
     summary: string;
+    compass_metrics?: any;
+    video_result?: any;
 }
 
 export const ingestContext = async (

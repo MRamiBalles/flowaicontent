@@ -61,19 +61,19 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+    <div className="flex flex-col h-full p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-700">
       <CommandPalette />
       {/* Header Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">Create New Content</h2>
-          <p className="text-zinc-400 text-lg">
+          <h2 className="text-2xl md:text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">Create New Content</h2>
+          <p className="text-zinc-400 text-sm md:text-lg">
             Transform your ideas into viral multimodal experiences.
           </p>
         </div>
-        <div className="hidden md:flex gap-4 items-center">
+        <div className="flex gap-4 items-center self-start md:self-auto">
           <Badge3D title="Early Access" />
-          <div className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-zinc-400 flex items-center gap-2">
+          <div className="hidden md:flex px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-zinc-400 items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             SYSTEM ONLINE
           </div>
