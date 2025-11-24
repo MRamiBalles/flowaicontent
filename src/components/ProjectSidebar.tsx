@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, FileText, LogOut, Settings as SettingsIcon, Star, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { RaidButton } from "@/components/RaidButton";
 
 interface Project {
   id: string;
