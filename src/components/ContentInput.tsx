@@ -20,14 +20,14 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
 
   const handleGenerate = () => {
     setErrors({});
-    
+
     try {
       // Validate inputs
       const validated = projectSchema.parse({
         title: title.trim(),
         content: content.trim(),
       });
-      
+
       onGenerate(validated.title, validated.content);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -90,6 +90,31 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
           <Sparkles className="w-5 h-5 mr-2" />
           {loading ? "Generating Magic..." : "✨ Generate Content"}
         </Button>
+
+        <div className="pt-2 border-t border-border mt-4">
+          <p className="text-xs text-muted-foreground mb-2 text-center">AI Backend Integration</p>
+          <Button
+            onClick={() => {
+              // Temporary direct call for testing
+              import("@/lib/api").then(({ ingestContext }) => {
+                if (!content.trim()) {
+                  toast.error("Please enter some content first");
+                  return;
+                }
+                toast.promise(ingestContext(content, "text"), {
+                  loading: "Ingesting context to LRM...",
+                  success: (data) => `Context ingested! ID: ${data.ingestion_id}`,
+                  error: "Failed to ingest context"
+                });
+              });
+            }}
+            variant="outline"
+            className="w-full text-xs"
+            disabled={!content.trim()}
+          >
+            🚀 Test LRM Ingestion (Localhost:8000)
+          </Button>
+        </div>
       </div>
     </div>
   );
