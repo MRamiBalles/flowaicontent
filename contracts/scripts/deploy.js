@@ -1,42 +1,28 @@
 const hre = require("hardhat");
 
 async function main() {
-    const [deployer] = await hre.ethers.getSigners();
+    console.log("Deploying FlowToken...");
 
-    console.log("Deploying FloToken with account:", deployer.address);
-    console.log("Account balance:", (await hre.ethers.provider.getBalance(deployer.address)).toString());
+    const FlowToken = await hre.ethers.getContractFactory("FlowToken");
+    const flowToken = await FlowToken.deploy();
 
-    // Deploy FloToken
-    const FloToken = await hre.ethers.getContractFactory("FloToken");
-    const token = await FloToken.deploy(deployer.address);
+    await flowToken.waitForDeployment();
 
-    await token.waitForDeployment();
+    const address = await flowToken.getAddress();
+    console.log(`FlowToken deployed to: ${address}`);
 
-    const tokenAddress = await token.getAddress();
-
-    console.log("\n✅ FloToken deployed successfully!");
-    console.log("📍 Contract Address:", tokenAddress);
-    console.log("👤 Owner Address:", deployer.address);
-    console.log("\n⚡ Next Steps:");
-    console.log("1. Save contract address to FLO_TOKEN_CONTRACT_ADDRESS in .env");
-    console.log("2. Verify contract:");
-    console.log(`   npx hardhat verify --network ${hre.network.name} ${tokenAddress} "${deployer.address}"`);
-    console.log("3. View on PolygonScan:");
-
-    if (hre.network.name === "polygon") {
-        console.log(`   https://polygonscan.com/address/${tokenAddress}`);
-    } else if (hre.network.name === "mumbai") {
-        console.log(`   https://mumbai.polygonscan.com/address/${tokenAddress}`);
+    // Verification (optional)
+    if (process.env.POLYGONSCAN_API_KEY) {
+        console.log("Waiting for block confirmations...");
+        await flowToken.deploymentTransaction().wait(5);
+        await hre.run("verify:verify", {
+            address: address,
+            constructorArguments: [],
+        });
     }
-
-    // Get initial supply
-    const totalSupply = await token.totalSupply();
-    console.log("\n💰 Initial Supply:", hre.ethers.formatEther(totalSupply), "FLO");
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error);
-        process.exit(1);
-    });
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});

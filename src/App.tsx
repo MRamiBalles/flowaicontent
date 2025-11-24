@@ -9,10 +9,10 @@ import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 
-const queryClient = new QueryClient();
+import { Web3Provider } from "@/components/web3/Web3Provider";
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <Web3Provider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -27,7 +27,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </Web3Provider>
 );
 
 export default App;

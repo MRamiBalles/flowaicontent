@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { projectSchema } from "@/lib/validations";
 import { detectPromptInjection } from "@/lib/ai-sanitization";
 import { Shield, LogOut } from "lucide-react";
+import { ConnectWallet } from "@/components/web3/ConnectWallet";
 
 interface GeneratedContent {
   twitter: string;
@@ -56,7 +57,7 @@ const Dashboard = () => {
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
-    
+
     setIsAdmin(!!data);
   };
 
@@ -222,13 +223,14 @@ const Dashboard = () => {
               Admin
             </Button>
           )}
+          <ConnectWallet />
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </Button>
         </div>
       </div>
-      
+
       <div className="flex flex-1 overflow-hidden">
         <ProjectSidebar
           selectedProjectId={selectedProjectId}
