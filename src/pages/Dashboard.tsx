@@ -10,6 +10,7 @@ import { projectSchema } from "@/lib/validations";
 import { detectPromptInjection } from "@/lib/ai-sanitization";
 import { Shield, LogOut } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
+import { MobileNav } from "@/components/ui/MobileNav";
 
 interface GeneratedContent {
   twitter: string;
@@ -252,6 +253,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 };

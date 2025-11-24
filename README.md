@@ -45,26 +45,23 @@ No other product offers all four pillars.
 - ✅ Supabase auth + RBAC (admin, moderator, user)
 - ✅ Real‑time analytics dashboard
 
-### Monetisation (Sprint 1)
-- ✅ 4‑tier subscription (FREE, PRO, STUDIO, BUSINESS)
-- ✅ Style‑packs marketplace (LoRA adapters)
-- ✅ Token system (ERC‑20 on Polygon) with fiat purchase
+### AI & Content (Sprints 7-8)
+- ✅ **Video Studio**: Text-to-Video using Stable Video Diffusion (SVD)
+- ✅ **Style Packs**: LoRA adapters for custom visual styles
+- ✅ **Co-Streaming**: AI-matched collaboration and raids
+- ✅ **Safety**: Deepfake detection and content moderation
 
-### Growth & Retention (Sprint 2)
-- ✅ Referral program (100 tokens per signup)
-- ✅ Super Clips boost (50‑500 tokens)
-- ✅ Season Pass – 50‑tier battle pass with quests
-- ✅ Achievements & global leaderboards
+### Web3 Economy (Sprint 9)
+- ✅ **$FLOW Token**: ERC-20 utility token on Polygon
+- ✅ **Staking**: Earn rewards by locking tokens
+- ✅ **NFT Marketplace**: Buy/Sell AI assets and prompts
+- ✅ **Creator Coins**: Bonding curve economy for creators
 
-### Virality (Sprint 3)
-- ✅ Discord bot (`/generate` command)
-- ✅ TikTok/IG export (9:16, auto‑caption, watermark)
-- ✅ Viral watermarks for attribution
-
-### Enterprise (Sprint 4)
-- ✅ Developer API (REST, usage‑based billing)
-- ✅ Marketing‑Teams dashboard (bulk campaigns, A/B testing)
-- ✅ Brand Bounties marketplace (escrow, voting, 15 % fee)
+### Growth & Mobile (Sprint 10)
+- ✅ **Mobile PWA**: Installable app with offline support
+- ✅ **Push Notifications**: Real-time engagement alerts
+- ✅ **Viral Loops**: Gamified referrals and TikTok/Reels export
+- ✅ **Social Export**: Auto-formatting for vertical video
 
 ---
 
