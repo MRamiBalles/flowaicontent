@@ -27,11 +27,14 @@ serve(async (req: Request) => {
             throw new Error('Not authenticated')
         }
 
-        // Check if user is admin (you might want to adjust this check based on your actual role implementation)
-        // For now assuming role is in user_metadata or app_metadata
-        const isAdmin = user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin'
+        // Check if user is admin using secure RPC
+        const { data: isAdmin, error: roleError } = await supabaseClient
+            .rpc('has_role', {
+                _user_id: user.id,
+                _role: 'admin'
+            });
 
-        if (!isAdmin) {
+        if (roleError || !isAdmin) {
             throw new Error('Unauthorized: Admin access required')
         }
 

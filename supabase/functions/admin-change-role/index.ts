@@ -27,9 +27,14 @@ serve(async (req: Request) => {
             throw new Error('Not authenticated')
         }
 
-        const isAdmin = user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin'
+        // Check if user is admin using secure RPC
+        const { data: isAdmin, error: roleError } = await supabaseClient
+            .rpc('has_role', {
+                _user_id: user.id,
+                _role: 'admin'
+            });
 
-        if (!isAdmin) {
+        if (roleError || !isAdmin) {
             throw new Error('Unauthorized: Admin access required')
         }
 
@@ -49,15 +54,34 @@ serve(async (req: Request) => {
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        // Update user metadata
-        const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-            userId,
-            { user_metadata: { role: newRole } }
-        )
+        // Update user_roles table
+        // 1. Delete existing role
+        const { error: deleteError } = await supabaseAdmin
+            .from('user_roles')
+            .delete()
+            .eq('user_id', userId)
 
-        if (error) throw error
+        if (deleteError) throw deleteError
 
-        return new Response(JSON.stringify({ data }), {
+        // 2. Insert new role
+        const { error: insertError } = await supabaseAdmin
+            .from('user_roles')
+            .insert({ user_id: userId, role: newRole })
+
+        if (insertError) throw insertError
+
+        // 3. Audit Log
+        await supabaseAdmin
+            .from('admin_audit_logs')
+            .insert({
+                admin_id: user.id,
+                action: 'change_role',
+                target_user_id: userId,
+                details: { new_role: newRole }
+            })
+            .catch(err => console.error('Audit log failed:', err))
+
+        return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
         })
