@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import ingest, economy
+from app.api.v1 import ingest, economy, social
 
 app = FastAPI(
     title="Lovable AI Core",
@@ -20,6 +20,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(ingest.router, prefix="/api/v1/context", tags=["Context Ingestion"])
 app.include_router(economy.router, prefix="/api/v1/economy", tags=["Attention Economy"])
+app.include_router(social.router, prefix="/api/v1/social", tags=["Social Hive"])
 
 @app.get("/health")
 async def health_check():

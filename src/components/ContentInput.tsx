@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { LRMVisualizer } from "@/components/LRMVisualizer";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { WalletCard } from "@/components/WalletCard";
+import { CommentSection } from "@/components/Social/CommentSection";
+import { LiveChat } from "@/components/Social/LiveChat";
 
 interface ContentInputProps {
   onGenerate: (title: string, content: string) => void;
@@ -141,6 +143,15 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
               </div>
 
               <WalletCard userId="user_demo_123" />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-8 border-t border-white/10">
+                <div className="md:col-span-2">
+                  <CommentSection videoId={"vid_" + lrmData.video_result.model} />
+                </div>
+                <div>
+                  <LiveChat videoId={"vid_" + lrmData.video_result.model} />
+                </div>
+              </div>
             </div>
           )}
         </div>
