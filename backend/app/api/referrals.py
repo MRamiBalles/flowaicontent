@@ -89,8 +89,14 @@ async def invite_friends(
         
         invited.append(email)
         
-        # TODO: Send email with link
-        # await send_referral_email(email, link, current_user["username"])
+        # Send email with referral link
+        from app.services.queue_service import send_referral_email_task
+        send_referral_email_task.delay(
+            referrer_name=current_user.get("username", "A friend"),
+            referrer_email=current_user.get("email"),
+            referee_email=email,
+            referral_link=link
+        )
     
     return {
         "invited_count": len(invited),

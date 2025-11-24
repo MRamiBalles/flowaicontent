@@ -52,8 +52,59 @@ async def get_cohort_analysis(
     current_user: dict = Depends(get_admin_user)
 ):
     """Get cohort retention analysis for specific month"""
-    # TODO: Implement cohort analysis
-    return {"message": "Cohort analysis not yet implemented"}
+    from datetime import datetime, timedelta
+    
+    # Get users who signed up in the specified month
+    start_date = datetime(year, month, 1)
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1)
+    else:
+        end_date = datetime(year, month + 1, 1)
+    
+    cohort_users = await db.users.find({
+        "created_at": {"$gte": start_date, "$lt": end_date}
+    }).to_list(None)
+    
+    cohort_size = len(cohort_users)
+    user_ids = [u["id"] for u in cohort_users]
+    
+    # Calculate retention for each month after signup
+    retention_data = []
+    for months_after in range(12):  # Track 12 months
+        check_date = start_date + timedelta(days=30 * (months_after + 1))
+        
+        # Count active users (had any activity in that month)
+        active_count = await db.user_activity.count_documents({
+            "user_id": {"$in": user_ids},
+            "activity_date": {
+                "$gte": check_date,
+                "$lt": check_date + timedelta(days=30)
+            }
+        })
+        
+        retention_rate = (active_count / cohort_size * 100) if cohort_size > 0 else 0
+        
+        retention_data.append({
+            "month": months_after,
+            "active_users": active_count,
+            "retention_rate": round(retention_rate, 2)
+        })
+    
+    # Calculate revenue cohort
+    total_revenue = await db.payments.aggregate([
+        {"$match": {"user_id": {"$in": user_ids}}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+    ]).to_list(1)
+    
+    avg_revenue_per_user = total_revenue[0]["total"] / cohort_size if total_revenue and cohort_size > 0 else 0
+    
+    return {
+        "cohort": f"{year}-{month:02d}",
+        "cohort_size": cohort_size,
+        "retention_by_month": retention_data,
+        "total_revenue": total_revenue[0]["total"] if total_revenue else 0,
+        "avg_revenue_per_user": round(avg_revenue_per_user, 2)
+    }
 
 def get_database():
     """Database dependency"""

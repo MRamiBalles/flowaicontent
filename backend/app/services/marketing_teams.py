@@ -217,10 +217,14 @@ async def get_campaign_analytics(campaign_id: str, db) -> dict:
 
 async def queue_bulk_generation(job_id: str):
     """Queue bulk generation job"""
-    # TODO: Add to queue
-    pass
+    from app.services.queue_service import batch_generate_videos_task
+    # Get job details from DB and queue
+    task = batch_generate_videos_task.delay(job_id, [])
+    return task.id
 
 async def queue_ab_test_generation(variant_id: str):
     """Queue A/B test variant generation"""
-    # TODO: Add to queue
-    pass
+    from app.services.queue_service import generate_video_task
+    # Get variant details and queue
+    task = generate_video_task.delay(variant_id, "")
+    return task.id

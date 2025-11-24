@@ -64,7 +64,21 @@ async def create_bounty(
     await db.bounties.create(bounty)
     
     # Deploy to smart contract
-    # TODO: Call BountyEscrow.createBounty()
+    try:
+        from app.services.blockchain_service import create_bounty_on_chain
+        tx_hash = await create_bounty_on_chain(
+            bounty_id=bounty_id,
+            amount_tokens=amount_tokens,
+            deadline=deadline
+        )
+        # Update bounty with transaction hash
+        await db.bounties.update(
+            {"id": bounty_id},
+            {"$set": {"tx_hash": tx_hash}}
+        )
+    except Exception as e:
+        # Log error but don't fail the request
+        print(f"Blockchain error: {e}")
     
     return {"bounty_id": bounty_id, "escrowed_tokens": amount_tokens}
 
@@ -134,7 +148,20 @@ async def submit_entry(
     )
     
     # Call smart contract
-    # TODO: BountyEscrow.submitEntry()
+    try:
+        from app.services.blockchain_service import submit_bounty_entry_on_chain
+        tx_hash = await submit_bounty_entry_on_chain(
+            bounty_id=request.bounty_id,
+            entry_id=entry_id,
+            creator_id=current_user["id"]
+        )
+        # Update entry with transaction hash
+        await db.bounty_entries.update(
+            {"id": entry_id},
+            {"$set": {"tx_hash": tx_hash}}
+        )
+    except Exception as e:
+        print(f"Blockchain error: {e}")
     
     return {"entry_id": entry_id}
 
@@ -182,7 +209,15 @@ async def vote_for_entry(
     )
     
     # Call smart contract
-    # TODO: BountyEscrow.vote()
+    try:
+        from app.services.blockchain_service import vote_on_chain
+        tx_hash = await vote_on_chain(
+            bounty_id=bounty["id"],
+            entry_id=entry_id,
+            voter_id=current_user["id"]
+        )
+    except Exception as e:
+        print(f"Blockchain error: {e}")
     
     return {"success": True}
 

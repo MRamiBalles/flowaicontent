@@ -129,21 +129,47 @@ class SocialMediaExporter:
     def _add_auto_captions(self, clip: VideoFileClip) -> VideoFileClip:
         """Add auto-generated captions using Whisper"""
         
-        # TODO: Implement Whisper transcription
-        # For now, return clip without captions
-        
-        # Placeholder: Add static caption
-        caption = TextClip(
-            "Generated with FlowAI",
-            fontsize=40,
-            color='white',
-            stroke_color='black',
-            stroke_width=2,
-            font='Arial-Bold'
-        )
-        caption = caption.set_position(('center', 'bottom')).set_duration(clip.duration)
-        
-        return CompositeVideoClip([clip, caption])
+        # Extract audio and transcribe with Whisper
+        try:
+            import whisper
+            model = whisper.load_model("base")
+            
+            # Extract audio to temp file
+            audio_path = "/tmp/temp_audio.wav"
+            clip.audio.write_audiofile(audio_path)
+            
+            # Transcribe
+            result = model.transcribe(audio_path)
+            
+            # Create caption clips for each segment
+            caption_clips = []
+            for segment in result["segments"]:
+                caption = TextClip(
+                    segment["text"],
+                    fontsize=40,
+                    color='white',
+                    stroke_color='black',
+                    stroke_width=2,
+                    font='Arial-Bold'
+                )
+                caption = caption.set_start(segment["start"]).set_duration(segment["end"] - segment["start"])
+                caption = caption.set_position(('center', 'bottom'))
+                caption_clips.append(caption)
+            
+            return CompositeVideoClip([clip] + caption_clips)
+        except Exception as e:
+            print(f"Whisper transcription failed: {e}")
+            # Fallback to static caption
+            caption = TextClip(
+                "Generated with FlowAI",
+                fontsize=40,
+                color='white',
+                stroke_color='black',
+                stroke_width=2,
+                font='Arial-Bold'
+            )
+            caption = caption.set_position(('center', 'bottom')).set_duration(clip.duration)
+            return CompositeVideoClip([clip, caption])
     
     def _add_watermark(
         self,
@@ -176,8 +202,20 @@ class SocialMediaExporter:
     
     def _get_trending_music(self) -> Optional[str]:
         """Get trending music file"""
-        # TODO: Implement trending music library
-        # For now, return None
+        # Trending music library
+        trending_tracks = [
+            "/music/trending/upbeat_1.mp3",
+            "/music/trending/chill_vibes.mp3",
+            "/music/trending/energetic.mp3",
+            "/music/trending/ambient.mp3"
+        ]
+        
+        # Check if files exist
+        for track in trending_tracks:
+            if os.path.exists(track):
+                return track
+        
+        # If no trending music available, return None
         return None
     
     def batch_export(

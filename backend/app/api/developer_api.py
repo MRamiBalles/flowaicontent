@@ -216,31 +216,6 @@ async def get_api_usage(
     }).to_list(10000)
     
     total_cost = sum(g.get("cost", 0) for g in generations)
-    total_generations = len(generations)
-    
-    return {
-        "month": month_start.strftime("%Y-%m"),
-        "total_generations": total_generations,
-        "total_cost": round(total_cost, 2),
-        "average_cost_per_gen": round(total_cost / total_generations, 2) if total_generations > 0 else 0
-    }
-
-async def queue_generation(generation_id: str, request: GenerateRequest):
-    """Queue generation for processing"""
-    # TODO: Add to Celery/Bull queue
-    pass
-
-async def charge_api_usage(user_id: str, cost: float, db):
-    """Charge user for API usage"""
-    # Deduct from prepaid balance or add to invoice
-    await db.users.update(
-        {"id": user_id},
-        {"$inc": {"api_balance": -cost}}
-    )
-
-def get_current_user():
-    """Get current user from JWT"""
-    pass
 
 def get_database():
     """Get database connection"""
