@@ -14,11 +14,7 @@ ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
 -- Create policy for admins
 CREATE POLICY "Admins can view audit logs"
 ON public.admin_audit_logs FOR SELECT
-USING (
-  auth.uid() IN (
-    SELECT user_id FROM public.user_roles WHERE role = 'admin'
-  )
-);
+USING (has_role(auth.uid(), 'admin'::app_role));
 
 -- Allow service role (edge functions) to insert
 CREATE POLICY "Service role can insert logs"
