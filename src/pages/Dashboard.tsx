@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { ContentInput } from "@/components/ContentInput";
 import { ContentResults } from "@/components/ContentResults";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { projectSchema } from "@/lib/validations";
 import { detectPromptInjection } from "@/lib/ai-sanitization";
+import { Shield, LogOut } from "lucide-react";
 
 interface GeneratedContent {
   twitter: string;
@@ -21,6 +23,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [generationCount, setGenerationCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -29,6 +32,7 @@ const Dashboard = () => {
       } else {
         setUser(session.user);
         fetchGenerationCount(session.user.id);
+        checkAdmin(session.user.id);
       }
     });
 
@@ -38,11 +42,28 @@ const Dashboard = () => {
       } else {
         setUser(session.user);
         fetchGenerationCount(session.user.id);
+        checkAdmin(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const checkAdmin = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const fetchGenerationCount = async (userId: string) => {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -191,24 +212,42 @@ const Dashboard = () => {
   const rateLimitStatus = Math.min(100, (generationCount / 10) * 100);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <ProjectSidebar
-        selectedProjectId={selectedProjectId}
-        onSelectProject={handleSelectProject}
-        onNewProject={handleNewProject}
-      />
-
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 border-r border-border overflow-auto">
-          <ContentInput onGenerate={handleGenerate} loading={loading} />
+    <div className="flex h-screen overflow-hidden flex-col">
+      <div className="flex items-center justify-between border-b border-border px-6 py-3 bg-background">
+        <h1 className="text-lg font-semibold">ContentFlow AI</h1>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button onClick={() => navigate("/admin")} variant="outline" size="sm">
+              <Shield className="mr-2 h-4 w-4" />
+              Admin
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
         </div>
+      </div>
+      
+      <div className="flex flex-1 overflow-hidden">
+        <ProjectSidebar
+          selectedProjectId={selectedProjectId}
+          onSelectProject={handleSelectProject}
+          onNewProject={handleNewProject}
+        />
 
-        <div className="flex-1 overflow-auto bg-muted/30">
-          <ContentResults
-            content={generatedContent}
-            remainingGenerations={remainingGenerations}
-            rateLimitStatus={rateLimitStatus}
-          />
+        <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 border-r border-border overflow-auto">
+            <ContentInput onGenerate={handleGenerate} loading={loading} />
+          </div>
+
+          <div className="flex-1 overflow-auto bg-muted/30">
+            <ContentResults
+              content={generatedContent}
+              remainingGenerations={remainingGenerations}
+              rateLimitStatus={rateLimitStatus}
+            />
+          </div>
         </div>
       </div>
     </div>
