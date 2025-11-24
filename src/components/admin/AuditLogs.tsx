@@ -12,22 +12,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
+interface AuditLog {
+    id: string;
+    admin_id: string;
+    action: string;
+    target_user_id: string | null;
+    details: Record<string, any> | null;
+    created_at: string;
+}
+
 export function AuditLogs() {
     const { data: logs, isLoading } = useQuery({
         queryKey: ["admin-audit-logs"],
         queryFn: async () => {
             const { data, error } = await supabase
-                .from("admin_audit_logs")
-                .select(`
-          *,
-          admin:admin_id(email),
-          target:target_user_id(email)
-        `)
+                .from("admin_audit_logs" as any) // Type assertion until types regenerate
+                .select("*")
                 .order("created_at", { ascending: false })
                 .limit(50);
 
             if (error) throw error;
-            return data;
+            return data as AuditLog[];
         },
     });
 
@@ -50,8 +55,8 @@ export function AuditLogs() {
                         <TableRow>
                             <TableHead>Timestamp</TableHead>
                             <TableHead>Action</TableHead>
-                            <TableHead>Admin</TableHead>
-                            <TableHead>Target User</TableHead>
+                            <TableHead>Admin ID</TableHead>
+                            <TableHead>Target User ID</TableHead>
                             <TableHead>Details</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -62,8 +67,8 @@ export function AuditLogs() {
                                     {format(new Date(log.created_at), "MMM d, HH:mm:ss")}
                                 </TableCell>
                                 <TableCell className="font-medium">{log.action}</TableCell>
-                                <TableCell>{log.admin?.email || log.admin_id}</TableCell>
-                                <TableCell>{log.target?.email || log.target_user_id}</TableCell>
+                                <TableCell className="font-mono text-xs">{log.admin_id}</TableCell>
+                                <TableCell className="font-mono text-xs">{log.target_user_id}</TableCell>
                                 <TableCell className="font-mono text-xs">
                                     {JSON.stringify(log.details)}
                                 </TableCell>

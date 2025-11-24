@@ -51,6 +51,16 @@ This document guides the security review of the FlowAI platform. It details the 
 - **XSS**: Verify that `SocialExportService` sanitizes video titles/metadata before rendering.
 - **Push Notifications**: Ensure only authorized users can trigger notifications.
 
+### 🔒 Security Hardening (Current Session)
+**Changes**:
+- **Admin Audit Logging**: Implemented `admin_audit_logs` table with immutable logs for all admin actions.
+- **Secure Role Management**: Refactored `admin-change-role` and `admin-list-users` to use `has_role()` RPC and `user_roles` table, eliminating insecure metadata usage.
+- **Edge Function Security**: Enforced `try/catch` blocks for audit logging to prevent silent failures.
+
+**Security Focus**:
+- **Audit Integrity**: Ensure `admin_audit_logs` cannot be modified even by admins (Append-Only pattern recommended for future).
+- **Role Escalation**: Verify that `has_role()` cannot be bypassed via SQL injection (mitigated by `SECURITY DEFINER` and fixed search path).
+
 ---
 
 ## 🚀 Premium Features Implementation (In Progress)
