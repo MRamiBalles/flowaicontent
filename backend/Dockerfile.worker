@@ -1,0 +1,52 @@
+# FlowAI Video Generation Worker
+# Base image with CUDA 12.1 support
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.10 \
+    python3-pip \
+    python3-dev \
+    git \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+# Torch with CUDA 12.1
+RUN pip3 install --upgrade pip && \
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Install Core AI libraries
+RUN pip3 install \
+    diffusers==0.25.0 \
+    transformers==4.36.0 \
+    accelerate==0.25.0 \
+    safetensors==0.4.1 \
+    xformers==0.0.23 \
+    opencv-python \
+    moviepy \
+    celery \
+    redis \
+    boto3 \
+    python-dotenv
+
+# Copy backend code
+COPY . /app
+
+# Create directories for models
+RUN mkdir -p /app/models/loras /app/models/svd-xt
+
+# Set entrypoint to run Celery worker
+# Usage: docker run --gpus all --env-file .env flowai-worker
+CMD ["celery", "-A", "app.services.queue_service", "worker", "--loglevel=info", "--pool=solo"]

@@ -30,7 +30,14 @@ async def generate_video(
     """Start a video generation task"""
     user_id = current_user["id"]
     
+    # Check user credits/tokens
     # TODO: Check user credits/tokens
+    
+    # Check content moderation
+    from app.services.moderation_service import moderation_service
+    is_safe, reason = moderation_service.check_prompt(request.prompt)
+    if not is_safe:
+        raise HTTPException(status_code=400, detail=f"Content moderation failed: {reason}")
     
     # Queue the task
     task = generate_video_task.delay(
@@ -66,12 +73,8 @@ async def get_generation_status(
 @router.get("/styles")
 async def get_styles():
     """Get available style packs"""
-    # TODO: Fetch from database or config
-    return [
-        {"id": "cinematic", "name": "Cinematic", "preview": "url_to_preview"},
-        {"id": "anime", "name": "Anime", "preview": "url_to_preview"},
-        {"id": "3d-render", "name": "3D Render", "preview": "url_to_preview"},
-    ]
+    from app.services.lora_manager import lora_manager
+    return lora_manager.get_available_styles()
 
 def get_database():
     from app.services.supabase_service import get_supabase_client
