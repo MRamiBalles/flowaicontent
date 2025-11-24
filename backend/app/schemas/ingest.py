@@ -11,3 +11,4 @@ class ContextIngestResponse(BaseModel):
     status: str
     processed_tokens: int
     summary: Optional[str] = None
+    compass_metrics: Optional[Dict[str, Any]] = None

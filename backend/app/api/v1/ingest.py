@@ -12,7 +12,15 @@ async def ingest_context(request: ContextIngestRequest):
     """
     # Process with LRM
     from app.services.lrm_service import lrm_service
+    from app.services.compass import compass_service
+    
     result = lrm_service.process_context(request.content)
+    
+    # Run COMPASS Analysis
+    compass_metrics = compass_service.analyze_output(
+        context_tokens=result.get("input_length", 0),
+        output_logits=result.get("sample_logits", [])
+    )
     
     ingestion_id = str(uuid.uuid4())
     
@@ -20,5 +28,6 @@ async def ingest_context(request: ContextIngestRequest):
         ingestion_id=ingestion_id,
         status="processed",
         processed_tokens=result.get("input_length", 0),
-        summary=f"Processed by LRM (Linear+MoE). Output shape: {result.get('output_shape')}"
+        summary=f"Processed by LRM (Linear+MoE). Output shape: {result.get('output_shape')}",
+        compass_metrics=compass_metrics
     )
