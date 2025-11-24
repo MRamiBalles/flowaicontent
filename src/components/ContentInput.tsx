@@ -8,6 +8,7 @@ import { projectSchema } from "@/lib/validations";
 import { z } from "zod";
 import { toast } from "sonner";
 import { LRMVisualizer } from "@/components/LRMVisualizer";
+import { VideoPlayer } from "@/components/VideoPlayer";
 
 interface ContentInputProps {
   onGenerate: (title: string, content: string) => void;
@@ -127,6 +128,16 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
           </Button>
 
           <LRMVisualizer isProcessing={lrmProcessing} data={lrmData} />
+
+          {lrmData?.video_result && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                Generated Video Output
+              </h3>
+              <VideoPlayer videoResult={lrmData.video_result} />
+            </div>
+          )}
         </div>
       </div>
     </div>
