@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Brain, Cpu, Zap, Activity } from 'lucide-react';
+import { Brain, Cpu, Zap, Activity, ShieldCheck, AlertTriangle, Eye } from 'lucide-react';
 
 interface LRMVisualizerProps {
     isProcessing: boolean;
@@ -82,6 +82,66 @@ export const LRMVisualizer = ({ isProcessing, data }: LRMVisualizerProps) => {
                             <span className="text-muted-foreground">Latency:</span>
                             <span className="font-mono">~45ms</span>
                         </div>
+
+                        {/* COMPASS Metrics */}
+                        {data.compass_metrics && (
+                            <div className="col-span-2 mt-2 space-y-2 border-t border-border/50 pt-2">
+                                <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-1">
+                                        <ShieldCheck className="w-3 h-3 text-primary" />
+                                        <span className="text-muted-foreground font-semibold">COMPASS Safety Layer</span>
+                                    </div>
+                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${data.compass_metrics.verification_status === 'verified'
+                                            ? 'bg-green-500/10 text-green-600 border-green-500/20'
+                                            : 'bg-red-500/10 text-red-600 border-red-500/20'
+                                        }`}>
+                                        {data.compass_metrics.verification_status.toUpperCase()}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                            <Eye className="w-3 h-3" /> CRS
+                                        </div>
+                                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                                style={{ width: `${data.compass_metrics.crs * 100}%` }}
+                                            />
+                                        </div>
+                                        <div className="text-[10px] font-mono text-right">{data.compass_metrics.crs}</div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                            <ShieldCheck className="w-3 h-3" /> Safety
+                                        </div>
+                                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-green-500 rounded-full transition-all duration-500"
+                                                style={{ width: `${data.compass_metrics.safety_score * 100}%` }}
+                                            />
+                                        </div>
+                                        <div className="text-[10px] font-mono text-right">{data.compass_metrics.safety_score}</div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                            <AlertTriangle className="w-3 h-3" /> Risk
+                                        </div>
+                                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-red-500 rounded-full transition-all duration-500"
+                                                style={{ width: `${data.compass_metrics.hallucination_risk * 100}%` }}
+                                            />
+                                        </div>
+                                        <div className="text-[10px] font-mono text-right">{data.compass_metrics.hallucination_risk}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="col-span-2 text-[10px] font-mono text-muted-foreground mt-1 truncate">
                             Output Shape: {data.summary?.split('Output shape: ')[1] || 'N/A'}
                         </div>
