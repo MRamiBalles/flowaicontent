@@ -47,6 +47,30 @@ export const LiveChat = ({ videoId }: { videoId: string }) => {
     const handleSend = async () => {
         if (!newMessage.trim()) return;
 
+        // Check for !emote command
+        const emoteMatch = newMessage.match(/^!emote\s+(.+)$/i);
+        if (emoteMatch) {
+            const emoteName = emoteMatch[1].trim();
+            toast.success(`🎨 Generating emote: "${emoteName}"`, {
+                description: "Your custom emote will be available for 5 minutes!",
+                duration: 3000,
+            });
+
+            // Add system message showing the "generated" emote
+            const emoteMessage: ChatMessage = {
+                id: `emote_${Date.now()}`,
+                user_id: "SYSTEM",
+                content: `🎨 ${newMessage.substring(0, 4)} created emote: :${emoteName.toLowerCase().replace(/\s+/g, '_')}:`,
+                timestamp: Date.now() / 1000,
+                is_super_chat: false,
+                tip_amount: 0
+            };
+
+            setMessages(prev => [...prev, emoteMessage]);
+            setNewMessage("");
+            return;
+        }
+
         try {
             const res = await fetch('http://localhost:8000/api/v1/social/chat', {
                 method: 'POST',
@@ -116,7 +140,7 @@ export const LiveChat = ({ videoId }: { videoId: string }) => {
                     <Input
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={tipAmount > 0 ? "Write your Super Chat message..." : "Say something..."}
+                        placeholder={tipAmount > 0 ? "Write your Super Chat message..." : "Type !emote [name] or say something..."}
                         className={`h-10 bg-black/50 border-white/10 text-sm focus:ring-purple-500/20 ${tipAmount > 0 ? 'border-yellow-500/30 focus:border-yellow-500/50' : ''}`}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     />

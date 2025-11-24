@@ -60,10 +60,22 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
     }
   };
 
+  const handleRemix = () => {
+    if (lrmData?.video_result) {
+      playSound('click');
+      setTitle(`Remix: ${title || "Untitled"}`);
+      // In a real app, we'd extract the original prompt from metadata
+      // For now, we keep the content as is or append a remix note
+      toast.success("Remix mode activated! 🧬");
+
+      // Scroll to top to edit
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-700">
       <CommandPalette />
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl md:text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">Create New Content</h2>
@@ -81,7 +93,6 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Input Form */}
         <div className="lg:col-span-4 space-y-6">
           <div className="glass-panel p-6 rounded-2xl space-y-6">
             <div className="space-y-2">
@@ -125,7 +136,6 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
             </Button>
           </div>
 
-          {/* Quick Actions */}
           <div className="glass-panel p-4 rounded-xl">
             <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-3 text-center">Developer Tools</p>
             <Button
@@ -161,32 +171,28 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
           </div>
         </div>
 
-        {/* Right Column: Output & Social */}
         <div className="lg:col-span-8 space-y-6">
-          {/* LRM Visualizer always visible but empty initially */}
           <div className={`transition-all duration-500 ${lrmProcessing || lrmData ? 'opacity-100 translate-y-0' : 'opacity-50 grayscale'}`}>
             <LRMVisualizer isProcessing={lrmProcessing} data={lrmData} />
           </div>
 
           {lrmData?.video_result && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-
-              {/* Main Video Area */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider">Generated Output</h3>
                   </div>
-                  <VideoPlayer videoResult={lrmData.video_result} />
+                  <VideoPlayer videoResult={lrmData.video_result} onRemix={handleRemix} />
                 </div>
                 <div className="lg:col-span-1 flex flex-col justify-end">
                   <WalletCard userId="user_demo_123" />
                 </div>
-              </div>
+              </div >
 
               {/* Social Hive Grid */}
-              <div className="border-t border-white/10 pt-8">
+              < div className="border-t border-white/10 pt-8" >
                 <div className="flex items-center gap-3 mb-6">
                   <Layers className="w-5 h-5 text-zinc-400" />
                   <h3 className="text-xl font-bold text-white">The Hive <span className="text-zinc-500 font-normal text-sm ml-2">Social Layer</span></h3>
@@ -203,18 +209,20 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
                     <DirectMessages />
                   </div>
                 </div>
-              </div>
-            </div>
+              </div >
+            </div >
           )}
 
-          {!lrmData?.video_result && !lrmProcessing && (
-            <div className="h-[400px] glass-panel rounded-2xl flex flex-col items-center justify-center text-zinc-600 border-dashed border-2 border-zinc-800">
-              <Sparkles className="w-12 h-12 mb-4 opacity-20" />
-              <p className="font-mono text-sm">Waiting for input generation...</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+          {
+            !lrmData?.video_result && !lrmProcessing && (
+              <div className="h-[400px] glass-panel rounded-2xl flex flex-col items-center justify-center text-zinc-600 border-dashed border-2 border-zinc-800">
+                <Sparkles className="w-12 h-12 mb-4 opacity-20" />
+                <p className="font-mono text-sm">Waiting for input generation...</p>
+              </div>
+            )
+          }
+        </div >
+      </div >
+    </div >
   );
 };
