@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import ingest, economy, social
-from app.api.v1 import ingest
 from app.core.config import settings
 
 app = FastAPI(

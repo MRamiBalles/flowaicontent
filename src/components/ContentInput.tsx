@@ -3,7 +3,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles } from "lucide-react";
+import { Sparkles, PlayCircle, Layers } from "lucide-react";
+import { projectSchema } from "@/lib/validations";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sparkles, PlayCircle, Layers } from "lucide-react";
 import { projectSchema } from "@/lib/validations";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -12,6 +21,10 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { WalletCard } from "@/components/WalletCard";
 import { CommentSection } from "@/components/Social/CommentSection";
 import { LiveChat } from "@/components/Social/LiveChat";
+import { DirectMessages } from "@/components/Social/DirectMessages";
+import { CommandPalette } from "@/components/CommandPalette";
+import { useSoundEffects } from "@/hooks/use-sound-effects";
+import { Badge3D } from "@/components/Achievements/Badge3D";
 
 interface ContentInputProps {
   onGenerate: (title: string, content: string) => void;
@@ -25,7 +38,10 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
   const [lrmProcessing, setLrmProcessing] = useState(false);
   const [lrmData, setLrmData] = useState<any>(null);
 
+  const { playSound } = useSoundEffects();
+
   const handleGenerate = () => {
+    playSound('click');
     setErrors({});
 
     try {
@@ -37,6 +53,7 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
 
       onGenerate(validated.title, validated.content);
     } catch (error: any) {
+      playSound('error');
       if (error instanceof z.ZodError) {
         const fieldErrors: { [key: string]: string } = {};
         error.errors.forEach((err) => {
@@ -51,107 +68,154 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Create New Content</h2>
-        <p className="text-muted-foreground">
-          Paste your original content and we'll transform it into viral posts
-        </p>
+    <div className="flex flex-col h-full p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
+      <CommandPalette />
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500">Create New Content</h2>
+          <p className="text-zinc-400 text-lg">
+            Transform your ideas into viral multimodal experiences.
+          </p>
+        </div>
+        <div className="hidden md:flex gap-4 items-center">
+          <Badge3D title="Early Access" />
+          <div className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-zinc-400 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            SYSTEM ONLINE
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-4 flex-1 flex flex-col">
-        <div className="space-y-2">
-          <Label htmlFor="title">Project Title</Label>
-          <Input
-            id="title"
-            placeholder="e.g., Q4 Product Launch"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className={errors.title ? "bg-card border-destructive" : "bg-card"}
-          />
-          {errors.title && (
-            <p className="text-sm text-destructive">{errors.title}</p>
-          )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: Input Form */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="glass-panel p-6 rounded-2xl space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-zinc-300">Project Title</Label>
+              <Input
+                id="title"
+                placeholder="e.g., Q4 Product Launch"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className={`bg-black/40 border-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all ${errors.title ? "border-red-500/50" : ""}`}
+              />
+              {errors.title && (
+                <p className="text-sm text-red-400">{errors.title}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="content" className="text-zinc-300">Original Content</Label>
+              <Textarea
+                id="content"
+                placeholder="Paste your blog post, video transcript, or any long-form content here..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className={`min-h-[300px] bg-black/40 border-white/10 resize-none focus:border-purple-500/50 focus:ring-purple-500/20 transition-all ${errors.content ? "border-red-500/50" : ""}`}
+              />
+              {errors.content && (
+                <p className="text-sm text-red-400">{errors.content}</p>
+              )}
+            </div>
+
+            <Button
+              onClick={handleGenerate}
+              disabled={loading || !title.trim() || !content.trim()}
+              size="lg"
+              className="w-full gradient-primary text-white font-bold text-lg h-12 shadow-xl shadow-purple-900/20"
+            >
+              <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
+              {loading ? "Generating Magic..." : "Generate Content"}
+            </Button>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="glass-panel p-4 rounded-xl">
+            <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-3 text-center">Developer Tools</p>
+            <Button
+              onClick={() => {
+                import("@/lib/api").then(({ ingestContext }) => {
+                  if (!content.trim()) {
+                    toast.error("Please enter some content first");
+                    return;
+                  }
+                  setLrmProcessing(true);
+                  setLrmData(null);
+
+                  ingestContext(content, "text")
+                    .then((data) => {
+                      setLrmData(data);
+                      toast.success(`Context ingested! ID: ${data.ingestion_id}`);
+                    })
+                    .catch(() => {
+                      toast.error("Failed to ingest context");
+                    })
+                    .finally(() => {
+                      setLrmProcessing(false);
+                    });
+                });
+              }}
+              variant="outline"
+              className="w-full text-xs border-white/10 hover:bg-white/5 hover:text-white transition-colors"
+              disabled={!content.trim() || lrmProcessing}
+            >
+              <PlayCircle className="w-3 h-3 mr-2" />
+              Test LRM Ingestion
+            </Button>
+          </div>
         </div>
 
-        <div className="space-y-2 flex-1 flex flex-col">
-          <Label htmlFor="content">Original Content</Label>
-          <Textarea
-            id="content"
-            placeholder="Paste your blog post, video transcript, or any long-form content here..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className={errors.content ? "flex-1 min-h-[300px] bg-card resize-none border-destructive" : "flex-1 min-h-[300px] bg-card resize-none"}
-          />
-          {errors.content && (
-            <p className="text-sm text-destructive">{errors.content}</p>
-          )}
-        </div>
-
-        <Button
-          onClick={handleGenerate}
-          disabled={loading || !title.trim() || !content.trim()}
-          size="lg"
-          className="w-full gradient-primary text-white font-semibold"
-        >
-          <Sparkles className="w-5 h-5 mr-2" />
-          {loading ? "Generating Magic..." : "✨ Generate Content"}
-        </Button>
-
-        <div className="pt-2 border-t border-border mt-4">
-          <p className="text-xs text-muted-foreground mb-2 text-center">AI Backend Integration</p>
-          <Button
-            onClick={() => {
-              import("@/lib/api").then(({ ingestContext }) => {
-                if (!content.trim()) {
-                  toast.error("Please enter some content first");
-                  return;
-                }
-                setLrmProcessing(true);
-                setLrmData(null);
-
-                ingestContext(content, "text")
-                  .then((data) => {
-                    setLrmData(data);
-                    toast.success(`Context ingested! ID: ${data.ingestion_id}`);
-                  })
-                  .catch(() => {
-                    toast.error("Failed to ingest context");
-                  })
-                  .finally(() => {
-                    setLrmProcessing(false);
-                  });
-              });
-            }}
-            variant="outline"
-            className="w-full text-xs"
-            disabled={!content.trim() || lrmProcessing}
-          >
-            🚀 Test LRM Ingestion (Localhost:8000)
-          </Button>
-
-          <LRMVisualizer isProcessing={lrmProcessing} data={lrmData} />
+        {/* Right Column: Output & Social */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* LRM Visualizer always visible but empty initially */}
+          <div className={`transition-all duration-500 ${lrmProcessing || lrmData ? 'opacity-100 translate-y-0' : 'opacity-50 grayscale'}`}>
+            <LRMVisualizer isProcessing={lrmProcessing} data={lrmData} />
+          </div>
 
           {lrmData?.video_result && (
-            <div className="mt-4 space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                  Generated Video Output
-                </h3>
-                <VideoPlayer videoResult={lrmData.video_result} />
-              </div>
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
 
-              <WalletCard userId="user_demo_123" />
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-8 border-t border-white/10">
-                <div className="md:col-span-2">
-                  <CommentSection videoId={"vid_" + lrmData.video_result.model} />
+              {/* Main Video Area */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Generated Output</h3>
+                  </div>
+                  <VideoPlayer videoResult={lrmData.video_result} />
                 </div>
-                <div>
-                  <LiveChat videoId={"vid_" + lrmData.video_result.model} />
+                <div className="lg:col-span-1 flex flex-col justify-end">
+                  <WalletCard userId="user_demo_123" />
                 </div>
               </div>
+
+              {/* Social Hive Grid */}
+              <div className="border-t border-white/10 pt-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <Layers className="w-5 h-5 text-zinc-400" />
+                  <h3 className="text-xl font-bold text-white">The Hive <span className="text-zinc-500 font-normal text-sm ml-2">Social Layer</span></h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px]">
+                  <div className="md:col-span-1 h-full">
+                    <CommentSection videoId={"vid_" + lrmData.video_result.model} />
+                  </div>
+                  <div className="md:col-span-1 h-full">
+                    <LiveChat videoId={"vid_" + lrmData.video_result.model} />
+                  </div>
+                  <div className="md:col-span-1 h-full">
+                    <DirectMessages />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!lrmData?.video_result && !lrmProcessing && (
+            <div className="h-[400px] glass-panel rounded-2xl flex flex-col items-center justify-center text-zinc-600 border-dashed border-2 border-zinc-800">
+              <Sparkles className="w-12 h-12 mb-4 opacity-20" />
+              <p className="font-mono text-sm">Waiting for input generation...</p>
             </div>
           )}
         </div>

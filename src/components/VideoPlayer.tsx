@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Play, Pause, Loader2, Film } from 'lucide-react';
+import { Play, Pause, Loader2, Film, Maximize2, Minimize2, Volume2, VolumeX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface VideoPlayerProps {
     videoResult: any | null;
@@ -10,24 +11,27 @@ export const VideoPlayer = ({ videoResult }: VideoPlayerProps) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [loading, setLoading] = useState(true);
     const [earnedSession, setEarnedSession] = useState(0);
+    const [isMuted, setIsMuted] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     useEffect(() => {
         if (videoResult) {
-            setLoading(false);
+            // Simulate loading delay for "Decoding" effect
+            const timer = setTimeout(() => setLoading(false), 1500);
+            return () => clearTimeout(timer);
         }
     }, [videoResult]);
 
     // Proof-of-Attention Heartbeat
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (isPlaying && videoResult) {
+        if (isPlaying && videoResult && !loading) {
             interval = setInterval(() => {
-                // Send heartbeat to backend
                 fetch('http://localhost:8000/api/v1/economy/poa', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        user_id: "user_demo_123", // Simulated user ID
+                        user_id: "user_demo_123",
                         video_id: "vid_" + videoResult.model,
                         duration_seconds: 5.0
                     })
@@ -39,27 +43,36 @@ export const VideoPlayer = ({ videoResult }: VideoPlayerProps) => {
                         }
                     })
                     .catch(err => console.error("PoA Heartbeat failed:", err));
-            }, 5000); // Every 5 seconds
+            }, 5000);
         }
         return () => clearInterval(interval);
-    }, [isPlaying, videoResult]);
+    }, [isPlaying, videoResult, loading]);
 
     if (!videoResult) return null;
 
     return (
-        <Card className="mt-4 overflow-hidden bg-black border-primary/20 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
-            {/* Session Earnings Overlay */}
-            {earnedSession > 0 && (
-                <div className="absolute top-4 right-4 z-20 bg-yellow-500/90 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce">
-                    +{earnedSession.toFixed(2)} TKN EARNED
+        <Card className={`overflow-hidden bg-black border-white/10 shadow-2xl transition-all duration-500 group relative ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : 'mt-4 rounded-xl glass-panel'}`}>
+            {/* Session Earnings Overlay - Premium Style */}
+            {earnedSession > 0 && !loading && (
+                <div className="absolute top-6 right-6 z-30 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="bg-yellow-500/10 backdrop-blur-md border border-yellow-500/50 text-yellow-400 px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(234,179,8,0.3)] flex items-center gap-2">
+                        <span className="animate-pulse">●</span>
+                        +{earnedSession.toFixed(2)} TKN
+                    </div>
                 </div>
             )}
 
-            <div className="relative aspect-video bg-zinc-900 group">
+            <div className={`relative bg-zinc-900 ${isFullscreen ? 'h-screen w-screen' : 'aspect-video w-full'}`}>
                 {loading ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white/50">
-                        <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                        <span className="text-xs font-mono">RENDERING FRAMES...</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-purple-500/20 blur-xl rounded-full animate-pulse" />
+                            <Loader2 className="w-12 h-12 animate-spin text-purple-500 relative z-10" />
+                        </div>
+                        <div className="mt-4 space-y-1 text-center">
+                            <span className="text-sm font-mono text-purple-400 tracking-widest block animate-pulse">NEURAL DECODING</span>
+                            <span className="text-[10px] text-zinc-500 font-mono block">Synthesizing Frames...</span>
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -69,37 +82,71 @@ export const VideoPlayer = ({ videoResult }: VideoPlayerProps) => {
                             controls={false}
                             autoPlay={true}
                             loop
-                            muted
+                            muted={isMuted}
                             onPlay={() => setIsPlaying(true)}
                             onPause={() => setIsPlaying(false)}
                         />
 
-                        {/* Overlay Controls */}
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                            <div className="bg-black/50 p-3 rounded-full backdrop-blur-sm">
-                                {isPlaying ? <Pause className="w-6 h-6 text-white" /> : <Play className="w-6 h-6 text-white" />}
-                            </div>
-                        </div>
+                        {/* Cinematic Overlay Controls */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-6">
 
-                        {/* Metadata Badge */}
-                        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-mono text-white/80 border border-white/10 flex items-center gap-1.5">
-                            <Film className="w-3 h-3 text-primary" />
-                            <span>{videoResult.model}</span>
-                            <span className="w-px h-3 bg-white/20" />
-                            <span>{videoResult.metadata?.resolution?.[0]}x{videoResult.metadata?.resolution?.[1]}</span>
-                            <span className="w-px h-3 bg-white/20" />
-                            <span>{videoResult.metadata?.fps} FPS</span>
+                            {/* Top Bar */}
+                            <div className="flex justify-between items-start">
+                                <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-mono text-white/90 border border-white/10 flex items-center gap-2">
+                                    <Film className="w-3 h-3 text-purple-400" />
+                                    <span className="font-bold tracking-wider uppercase">{videoResult.model}</span>
+                                    <span className="w-px h-3 bg-white/20" />
+                                    <span>{videoResult.metadata?.resolution?.[0]}x{videoResult.metadata?.resolution?.[1]}</span>
+                                </div>
+
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-white hover:bg-white/10 rounded-full"
+                                    onClick={() => setIsFullscreen(!isFullscreen)}
+                                >
+                                    {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                                </Button>
+                            </div>
+
+                            {/* Center Play Button */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className={`bg-white/10 backdrop-blur-md p-4 rounded-full border border-white/20 transition-transform duration-300 ${isPlaying ? 'scale-90 opacity-0' : 'scale-100 opacity-100'}`}>
+                                    {isPlaying ? <Pause className="w-8 h-8 text-white fill-white" /> : <Play className="w-8 h-8 text-white fill-white ml-1" />}
+                                </div>
+                            </div>
+
+                            {/* Bottom Bar */}
+                            <div className="flex justify-between items-end">
+                                <div className="space-y-1">
+                                    <h3 className="text-white font-bold text-lg leading-none drop-shadow-md line-clamp-1 max-w-md">
+                                        {videoResult.metadata?.prompt || "Generated Scene"}
+                                    </h3>
+                                    <p className="text-zinc-400 text-xs font-mono">
+                                        GEN_TIME: {videoResult.metadata?.generation_time}s
+                                    </p>
+                                </div>
+
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-white hover:bg-white/10 rounded-full"
+                                    onClick={() => setIsMuted(!isMuted)}
+                                >
+                                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                                </Button>
+                            </div>
                         </div>
                     </>
                 )}
             </div>
 
-            <div className="p-3 bg-zinc-900/50 border-t border-white/5">
-                <div className="flex justify-between items-center text-xs">
-                    <span className="text-muted-foreground font-mono">GENERATION TIME: {videoResult.metadata?.generation_time}</span>
-                    <span className="text-green-500 font-mono">● READY</span>
+            {/* Progress Bar (Fake) */}
+            {!loading && (
+                <div className="h-1 bg-zinc-800 w-full">
+                    <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 w-1/3 animate-[pulse_3s_ease-in-out_infinite]" />
                 </div>
-            </div>
+            )}
         </Card>
     );
 };

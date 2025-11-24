@@ -16,6 +16,11 @@ class ChatRequest(BaseModel):
     content: str
     tip_amount: Optional[float] = 0.0
 
+class DMRequest(BaseModel):
+    from_user: str
+    to_user: str
+    content: str
+
 @router.post("/comments")
 async def post_comment(request: CommentRequest):
     return await social_service.post_comment(request.user_id, request.video_id, request.content)
@@ -31,3 +36,7 @@ async def send_chat(request: ChatRequest):
 @router.get("/chat/{video_id}")
 async def get_chat(video_id: str):
     return social_service.get_chat_history(video_id)
+
+@router.post("/dm")
+async def send_dm(request: DMRequest):
+    return await social_service.send_dm(request.from_user, request.to_user, request.content)

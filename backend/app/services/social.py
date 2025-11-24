@@ -78,6 +78,28 @@ class SocialService:
             
         return message
 
+    async def send_dm(self, from_user: str, to_user: str, content: str) -> Dict[str, Any]:
+        """
+        Sends a private direct message.
+        """
+        # Moderate DMs too for safety
+        analysis = await compass_service.analyze_output(content)
+        
+        # In a real app, we would store this in a DB
+        # For simulation, we'll just return the message object
+        # and maybe log it if we had a DM storage
+        
+        message = {
+            "id": str(uuid.uuid4()),
+            "from_user": from_user,
+            "to_user": to_user,
+            "content": content,
+            "timestamp": time.time(),
+            "is_flagged": analysis["safety_score"] < 80
+        }
+        
+        return message
+
     def get_comments(self, video_id: str) -> List[Dict]:
         return self.comments.get(video_id, [])
 
