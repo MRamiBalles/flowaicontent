@@ -4,13 +4,7 @@ from typing import List, Optional, Dict, Any
 class ContextIngestRequest(BaseModel):
     source_type: str  # 'text', 'script', 'repo', 'video_clip'
     content: str
-    metadata: Optional[Dict[str, Any]] = None
-from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-
-class ContextIngestRequest(BaseModel):
-    source_type: str  # 'text', 'script', 'repo', 'video_clip'
-    content: str
+    style: Optional[str] = None # New field for style selection
     metadata: Optional[Dict[str, Any]] = None
 
 class ContextIngestResponse(BaseModel):

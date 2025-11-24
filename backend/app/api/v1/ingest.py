@@ -24,6 +24,12 @@ async def ingest_context(request: ContextIngestRequest):
     # Only generate video if content is verified safe
     video_result = None
     if compass_metrics["verification_status"] == "verified":
+        # Load style adapter if provided
+        if hasattr(request, 'style') and request.style:
+             # Map style ID to adapter path (simulated)
+             adapter_path = f"adapters/{request.style}.safetensors"
+             video_engine.load_style_adapter(adapter_path)
+             
         video_result = await video_engine.process_scene(request.content[:200]) # Use first 200 chars as prompt
     
     ingestion_id = str(uuid.uuid4())

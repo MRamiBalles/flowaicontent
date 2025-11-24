@@ -7,15 +7,6 @@ import { Sparkles, PlayCircle, Layers } from "lucide-react";
 import { projectSchema } from "@/lib/validations";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Sparkles, PlayCircle, Layers } from "lucide-react";
-import { projectSchema } from "@/lib/validations";
-import { z } from "zod";
-import { toast } from "sonner";
 import { LRMVisualizer } from "@/components/LRMVisualizer";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { WalletCard } from "@/components/WalletCard";
@@ -25,15 +16,17 @@ import { DirectMessages } from "@/components/Social/DirectMessages";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useSoundEffects } from "@/hooks/use-sound-effects";
 import { Badge3D } from "@/components/Achievements/Badge3D";
+import { StyleSelector } from "@/components/StyleSelector";
 
 interface ContentInputProps {
-  onGenerate: (title: string, content: string) => void;
+  onGenerate: (title: string, content: string, style?: string) => void;
   loading: boolean;
 }
 
 export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("cinematic");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [lrmProcessing, setLrmProcessing] = useState(false);
   const [lrmData, setLrmData] = useState<any>(null);
@@ -51,7 +44,7 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
         content: content.trim(),
       });
 
-      onGenerate(validated.title, validated.content);
+      onGenerate(validated.title, validated.content, selectedStyle);
     } catch (error: any) {
       playSound('error');
       if (error instanceof z.ZodError) {
@@ -118,6 +111,8 @@ export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
                 <p className="text-sm text-red-400">{errors.content}</p>
               )}
             </div>
+
+            <StyleSelector selectedStyle={selectedStyle} onSelect={setSelectedStyle} />
 
             <Button
               onClick={handleGenerate}
