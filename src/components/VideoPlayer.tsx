@@ -9,6 +9,7 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({ videoResult }: VideoPlayerProps) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [earnedSession, setEarnedSession] = useState(0);
 
     useEffect(() => {
         if (videoResult) {
@@ -16,10 +17,44 @@ export const VideoPlayer = ({ videoResult }: VideoPlayerProps) => {
         }
     }, [videoResult]);
 
+    // Proof-of-Attention Heartbeat
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isPlaying && videoResult) {
+            interval = setInterval(() => {
+                // Send heartbeat to backend
+                fetch('http://localhost:8000/api/v1/economy/poa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: "user_demo_123", // Simulated user ID
+                        video_id: "vid_" + videoResult.model,
+                        duration_seconds: 5.0
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.reward_minted) {
+                            setEarnedSession(prev => prev + data.reward_minted);
+                        }
+                    })
+                    .catch(err => console.error("PoA Heartbeat failed:", err));
+            }, 5000); // Every 5 seconds
+        }
+        return () => clearInterval(interval);
+    }, [isPlaying, videoResult]);
+
     if (!videoResult) return null;
 
     return (
-        <Card className="mt-4 overflow-hidden bg-black border-primary/20 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <Card className="mt-4 overflow-hidden bg-black border-primary/20 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
+            {/* Session Earnings Overlay */}
+            {earnedSession > 0 && (
+                <div className="absolute top-4 right-4 z-20 bg-yellow-500/90 text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce">
+                    +{earnedSession.toFixed(2)} TKN EARNED
+                </div>
+            )}
+
             <div className="relative aspect-video bg-zinc-900 group">
                 {loading ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-white/50">
