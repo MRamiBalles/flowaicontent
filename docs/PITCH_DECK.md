@@ -708,28 +708,28 @@ Month 12:  100k MAU, $1M MRR    ← Profitability
 ### 👥 Founding Team
 
 #### Co-Founder & CEO
-**[Nombre]**
+**Manu**
 - 🎓 MBA, Stanford GSB
 - 💼 Previous: Product Lead @ Meta (Instagram Reels team)
 - 🏆 Shipped features to 500M+ users
 - 🚀 2nd-time founder (prev exit: $15M acq)
 
 #### Co-Founder & CTO
-**[Nombre]**
+**[TBD - Technical Lead]**
 - 🎓 MS Computer Science, MIT
 - 💼 Previous: ML Engineer @ Google Brain
 - 📄 3 papers on video diffusion models (2k+ citations)
 - 🏆 Kaggle Grandmaster
 
 #### Head of Product
-**[Nombre]**
+**[TBD - Product Lead]**
 - 🎓 BS Design, RISD
 - 💼 Previous: Senior Designer @ Figma
 - 🏆 Led 0→1 products used by 1M+ designers
 - 📱 Expert in creator tools UX
 
 #### Head of Growth
-**[Nombre]**
+**[TBD - Growth Lead]**
 - 🎓 BS Marketing, Wharton
 - 💼 Previous: Growth PM @ TikTok
 - 📈 Scaled user base from 10M → 100M (LATAM)
@@ -737,15 +737,15 @@ Month 12:  100k MAU, $1M MRR    ← Profitability
 
 ### 🌟 Advisors
 
-**[Advisor 1 Name]**
+**[Advisor 1 - Tech]**
 - Former VP Engineering @ YouTube
 - Advisor to 5 unicorn startups
 
-**[Advisor 2 Name]**
+**[Advisor 2 - Crypto]**
 - Partner @ a16z Crypto
 - Early investor in Axie Infinity, The Sandbox
 
-**[Advisor 3 Name]**
+**[Advisor 3 - Growth]**
 - CMO @ Shopify
 - Built creator economy initiatives
 
