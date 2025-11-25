@@ -58,6 +58,7 @@ serve(async (req: Request) => {
         const adminId = url.searchParams.get('adminId');
         const startDate = url.searchParams.get('startDate');
         const endDate = url.searchParams.get('endDate');
+        const search = url.searchParams.get('search');
 
         // Use service role to access auth.users
         const supabaseAdmin = createClient(
@@ -86,15 +87,34 @@ serve(async (req: Request) => {
             query = query.lte('created_at', endDate);
         }
 
+        // Get all logs for search (we'll filter after enrichment if search is provided)
+        let allLogs = [];
+        if (search) {
+            // Fetch more records for search filtering
+            const { data: searchLogs, error: searchError } = await query
+                .order('created_at', { ascending: false })
+                .limit(1000); // Get more logs for searching
+            
+            if (searchError) throw searchError;
+            allLogs = searchLogs || [];
+        }
+
         // Apply pagination
         const from = (page - 1) * pageSize;
         const to = from + pageSize - 1;
 
-        const { data: logs, error: logsError, count } = await query
-            .order('created_at', { ascending: false })
-            .range(from, to);
+        let logs = allLogs;
+        let count = 0;
 
-        if (logsError) throw logsError;
+        if (!search) {
+            const { data: paginatedLogs, error: logsError, count: totalCount } = await query
+                .order('created_at', { ascending: false })
+                .range(from, to);
+
+            if (logsError) throw logsError;
+            logs = paginatedLogs || [];
+            count = totalCount || 0;
+        }
 
         // Fetch user emails from auth.users
         const adminIds = [...new Set(logs?.map(log => log.admin_id) || [])];
@@ -117,13 +137,31 @@ serve(async (req: Request) => {
         const profileNameMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
 
         // Enrich logs with email and name data
-        const enrichedLogs: AuditLogWithEmails[] = logs?.map(log => ({
+        let enrichedLogs: AuditLogWithEmails[] = logs?.map(log => ({
             ...log,
             admin_email: userEmailMap.get(log.admin_id) || 'Unknown',
             admin_name: profileNameMap.get(log.admin_id) || null,
             target_email: log.target_user_id ? (userEmailMap.get(log.target_user_id) || 'Unknown') : null,
             target_name: log.target_user_id ? (profileNameMap.get(log.target_user_id) || null) : null,
         })) || [];
+
+        // Apply search filter after enrichment
+        if (search) {
+            const searchLower = search.toLowerCase();
+            enrichedLogs = enrichedLogs.filter(log => 
+                log.action.toLowerCase().includes(searchLower) ||
+                log.admin_email.toLowerCase().includes(searchLower) ||
+                (log.admin_name?.toLowerCase().includes(searchLower) || false) ||
+                (log.target_email?.toLowerCase().includes(searchLower) || false) ||
+                (log.target_name?.toLowerCase().includes(searchLower) || false) ||
+                JSON.stringify(log.details).toLowerCase().includes(searchLower)
+            );
+            
+            count = enrichedLogs.length;
+            
+            // Apply pagination to search results
+            enrichedLogs = enrichedLogs.slice(from, to + 1);
+        }
 
         return new Response(JSON.stringify({
             logs: enrichedLogs,

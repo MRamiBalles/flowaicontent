@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
     Table,
     TableBody,
@@ -20,7 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Filter, X, Search, Download, FileJson, FileText } from "lucide-react";
 import { format } from "date-fns";
 
 interface AuditLog {
@@ -51,10 +52,13 @@ export function AuditLogs() {
     const [action, setAction] = useState<string>("");
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
+    const [search, setSearch] = useState<string>("");
     const [showFilters, setShowFilters] = useState(false);
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
 
     const { data, isLoading } = useQuery({
-        queryKey: ["admin-audit-logs", page, action, startDate, endDate],
+        queryKey: ["admin-audit-logs", page, action, startDate, endDate, search],
         queryFn: async () => {
             const params = new URLSearchParams({
                 page: page.toString(),
@@ -64,6 +68,7 @@ export function AuditLogs() {
             if (action) params.append("action", action);
             if (startDate) params.append("startDate", new Date(startDate).toISOString());
             if (endDate) params.append("endDate", new Date(endDate).toISOString());
+            if (search) params.append("search", search);
 
             const { data, error } = await supabase.functions.invoke("admin-audit-logs", {
                 method: "GET",
@@ -100,8 +105,93 @@ export function AuditLogs() {
         setAction("");
         setStartDate("");
         setEndDate("");
+        setSearch("");
         setPage(1);
     };
+
+    const exportToCSV = () => {
+        if (!data?.logs.length) return;
+
+        const headers = ["Timestamp", "Action", "Admin Email", "Admin Name", "Target Email", "Target Name", "Details"];
+        const csvContent = [
+            headers.join(","),
+            ...data.logs.map(log => [
+                format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
+                log.action,
+                log.admin_email,
+                log.admin_name || "",
+                log.target_email || "",
+                log.target_name || "",
+                `"${JSON.stringify(log.details).replace(/"/g, '""')}"`,
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `audit-logs-${format(new Date(), "yyyy-MM-dd-HHmmss")}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast({
+            title: "Export successful",
+            description: `Exported ${data.logs.length} audit logs to CSV`,
+        });
+    };
+
+    const exportToJSON = () => {
+        if (!data?.logs.length) return;
+
+        const jsonContent = JSON.stringify(data.logs, null, 2);
+        const blob = new Blob([jsonContent], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `audit-logs-${format(new Date(), "yyyy-MM-dd-HHmmss")}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast({
+            title: "Export successful",
+            description: `Exported ${data.logs.length} audit logs to JSON`,
+        });
+    };
+
+    // Real-time subscription for new audit logs
+    useEffect(() => {
+        const channel = supabase
+            .channel('admin-audit-logs-realtime')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'admin_audit_logs',
+                },
+                (payload) => {
+                    const newLog = payload.new as any;
+                    
+                    // Show toast notification for critical actions
+                    const criticalActions = ['change_role', 'delete_user', 'suspend_user'];
+                    if (criticalActions.includes(newLog.action)) {
+                        toast({
+                            title: "🔔 Critical Admin Action",
+                            description: `Action: ${newLog.action} at ${format(new Date(newLog.created_at), "HH:mm:ss")}`,
+                            variant: "default",
+                        });
+                    }
+
+                    // Refresh the query
+                    queryClient.invalidateQueries({ queryKey: ["admin-audit-logs"] });
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [toast, queryClient]);
 
     const logs = data?.logs || [];
     const pagination = data?.pagination;
@@ -114,21 +204,55 @@ export function AuditLogs() {
         );
     }
 
-    const hasActiveFilters = action || startDate || endDate;
+    const hasActiveFilters = action || startDate || endDate || search;
 
     return (
         <Card>
             <CardHeader className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                     <CardTitle>Security Audit Logs</CardTitle>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowFilters(!showFilters)}
-                    >
-                        <Filter className="h-4 w-4 mr-2" />
-                        {showFilters ? "Hide Filters" : "Show Filters"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={exportToCSV}
+                            disabled={!data?.logs.length}
+                        >
+                            <FileText className="h-4 w-4 mr-2" />
+                            CSV
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={exportToJSON}
+                            disabled={!data?.logs.length}
+                        >
+                            <FileJson className="h-4 w-4 mr-2" />
+                            JSON
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowFilters(!showFilters)}
+                        >
+                            <Filter className="h-4 w-4 mr-2" />
+                            {showFilters ? "Hide" : "Filter"}
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Search bar - always visible */}
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search logs by action, email, name, or details..."
+                        value={search}
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            setPage(1);
+                        }}
+                        className="pl-10"
+                    />
                 </div>
 
                 {showFilters && (
