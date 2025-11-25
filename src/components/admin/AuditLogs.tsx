@@ -32,7 +32,7 @@ export function AuditLogs() {
                 .limit(50);
 
             if (error) throw error;
-            return data as AuditLog[];
+            return data as unknown as AuditLog[];
         },
     });
 
