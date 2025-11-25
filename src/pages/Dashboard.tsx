@@ -224,6 +224,9 @@ const Dashboard = () => {
               Admin
             </Button>
           )}
+          <Button onClick={() => navigate("/mint-nft")} variant="outline" size="sm">
+            Mint NFT
+          </Button>
           <ConnectWallet />
           <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
