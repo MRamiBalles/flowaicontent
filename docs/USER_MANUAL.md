@@ -383,222 +383,212 @@ Spend FLO to promote your video to more users.
 
 **Staking** = Locking FLO tokens to earn rewards (like a savings account).
 
+**Current Implementation Status**: MVP with mock data
+
 **Why Stake?**
-- Earn passive income (15-31% APY)
+- Earn passive rewards (APY varies)
 - Support platform stability
-- Reduce token velocity (benefits price)
+- Reduce token velocity
 
 ---
 
 ### How to Stake
 
-**Step 1: Choose Lock Period**
-1. Go to **"Wallet"** → **"Staking"**
-2. Select period:
+**Step 1: Connect Your Wallet**
+1. Go to **"Wallet"** page
+2. Connect your Web3 wallet (MetaMask, WalletConnect)
+3. Make sure you have FLO tokens in your wallet
 
-| Lock Period | APY | Early Withdrawal Penalty |
-|-------------|-----|--------------------------|
-| **No Lock** | 15% | None |
-| **3 Months** | 20% | 10% fee |
-| **6 Months** | 25% | 15% fee |
-| **12 Months** | 31% | 20% fee |
+**Step 2: View Staking Information**
+- Current implementation displays:
+  - Your staked amount
+  - Pending rewards
+  - Current APY (approximately 12.5%)
+  - Total earned rewards
 
-**Step 2: Enter Amount**
-- Minimum: 100 FLO
-- Maximum: No limit (but limited staking pool)
-
-**Step 3: Confirm**
-- Review details
-- Click **"Stake"**
-- Tokens locked immediately
+**Step 3: Access Staking API**
+The staking system uses blockchain smart contracts. Current endpoints:
+- `GET /api/staking/info` - Your staking details
+- `GET /api/staking/stats` - Global statistics (TVL, total stakers)
 
 ---
 
-### Staking Example
+### Current Staking Stats (Example Data)
 
-**Scenario**: Stake 10,000 FLO for 12 months at 31% APY
-
-**Calculation**:
+**Your Staking Info**:
 ```
-Principal:       10,000 FLO
-APY:             31%
-Duration:        12 months
-Rewards:         3,100 FLO
-Total after 1y:  13,100 FLO
+Staked Amount:    5,000 FLO
+Pending Rewards:  125 FLO
+Current APY:      12.5%
+Total Earned:     450 FLO
 ```
 
-**USD Value** (at $0.10/FLO):
+**Global Stats**:
 ```
-Initial:  $1,000
-Final:    $1,310
-Profit:   $310 (31% return)
+Total Value Locked (TVL):  1,500,000 FLO
+Total Stakers:             1,240 users
+Current APY:               12.5%
 ```
 
 ---
 
-### Rewards Distribution
+### Blockchain Integration
 
-**How Rewards Work**:
-- Rewards accrue daily
-- Paid out weekly (every Monday)
-- Compound automatically (unless you withdraw)
+**Smart Contract**: FlowStaking.sol
+- Located in `contracts/FlowStaking.sol`
+- Handles on-chain staking logic
+- Automatic reward distribution
 
-**Rewards Source**:
-- 30% of platform revenue → staking pool
-- Sustainable long-term (not a Ponzi)
-
-**Staking Pool Cap**: 300M FLO (30% of total supply)
+**Backend Tracking**:
+- Off-chain analytics in `backend/app/services/staking_service.py`
+- Queries blockchain via Web3 RPC for real-time data
 
 ---
 
-### Unstaking
+### Important Notes
 
-**Withdraw Anytime** (if no lock period):
-1. Go to **"Staking"**
-2. Click **"Unstake"**
-3. Tokens + rewards back to wallet
+⚠️ **MVP Status**: Current implementation uses mock data for development. Production version will:
+- Connect to deployed smart contracts on Polygon
+- Enable actual token deposits and withdrawals
+- Implement lock periods and penalty mechanisms
+- Add automated reward distribution
 
-**Early Withdrawal** (if locked):
-```
-Example: 12-month lock, withdraw after 6 months
-├─ Principal: 10,000 FLO (returned)
-├─ Rewards earned: 1,550 FLO (50% of year)
-├─ Penalty: 20% of principal = 2,000 FLO
-└─ Net received: 10,000 + 1,550 - 2,000 = 9,550 FLO
-```
-
-**Tip**: Only stake amounts you won't need short-term!
+**Roadmap**: Full staking features planned for Q2 2025
 
 ---
 
-### Risks & Considerations
+## 🛍️ Marketplace & Style Packs
 
-**Token Price Volatility**:
-- 31% APY in FLO ≠ guaranteed USD gains
-- If FLO price drops 50%, you may lose money in USD terms
-- Example: Stake $1,000, earn 31% → $1,310. But if FLO price drops 40%, now worth $786.
-
-**Dilution**:
-- If too many people stake, APY decreases (shared pool)
-- Early stakers benefit most
-
-**Opportunity Cost**:
-- Locked tokens can't be used for other opportunities
-- Consider market conditions before locking
-
-**Platform Risk**:
-- Smart contract bugs (mitigated by audits)
-- Platform failure (unlikely but possible)
-
----
-
-## 🛍️ Marketplace & NFTs
-
-### Style Packs
+### Style Packs Marketplace
 
 **What are Style Packs?**
-Pre-made visual styles created by other users (like Instagram filters for AI videos).
+Pre-made LoRA adapters that unlock unique visual styles for your AI videos (like Instagram filters for video generation).
 
-**How to Buy**:
-1. **"Marketplace"** → **"Style Packs"**
-2. Browse by category:
-   - Cyberpunk
-   - Fantasy
-   - Retro
-   - Realistic
-   - Anime
-3. Preview samples (3-5 example videos)
-4. Click **"Buy"** (price in FLO or USD)
-5. Use immediately in Video Studio
+**How to Access**:
+1. Navigate to **"Style Packs Marketplace"** from main menu
+2. Browse available packs in grid layout
+3. View preview images, descriptions, tags, and download counts
 
-**Popular Packs**:
+---
+
+### Official Style Packs (Platform-Created)
+
+Currently available premium style packs:
+
+**🎨 Studio Ghibli Dreams** - $4.99
+- Iconic Miyazaki animation style
+- Tags: anime, nostalgic, whimsical
+- Preview count: 8 samples
+
+**🌆 Cyberpunk 2077** - $6.99
+- Neon-soaked futuristic cityscapes
+- Tags: cyberpunk, neon, futuristic
+- Preview count: 10 samples
+
+**💧 Watercolor Serenity** - $3.99
+- Soft, painterly watercolor effects
+- Tags: watercolor, artistic, serene
+- Preview count: 6 samples
+
+**🎬 Cinematic Blockbuster** - $9.99
+- Hollywood-grade color grading
+- Tags: cinematic, professional, dramatic
+- Preview count: 12 samples
+
+**📼 Retro 80s VHS** - $5.99
+- Nostalgic VHS tape aesthetic with scan lines
+- Tags: retro, 80s, vintage
+- Preview count: 8 samples
+
+---
+
+### How to Purchase Style Packs
+
+**Step 1: Browse & Preview**
+- View high-quality preview images
+- Check download statistics (popularity indicator)
+- Read detailed descriptions and tags
+- Review pricing
+
+**Step 2: Purchase Process**
+1. Click **"Buy Now"** on desired pack
+2. Redirected to Stripe Checkout (secure payment)
+3. Complete payment with credit/debit card
+4. Automatic redirect back to marketplace on success
+
+**Step 3: Download & Use**
+1. Pack shows **"OWNED"** badge after purchase
+2. Click **"Download"** button to get LoRA files
+3. Files downloaded as `.safetensors` format
+4. Use in Video Studio for custom styled generations
+
+---
+
+### Technical Details
+
+**File Format**: `.safetensors` (LoRA adapter files)
+**Payment Processor**: Stripe
+**Storage**: S3-compatible backend storage
+**Authentication**: Required (must be logged in to purchase)
+
+**Purchase API Endpoints**:
+- `GET /v1/style-packs` - List all available packs
+- `POST /v1/style-packs/purchase` - Initiate Stripe checkout
+- `GET /v1/style-packs/download/{pack_id}` - Get download URL
+
+**Purchase Flow**:
 ```
-🔥 Retro Vaporwave   ($10 / 100 FLO)
-🌌 Cosmic Dreams     ($15 / 150 FLO)
-🏯 Anime Cinematic   ($20 / 200 FLO)
-🎨 Oil Painting      ($25 / 250 FLO)
-💎 Luxury Gold       ($50 / 500 FLO)
+1. User clicks "Buy Now"
+   ↓
+2. Backend creates Stripe Checkout session
+   ↓
+3. User completes payment on Stripe
+   ↓
+4. Webhook updates purchase record
+   ↓
+5. User gains access to download
 ```
 
 ---
 
-### Selling Your Own Style Packs
+### Selling Your Own Style Packs (Creator Economy)
+
+**Creator Revenue Share**: 70% to creator, 30% platform fee
 
 **Requirements**:
-- PRO or BUSINESS tier
-- At least 10 videos generated
-- Account in good standing
+- Verified creator account
+- High-quality reference images (min 1920x1080)
+- Cohesive visual style across samples
 
-**How to Create & Sell**:
+**Creation Process**:
+1. Upload 5-10 reference images showcasing your style
+2. Platform trains custom LoRA model (processing time: 24-48 hours)
+3. Set price ($5-$100 range recommended)
+4. Write compelling description and add relevant tags
+5. Submit for approval (review time: 2-3 business days)
+6. Once approved, pack goes live on marketplace
 
-**Step 1: Prepare Assets**
-- Upload 5-10 reference images (your style)
-- High quality (min 1920x1080)
-- Cohesive aesthetic (all images match)
-
-**Step 2: Submit for Training**
-1. **"Marketplace"** → **"Sell a Pack"**
-2. Upload images
-3. Our AI trains custom LoRA model (24-48 hours)
-
-**Step 3: Set Price & Publish**
-- Price range: $5-$100 (you keep 70%)
-- Write description (explain use cases)
-- Generate 3-5 preview videos
-- Submit for approval (2-3 days review)
-
-**Step 4: Earn Passive Income**
+**Earnings Example**:
 ```
-Your pack sells for $20 (200 FLO)
+Your pack sells for $20
 ├─ You receive: $14 (70%)
 ├─ Platform fee: $6 (30%)
 
-If 50 sales:
-You earn: $700 💰
+If 50 sales → You earn: $700
 ```
-
-**Best Practices**:
-- High-quality references (not blurry)
-- Unique style (differentiate from others)
-- Good description + preview videos
-- Competitive pricing
 
 ---
 
-### NFT Marketplace
+### NFT Marketplace (Coming Q3 2025)
 
-**What are NFT Videos?**
-Own viral videos as blockchain-verified digital assets.
+**Planned Features**:
+- Mint videos as NFTs on Polygon blockchain
+- List and sell NFTs with FLO tokens
+- Fractional ownership for high-value content
+- Secondary market trading
+- Royalties for original creators
 
-**How NFTs Work**:
-1. Creator mints video as NFT (one-time fee)
-2. Listed for sale on marketplace
-3. Buyers purchase with FLO tokens
-4. Ownership recorded on blockchain (Polygon)
-5. Resell later if value increases
-
-**Why Buy NFT Videos?**
-- **Investment**: Viral videos may appreciate
-- **Collectibles**: Own unique digital art
-- **Support Creators**: Artists earn from sales
-- **Fractional Ownership**: Coming Q3 2025 (own shares)
-
-**How to Buy**:
-1. **"Marketplace"** → **"NFTs"**
-2. Browse by:
-   - Price (low to high)
-   - Views (most popular)
-   - Recent (newest listings)
-3. Click **"Buy"**
-4. Confirm transaction (MetaMask or FLO wallet)
-5. NFT appears in your collection
-
-**How to Mint Your Own**:
-1. Go to your video
-2. Click **"Mint as NFT"**
-3. Set price (min 100 FLO = $10)
-4. Pay minting fee (50 FLO gas)
-5. Listed on marketplace
+**Smart Contract**: `contracts/FractionalNFT.sol`
 
 ---
 
@@ -677,92 +667,174 @@ Post your FlowAI videos directly to TikTok, Instagram Reels, YouTube Shorts with
 
 ### Common Issues & Solutions
 
-#### Issue 1: Video Generation Stuck on "Processing"
+#### Issue 1: Wallet Connection Failed
+
+**Symptoms**: Can't connect MetaMask or WalletConnect wallet
+
+**Possible Causes**:
+- WalletConnect not configured
+- Wrong network selected
+- Wallet extension not installed
+- Popup blocked by browser
+
+**Solutions**:
+1. **Install wallet**: Make sure MetaMask or compatible wallet is installed
+2. **Check network**: Switch to Polygon network in wallet
+3. **Allow popups**: Enable popups for the site
+4. **Refresh page**: Sometimes connection requires page reload
+5. **Try different wallet**: Test with alternative wallet provider
+
+---
+
+#### Issue 2: Style Pack Purchase Failed
+
+**Symptoms**: Payment doesn't complete, redirected back without confirmation
+
+**Possible Causes**:
+- Payment declined by bank
+- Session expired
+- Network interruption during Stripe checkout
+- Insufficient funds
+
+**Solutions**:
+1. **Check email**: Look for Stripe payment confirmation
+2. **Verify bank statement**: Payment may have succeeded despite error
+3. **Try again**: Return to marketplace and re-initiate purchase
+4. **Contact support**: If charged but no access, email support@flowai.com with transaction ID
+5. **Different payment method**: Try alternative card if declined
+
+---
+
+#### Issue 3: Style Pack Download Not Working
+
+**Symptoms**: Click "Download" but file doesn't start downloading
+
+**Possible Causes**:
+- Session expired (need to re-login)
+- Browser popup blocker
+- Temporary storage issue
+- Network connectivity
+
+**Solutions**:
+1. **Check popup blocker**: Allow popups for the site
+2. **Re-login**: Sign out and sign back in to refresh session
+3. **Try different browser**: Test in Chrome, Firefox, or Safari
+4. **Check downloads folder**: File may have downloaded without notification
+5. **Contact support**: Request manual download link if persistent issue
+
+---
+
+#### Issue 4: Can't Access Admin Dashboard
+
+**Symptoms**: Admin menu not visible, redirected from `/admin` route
+
+**Possible Causes**:
+- Not assigned admin role
+- Session expired
+- Database permission issue
+
+**Solutions**:
+1. **Verify role**: Admin must assign you "admin" role in `user_roles` table
+2. **Re-login**: Sign out and sign back in to refresh permissions
+3. **Check console**: Open browser DevTools → Console for error messages
+4. **Contact admin**: Request role assignment from existing admin
+5. **Database check**: Admin can verify role exists: `SELECT * FROM user_roles WHERE user_id = 'your-id'`
+
+---
+
+#### Issue 5: Video Generation Stuck on "Processing"
 
 **Symptoms**: Progress bar frozen, no video after 10+ minutes
 
 **Possible Causes**:
 - High server load
-- Complex prompt
-- System error
+- Complex prompt exceeds processing limits
+- AI service temporary outage
+- Network timeout
 
 **Solutions**:
-1. **Wait 5 more minutes** (sometimes just slow)
-2. **Cancel & retry** with simpler prompt
-3. **Check status page**: https://status.flowai.com
-4. **Try different style** (some styles faster)
-5. **Contact support** if stuck >15 minutes
+1. **Wait 5 more minutes**: Sometimes processing is just slow
+2. **Cancel & retry**: Simplify prompt and try again
+3. **Check rate limit**: You may have hit 10/hour generation limit
+4. **Try different style**: Some styles process faster than others
+5. **Check console logs**: DevTools → Console may show specific error
 
 ---
 
-#### Issue 2: Can't Log In
+#### Issue 6: Staking Information Not Loading
 
-**Symptoms**: "Invalid credentials" error
+**Symptoms**: Staking page shows loading or error state
 
 **Possible Causes**:
-- Wrong email/password
-- Email not verified
-- Account suspended
+- Wallet not connected
+- Backend API unavailable
+- Network mismatch (not on Polygon)
+- Mock data service issue (MVP)
 
 **Solutions**:
-1. **Reset password**: Click "Forgot Password"
-2. **Check email verification**: Resend verification email
-3. **Try magic link**: Passwordless login
-4. **Contact support**: If account suspended
+1. **Connect wallet**: Make sure Web3 wallet is connected first
+2. **Check network**: Verify wallet is on Polygon network
+3. **Refresh page**: Reload to re-fetch staking data
+4. **Check API**: Verify backend is running at `localhost:8000/api/staking/info`
+5. **MVP note**: Current version uses mock data; production will connect to smart contracts
 
 ---
 
-#### Issue 3: Token Purchase Failed
+#### Issue 7: Authentication Errors
 
-**Symptoms**: Payment declined, no tokens received
+**Symptoms**: "Invalid credentials", "Session expired", can't login
 
 **Possible Causes**:
-- Credit card declined
-- Insufficient funds
-- Fraud protection triggered
-- KYC required (large purchases)
+- Incorrect email/password
+- Email not confirmed (if confirmation required)
+- Session cookie deleted
+- Browser privacy mode
 
 **Solutions**:
-1. **Check card balance**: Ensure sufficient funds
-2. **Try different card**: Some banks block crypto-related purchases
-3. **Contact bank**: May need to approve transaction
-4. **Use PayPal** (coming Q2 2025)
-5. **KYC verification**: For purchases >$1,000 (email sent)
+1. **Reset password**: Use "Forgot Password" link on Auth page
+2. **Check email**: Confirm email verification if required
+3. **Clear cache**: Clear browser cache and cookies, try again
+4. **Disable privacy mode**: Incognito/Private mode may block auth cookies
+5. **Try different device**: Test if issue is device-specific
 
 ---
 
-#### Issue 4: Low Video Quality
+#### Issue 8: API Rate Limit Exceeded
 
-**Symptoms**: Blurry, pixelated, low resolution
+**Symptoms**: Error message "Rate limit exceeded" when generating content
 
-**Possible Causes**:
-- Free tier (720p limit)
-- Upscaled from lower resolution
-- Vague prompt
+**Current Limits**:
+- **Content Generation**: 10 requests per hour per user
+- Tracked in `generation_attempts` table
 
 **Solutions**:
-1. **Upgrade to PRO**: 1080p native resolution
-2. **Be more specific**: Detailed prompts = sharper output
-3. **Try different style**: Some styles sharper than others
-4. **External upscaling**: Use Topaz Video Enhance AI
+1. **Wait it out**: Rate limit resets after 1 hour
+2. **Check usage**: Query `generation_attempts` table to see your recent attempts
+3. **Upgrade plan**: PRO/BUSINESS tiers may have higher limits (roadmap)
+4. **Batch requests**: Plan generations strategically to avoid hitting limit
 
 ---
 
-#### Issue 5: My Video Was Removed
+#### Issue 9: Edge Function Errors
 
-**Symptoms**: Video deleted, warning email received
+**Symptoms**: Admin functions return 401/403, audit logs not appearing
 
 **Possible Causes**:
-- Violated Community Guidelines
-- Copyright infringement
-- NSFW content
-- Spam/misleading
+- Not authenticated
+- Missing admin role
+- JWT token expired
+- Function deployment issue
 
-**What to Do**:
-1. **Read email**: We explain reason for removal
-2. **Appeal**: If you think it's a mistake, email support@flowai.com
-3. **Review Guidelines**: https://flowai.com/guidelines
-4. **Don't repeat violation**: Repeated violations = account suspension
+**Solutions**:
+1. **Re-authenticate**: Sign out and back in to refresh JWT
+2. **Verify admin role**: Check `user_roles` table for your user ID
+3. **Check function logs**: Use Lovable Cloud → Functions → Logs
+4. **Test with curl**: 
+```bash
+curl -H "Authorization: Bearer YOUR_JWT" \
+     https://[project].supabase.co/functions/v1/admin-list-users
+```
+5. **Redeploy functions**: Sometimes requires redeployment after changes
 
 ---
 

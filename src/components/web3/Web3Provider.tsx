@@ -7,7 +7,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 // Configure chains - Polygon Mainnet & Amoy Testnet
 const config = getDefaultConfig({
     appName: "FlowAI",
-    projectId: "YOUR_WALLETCONNECT_PROJECT_ID", // TODO: Replace with env var
+    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "",
     chains: [polygon, polygonAmoy],
     transports: {
         [polygon.id]: http(),
