@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title BountyEscrow
  * @dev Smart contract for brand bounties marketplace
  * Brands post bounties → Creators submit → Voting → Winner gets paid
  */
-contract BountyEscrow is ReentrancyGuard, Ownable {
+contract BountyEscrow is ReentrancyGuard, Ownable, Pausable {
     
+    IERC20 public floToken;
+    uint256 public constant MIN_VOTE_STAKE = 100 * 10**18; // 100 FLO required to vote
+
     struct Bounty {
         bytes32 id;
         address brand;
@@ -51,10 +56,19 @@ contract BountyEscrow is ReentrancyGuard, Ownable {
     event BountyCompleted(bytes32 indexed bountyId, address indexed winner, uint256 amount);
     event BountyCancelled(bytes32 indexed bountyId);
     
-    constructor(address _platformWallet) {
+    constructor(address _platformWallet, address _floToken) Ownable(msg.sender) {
         platformWallet = _platformWallet;
+        floToken = IERC20(_floToken);
     }
     
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
     /**
      * @dev Create new bounty with escrow
      */
@@ -62,7 +76,7 @@ contract BountyEscrow is ReentrancyGuard, Ownable {
         bytes32 bountyId,
         uint256 deadline,
         string memory requirements
-    ) external payable {
+    ) external payable whenNotPaused {
         require(msg.value > 0, "Bounty amount must be greater than 0");
         require(bounties[bountyId].amount == 0, "Bounty ID already exists");
         require(deadline > block.timestamp, "Deadline must be in future");
@@ -86,7 +100,7 @@ contract BountyEscrow is ReentrancyGuard, Ownable {
     function submitEntry(
         bytes32 bountyId,
         string memory videoUrl
-    ) external {
+    ) external whenNotPaused {
         Bounty storage bounty = bounties[bountyId];
         
         require(bounty.amount > 0, "Bounty does not exist");
@@ -109,7 +123,7 @@ contract BountyEscrow is ReentrancyGuard, Ownable {
     /**
      * @dev Start voting period (called after deadline)
      */
-    function startVoting(bytes32 bountyId) external {
+    function startVoting(bytes32 bountyId) external whenNotPaused {
         Bounty storage bounty = bounties[bountyId];
         
         require(bounty.amount > 0, "Bounty does not exist");
@@ -123,14 +137,18 @@ contract BountyEscrow is ReentrancyGuard, Ownable {
     
     /**
      * @dev Cast vote for entry
+     * Protected against Sybil attacks by requiring FLO token stake
      */
-    function vote(bytes32 bountyId, uint256 entryIndex) external {
+    function vote(bytes32 bountyId, uint256 entryIndex) external whenNotPaused {
         Bounty storage bounty = bounties[bountyId];
         
         require(bounty.status == BountyStatus.VotingPeriod, "Not in voting period");
         require(block.timestamp < bounty.votingEndTime, "Voting period ended");
         require(!hasVoted[bountyId][msg.sender], "Already voted");
         require(entryIndex < bountyEntries[bountyId].length, "Invalid entry index");
+        
+        // Sybil Protection: Check FLO balance
+        require(floToken.balanceOf(msg.sender) >= MIN_VOTE_STAKE, "Insufficient FLO stake to vote");
         
         hasVoted[bountyId][msg.sender] = true;
         bountyEntries[bountyId][entryIndex].voteCount++;
@@ -147,7 +165,7 @@ contract BountyEscrow is ReentrancyGuard, Ownable {
     /**
      * @dev Release funds to winner after voting
      */
-    function releaseFunds(bytes32 bountyId) external nonReentrant {
+    function releaseFunds(bytes32 bountyId) external nonReentrant whenNotPaused {
         Bounty storage bounty = bounties[bountyId];
         
         require(bounty.amount > 0, "Bounty does not exist");
@@ -186,7 +204,7 @@ contract BountyEscrow is ReentrancyGuard, Ownable {
     /**
      * @dev Cancel bounty and refund (only before deadline)
      */
-    function cancelBounty(bytes32 bountyId) external nonReentrant {
+    function cancelBounty(bytes32 bountyId) external nonReentrant whenNotPaused {
         Bounty storage bounty = bounties[bountyId];
         
         require(bounty.amount > 0, "Bounty does not exist");

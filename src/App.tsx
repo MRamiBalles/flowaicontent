@@ -17,6 +17,7 @@ import CoStream from "./pages/CoStream";
 import MintNFT from "./pages/MintNFT";
 
 import { Web3Provider } from "@/components/web3/Web3Provider";
+import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <OnboardingTutorial />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
