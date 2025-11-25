@@ -4,10 +4,10 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./FlowToken.sol";
+import "./FloToken.sol";
 
 contract FlowStaking is ReentrancyGuard, Ownable {
-    FlowToken public flowToken;
+    FloToken public flowToken;
 
     struct StakeInfo {
         uint256 amount;
@@ -17,7 +17,7 @@ contract FlowStaking is ReentrancyGuard, Ownable {
 
     mapping(address => StakeInfo) public stakes;
     
-    // Reward rate: 1 FLOW per second per 1000 staked (Example APY)
+    // Reward rate: 1 FLO per second per 1000 staked (Example APY)
     uint256 public constant REWARD_RATE = 1; 
     uint256 public constant REWARD_DIVISOR = 1000;
 
@@ -26,7 +26,7 @@ contract FlowStaking is ReentrancyGuard, Ownable {
     event RewardClaimed(address indexed user, uint256 amount);
 
     constructor(address _flowToken) Ownable(msg.sender) {
-        flowToken = FlowToken(_flowToken);
+        flowToken = FloToken(_flowToken);
     }
 
     function stake(uint256 _amount) external nonReentrant {

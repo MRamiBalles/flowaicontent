@@ -2,7 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
  * @title FloToken
@@ -13,6 +15,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * - Symbol: FLO
  * - Decimals: 18
  * - Network: Polygon (low gas fees)
+ * - Max Supply: 1,000,000,000 (1 Billion)
  * 
  * Use Cases:
  * - Tip creators
@@ -20,10 +23,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * - Purchase bounties
  * - Platform rewards
  */
-contract FloToken is ERC20, Ownable {
-    // Platform address (can mint tokens when users purchase)
-    address public platform;
-    
+contract FloToken is ERC20, ERC20Burnable, AccessControl, Pausable {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+
+    // Max Supply: 1 Billion Tokens
+    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**18;
+
     // Mapping of user addresses to their token balances (off-chain tracking)
     mapping(address => uint256) public earned;
     mapping(address => uint256) public spent;
@@ -34,19 +40,46 @@ contract FloToken is ERC20, Ownable {
     event TokensSpent(address indexed user, uint256 amount, string purpose);
     event TokensCashedOut(address indexed user, uint256 amount);
     
-    constructor(address initialOwner) ERC20("FlowAI Token", "FLO") Ownable(initialOwner) {
-        platform = initialOwner;
+    constructor(address initialAdmin) ERC20("FlowAI Token", "FLO") {
+        _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
+        _grantRole(MINTER_ROLE, initialAdmin);
+        _grantRole(PAUSER_ROLE, initialAdmin);
         
-        // Mint initial supply to platform (100M tokens)
-        _mint(platform, 100_000_000 * 10**decimals());
+        // Mint initial supply to admin (100M tokens)
+        _mint(initialAdmin, 100_000_000 * 10**decimals());
     }
     
     /**
-     * @dev Modifier to restrict calls to platform only
+     * @dev Pause token transfers in case of emergency
      */
-    modifier onlyPlatform() {
-        require(msg.sender == platform, "Only platform can call this");
-        _;
+    function pause() public onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    /**
+     * @dev Unpause token transfers
+     */
+    function unpause() public onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
+
+    /**
+     * @dev Hook to check pause status before transfer
+     */
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        override(ERC20)
+    {
+        super._beforeTokenTransfer(from, to, amount);
+        require(!paused(), "ERC20Pausable: token transfer while paused");
+    }
+
+    /**
+     * @dev Generic mint function for authorized roles (e.g. Staking contract)
+     */
+    function mint(address to, uint256 amount) public onlyRole(MINTER_ROLE) {
+        require(totalSupply() + amount <= MAX_SUPPLY, "Max supply exceeded");
+        _mint(to, amount);
     }
     
     /**
@@ -55,8 +88,9 @@ contract FloToken is ERC20, Ownable {
      */
     function mintToPurchaser(address user, uint256 amount, uint256 usdValue) 
         external 
-        onlyPlatform 
+        onlyRole(MINTER_ROLE) 
     {
+        require(totalSupply() + amount <= MAX_SUPPLY, "Max supply exceeded");
         _mint(user, amount);
         emit TokensPurchased(user, amount, usdValue);
     }
@@ -67,8 +101,9 @@ contract FloToken is ERC20, Ownable {
      */
     function awardTokens(address user, uint256 amount, string memory reason) 
         external 
-        onlyPlatform 
+        onlyRole(MINTER_ROLE) 
     {
+        require(totalSupply() + amount <= MAX_SUPPLY, "Max supply exceeded");
         _mint(user, amount);
         earned[user] += amount;
         emit TokensEarned(user, amount, reason);
@@ -80,7 +115,7 @@ contract FloToken is ERC20, Ownable {
      */
     function cashOut(address user, uint256 amount) 
         external 
-        onlyPlatform 
+        onlyRole(MINTER_ROLE) 
     {
         require(balanceOf(user) >= amount, "Insufficient balance");
         _burn(user, amount);
@@ -93,18 +128,10 @@ contract FloToken is ERC20, Ownable {
      */
     function recordSpending(address user, uint256 amount, string memory purpose) 
         external 
-        onlyPlatform 
+        onlyRole(MINTER_ROLE) 
     {
         spent[user] += amount;
         emit TokensSpent(user, amount, purpose);
-    }
-    
-    /**
-     * @dev Update platform address (in case of migration)
-     */
-    function updatePlatform(address newPlatform) external onlyOwner {
-        require(newPlatform != address(0), "Invalid address");
-        platform = newPlatform;
     }
     
     /**
