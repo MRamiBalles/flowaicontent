@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowAI - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      padding: 20px;
+    }
+    
+    .container {
+      text-align: center;
+      max-width: 500px;
+    }
+    
+    .icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+    
+    .btn {
+      background: white;
+      color: #667eea;
+      padding: 15px 40px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    
+    .features {
+      margin-top: 3rem;
+      text-align: left;
+      background: rgba(255,255,255,0.1);
+      padding: 2rem;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .features h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .features ul {
+      list-style: none;
+    }
+    
+    .features li {
+      padding: 0.5rem 0;
+      padding-left: 30px;
+      position: relative;
+    }
+    
+    .features li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+      color: #10b981;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+    <h1>You're Offline</h1>
+    <p>Don't worry! FlowAI works offline. Your work is saved locally and will sync when you're back online.</p>
+    <a href="/" class="btn" onclick="window.location.reload()">Try Again</a>
+    
+    <div class="features">
+      <h2>Available Offline:</h2>
+      <ul>
+        <li>View your dashboard</li>
+        <li>Browse saved projects</li>
+        <li>Edit draft content</li>
+        <li>Access your settings</li>
+      </ul>
+    </div>
+  </div>
+  
+  <script>
+    // Auto-retry connection every 5 seconds
+    setInterval(() => {
+      if (navigator.onLine) {
+        window.location.reload();
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
