@@ -41,6 +41,60 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_earnings: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          creator_id: string
+          id: string
+          paid_at: string | null
+          payout_method: string | null
+          platform_fee_cents: number
+          purchase_id: string
+          status: string
+          style_pack_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          creator_id: string
+          id?: string
+          paid_at?: string | null
+          payout_method?: string | null
+          platform_fee_cents: number
+          purchase_id: string
+          status?: string
+          style_pack_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          creator_id?: string
+          id?: string
+          paid_at?: string | null
+          payout_method?: string | null
+          platform_fee_cents?: number
+          purchase_id?: string
+          status?: string
+          style_pack_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_earnings_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "style_pack_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_earnings_style_pack_id_fkey"
+            columns: ["style_pack_id"]
+            isOneToOne: false
+            referencedRelation: "user_style_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_content: {
         Row: {
           content_text: string
@@ -105,6 +159,133 @@ export type Database = {
           },
         ]
       }
+      nft_shares: {
+        Row: {
+          acquired_at: string
+          created_at: string
+          id: string
+          nft_id: string
+          owner_address: string
+          shares: number
+        }
+        Insert: {
+          acquired_at?: string
+          created_at?: string
+          id?: string
+          nft_id: string
+          owner_address: string
+          shares: number
+        }
+        Update: {
+          acquired_at?: string
+          created_at?: string
+          id?: string
+          nft_id?: string
+          owner_address?: string
+          shares?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nft_shares_nft_id_fkey"
+            columns: ["nft_id"]
+            isOneToOne: false
+            referencedRelation: "nfts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nft_transactions: {
+        Row: {
+          created_at: string
+          from_address: string | null
+          id: string
+          nft_id: string
+          price_matic: number | null
+          shares: number
+          to_address: string
+          transaction_hash: string
+          transaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          from_address?: string | null
+          id?: string
+          nft_id: string
+          price_matic?: number | null
+          shares: number
+          to_address: string
+          transaction_hash: string
+          transaction_type: string
+        }
+        Update: {
+          created_at?: string
+          from_address?: string | null
+          id?: string
+          nft_id?: string
+          price_matic?: number | null
+          shares?: number
+          to_address?: string
+          transaction_hash?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nft_transactions_nft_id_fkey"
+            columns: ["nft_id"]
+            isOneToOne: false
+            referencedRelation: "nfts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfts: {
+        Row: {
+          contract_address: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          minted_at: string
+          network: string
+          title: string
+          token_id: number
+          total_shares: number
+          transaction_hash: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          contract_address: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          minted_at?: string
+          network?: string
+          title: string
+          token_id: number
+          total_shares?: number
+          transaction_hash: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          contract_address?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          minted_at?: string
+          network?: string
+          title?: string
+          token_id?: number
+          total_shares?: number
+          transaction_hash?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -155,6 +336,38 @@ export type Database = {
           },
         ]
       }
+      style_pack_purchases: {
+        Row: {
+          buyer_id: string
+          id: string
+          price_paid_cents: number
+          purchased_at: string
+          style_pack_id: string
+        }
+        Insert: {
+          buyer_id: string
+          id?: string
+          price_paid_cents: number
+          purchased_at?: string
+          style_pack_id: string
+        }
+        Update: {
+          buyer_id?: string
+          id?: string
+          price_paid_cents?: number
+          purchased_at?: string
+          style_pack_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "style_pack_purchases_style_pack_id_fkey"
+            columns: ["style_pack_id"]
+            isOneToOne: false
+            referencedRelation: "user_style_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -173,6 +386,54 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_style_packs: {
+        Row: {
+          created_at: string
+          creator_id: string
+          description: string | null
+          download_count: number
+          id: string
+          is_active: boolean
+          lora_url: string | null
+          name: string
+          preview_images: string[]
+          price_cents: number
+          tags: string[]
+          training_status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          download_count?: number
+          id?: string
+          is_active?: boolean
+          lora_url?: string | null
+          name: string
+          preview_images?: string[]
+          price_cents: number
+          tags?: string[]
+          training_status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          download_count?: number
+          id?: string
+          is_active?: boolean
+          lora_url?: string | null
+          name?: string
+          preview_images?: string[]
+          price_cents?: number
+          tags?: string[]
+          training_status?: string
+          updated_at?: string
         }
         Relationships: []
       }
