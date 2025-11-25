@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Palette, Download, Check, ShoppingCart, Star, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { supabase } from '@/integrations/supabase/client';
 
 interface StylePack {
@@ -148,10 +148,13 @@ export const StylePacksMarketplace = () => {
                             {/* Preview Image */}
                             <div className="relative h-48 bg-gradient-to-br from-purple-900/20 to-pink-900/20 overflow-hidden">
                                 {pack.preview_images[0] ? (
-                                    <img
+                                    <OptimizedImage
                                         src={pack.preview_images[0]}
                                         alt={pack.name}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        width={600}
+                                        height={192}
+                                        objectFit="cover"
+                                        className="w-full h-full group-hover:scale-110 transition-transform duration-500"
                                     />
                                 ) : (
                                     <div className="flex items-center justify-center h-full">

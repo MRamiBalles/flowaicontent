@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Emote {
     id: string;
@@ -39,10 +40,13 @@ export function EmoteLibrary() {
                 {emotes?.map((emote) => (
                     <Card key={emote.id} className="group relative overflow-hidden bg-muted/30 border-0">
                         <CardContent className="p-4 flex flex-col items-center gap-2">
-                            <img
+                            <OptimizedImage
                                 src={emote.url}
                                 alt={emote.prompt}
-                                className="w-20 h-20 object-contain"
+                                width={80}
+                                height={80}
+                                objectFit="contain"
+                                className="w-20 h-20"
                             />
                             <p className="text-xs text-muted-foreground truncate w-full text-center">
                                 {emote.prompt}

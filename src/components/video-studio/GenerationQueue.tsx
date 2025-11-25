@@ -1,6 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Play, Clock, CheckCircle2 } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 export function GenerationQueue() {
     // Mock data for now
@@ -21,10 +22,13 @@ export function GenerationQueue() {
                         <div className="flex items-center gap-3">
                             <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center overflow-hidden relative">
                                 {task.status === "completed" ? (
-                                    <img
+                                    <OptimizedImage
                                         src={`https://source.unsplash.com/random/100x100?${task.id}`}
                                         alt="Thumbnail"
-                                        className="w-full h-full object-cover"
+                                        width={64}
+                                        height={64}
+                                        objectFit="cover"
+                                        className="w-full h-full"
                                     />
                                 ) : (
                                     <Clock className="h-6 w-6 text-muted-foreground animate-pulse" />
