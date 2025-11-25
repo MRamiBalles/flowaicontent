@@ -14,6 +14,7 @@ import VideoEditor from "./pages/VideoEditor";
 import Index from "./pages/Index";
 import VideoStudio from "./pages/VideoStudio";
 import CoStream from "./pages/CoStream";
+import MintNFT from "./pages/MintNFT";
 
 import { Web3Provider } from "@/components/web3/Web3Provider";
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/co-stream" element={<CoStream />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/editor" element={<VideoEditor />} />
+            <Route path="/mint-nft" element={<MintNFT />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

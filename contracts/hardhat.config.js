@@ -16,10 +16,11 @@ module.exports = {
         hardhat: {
             chainId: 1337
         },
-        mumbai: {
-            url: process.env.MUMBAI_RPC_URL || "https://rpc-mumbai.maticvigil.com",
+        amoy: {
+            url: process.env.AMOY_RPC_URL || "https://rpc-amoy.polygon.technology",
             accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-            gas Gas: 6000000
+            gas: 6000000,
+            chainId: 80002
         },
         polygon: {
             url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",

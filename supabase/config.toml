@@ -2,3 +2,6 @@ project_id = "zcuhvoyvutspcciyjohf"
 
 [functions.generate-content]
 verify_jwt = true
+
+[functions.mint-nft]
+verify_jwt = true
