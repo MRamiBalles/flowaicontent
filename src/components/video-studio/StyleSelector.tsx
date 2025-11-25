@@ -4,6 +4,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Style {
     id: string;
@@ -61,10 +62,13 @@ export function StyleSelector({ selected, onSelect }: StyleSelectorProps) {
                                 "w-32 h-32 rounded-lg overflow-hidden border-2 transition-all",
                                 selected === style.id ? "border-primary shadow-lg shadow-primary/20" : "border-transparent"
                             )}>
-                                <img
+                                <OptimizedImage
                                     src={style.preview_url}
                                     alt={style.name}
-                                    className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                                    width={128}
+                                    height={128}
+                                    objectFit="cover"
+                                    className="w-full h-full transition-transform group-hover:scale-110"
                                 />
                             </div>
                             <span className={cn(

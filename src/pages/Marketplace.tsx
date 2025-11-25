@@ -6,6 +6,7 @@ import { ShoppingCart, Plus, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface Listing {
     id: string;
@@ -87,10 +88,13 @@ export default function Marketplace() {
                     {listings?.map((item) => (
                         <Card key={item.id} className="group overflow-hidden border-primary/20 hover:border-primary/50 transition-all">
                             <div className="aspect-square overflow-hidden bg-muted relative">
-                                <img
+                                <OptimizedImage
                                     src={item.image_url}
                                     alt={item.title}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    width={400}
+                                    height={400}
+                                    objectFit="cover"
+                                    className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                                 />
                                 <Badge className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm">
                                     {item.type}
