@@ -1,25 +1,24 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
-import { LoadingFallback } from "@/components/ui/loading-fallback";
 import { Web3Provider } from "@/components/web3/Web3Provider";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-// Lazy load pages for better performance
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
+// Lazy load all route components for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Auth = lazy(() => import("./pages/Auth"));
 const Settings = lazy(() => import("./pages/Settings"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const VideoStudio = lazy(() => import("./pages/VideoStudio"));
-const CoStream = lazy(() => import("./pages/CoStream"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const VideoEditor = lazy(() => import("./pages/VideoEditor"));
+const Index = lazy(() => import("./pages/Index"));
+const VideoStudio = lazy(() => import("./pages/VideoStudio"));
+const CoStream = lazy(() => import("./pages/CoStream"));
 const MintNFT = lazy(() => import("./pages/MintNFT"));
-const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -31,7 +30,7 @@ const App = () => (
         <Sonner />
         <OnboardingTutorial />
         <BrowserRouter>
-          <Suspense fallback={<LoadingFallback />}>
+          <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -43,7 +42,6 @@ const App = () => (
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/editor" element={<VideoEditor />} />
               <Route path="/mint-nft" element={<MintNFT />} />
-              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

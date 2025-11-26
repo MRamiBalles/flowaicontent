@@ -1,10 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Validation schema for NFT minting request
+const MintNFTSchema = z.object({
+  video_id: z.string().min(1, "Video ID is required"),
+  title: z.string().min(1, "Title is required").max(200, "Title too long"),
+  description: z.string().optional(),
+  wallet_address: z.string().regex(
+    /^0x[a-fA-F0-9]{40}$/,
+    "Invalid Ethereum wallet address format"
+  ),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,17 +47,25 @@ serve(async (req) => {
       });
     }
 
-    const { video_id, title, description, wallet_address } = await req.json();
+    const body = await req.json();
 
-    if (!video_id || !title || !wallet_address) {
+    // Validate request body with Zod
+    const validation = MintNFTSchema.safeParse(body);
+
+    if (!validation.success) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: video_id, title, wallet_address" }),
+        JSON.stringify({
+          error: "Validation failed",
+          details: validation.error.format()
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
+
+    const { video_id, title, description, wallet_address } = validation.data;
 
     // In production, this would call the Python backend service
     // For now, return mock data
