@@ -138,9 +138,10 @@ serve(async (req) => {
         )
 
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
         console.error('Error in record-nft-transaction:', error)
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: errorMessage }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 400,

@@ -161,12 +161,13 @@ serve(async (req) => {
         )
 
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
         console.error('Error in process-creator-payout:', error)
         return new Response(
-            JSON.stringify({ error: error.message }),
+            JSON.stringify({ error: errorMessage }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: error.message.includes('Forbidden') ? 403 : 400,
+                status: errorMessage.includes('Forbidden') ? 403 : 400,
             }
         )
     }
