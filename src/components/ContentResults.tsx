@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Check, Twitter, Linkedin, Instagram, Download, FileJson, FileText } from "lucide-react";
+import { Copy, Check, Twitter, Linkedin, Instagram, Download, FileJson, FileText, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 
@@ -16,9 +16,10 @@ interface ContentResultsProps {
   content: GeneratedContent | null;
   remainingGenerations?: number;
   rateLimitStatus?: number; // 0-100 percentage
+  onRemix?: (platform: string, content: string) => void;
 }
 
-export const ContentResults = ({ content, remainingGenerations, rateLimitStatus }: ContentResultsProps) => {
+export const ContentResults = ({ content, remainingGenerations, rateLimitStatus, onRemix }: ContentResultsProps) => {
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
 
   const copyToClipboard = async (text: string, platform: string) => {
@@ -154,6 +155,11 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus 
                 <CardTitle className="flex items-center justify-between">
                   Twitter Thread
                   <div className="flex gap-2">
+                    {onRemix && (
+                      <Button variant="ghost" size="sm" onClick={() => onRemix("twitter", content.twitter)}>
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -192,6 +198,11 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus 
                 <CardTitle className="flex items-center justify-between">
                   LinkedIn Post
                   <div className="flex gap-2">
+                    {onRemix && (
+                      <Button variant="ghost" size="sm" onClick={() => onRemix("linkedin", content.linkedin)}>
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -230,6 +241,11 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus 
                 <CardTitle className="flex items-center justify-between">
                   Instagram Script
                   <div className="flex gap-2">
+                    {onRemix && (
+                      <Button variant="ghost" size="sm" onClick={() => onRemix("instagram", content.instagram)}>
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"

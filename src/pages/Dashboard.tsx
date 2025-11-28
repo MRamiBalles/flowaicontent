@@ -1,210 +1,28 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { ContentInput } from "@/components/ContentInput";
 import { ContentResults } from "@/components/ContentResults";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { projectSchema } from "@/lib/validations";
-import { detectPromptInjection } from "@/lib/ai-sanitization";
-import { Shield, LogOut } from "lucide-react";
+import { Shield, LogOut, Flame, Sparkles, Trophy } from "lucide-react";
 import { ConnectWallet } from "@/components/web3/ConnectWallet";
 import { MobileNav } from "@/components/ui/MobileNav";
-
-interface GeneratedContent {
-  twitter: string;
-  linkedin: string;
-  instagram: string;
-}
+import { useDashboardLogic } from "@/hooks/useDashboardLogic";
+import { Progress } from "@/components/ui/progress";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [generationCount, setGenerationCount] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-        fetchGenerationCount(session.user.id);
-        checkAdmin(session.user.id);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-        fetchGenerationCount(session.user.id);
-        checkAdmin(session.user.id);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const checkAdmin = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    setIsAdmin(!!data);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
-  const fetchGenerationCount = async (userId: string) => {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
-    const { count, error } = await supabase
-      .from("generation_attempts")
-      .select("*", { count: 'exact', head: true })
-      .eq("user_id", userId)
-      .gte("created_at", oneHourAgo);
-
-    if (!error && count !== null) {
-      setGenerationCount(count);
-    }
-  };
-
-  const handleNewProject = () => {
-    setSelectedProjectId(null);
-    setGeneratedContent(null);
-  };
-
-  const generateContentWithAI = async (
-    title: string,
-    content: string,
-    projectId: string
-  ): Promise<GeneratedContent> => {
-    // Detect potential prompt injection attempts
-    const injectionCheck = detectPromptInjection(content);
-    if (injectionCheck.isInjection) {
-      console.warn("Potential prompt injection detected:", injectionCheck.patterns);
-      toast.warning("Your input contains patterns that may not process correctly. Please review your content.");
-    }
-
-    // Call edge function with rate limiting
-    const { data, error } = await supabase.functions.invoke('generate-content', {
-      body: { title, content, projectId }
-    });
-
-    if (error) {
-      console.error('Edge function error:', error);
-      throw new Error(error.message || 'Failed to generate content');
-    }
-
-    if (!data.success) {
-      throw new Error(data.error || 'Content generation failed');
-    }
-
-    return data.content;
-  };
-
-  const handleGenerate = async (title: string, content: string) => {
-    setLoading(true);
-
-    try {
-      // Validate inputs
-      const validated = projectSchema.parse({ title, content });
-
-      // Create project in database
-      const { data: project, error: projectError } = await supabase
-        .from("projects")
-        .insert({
-          user_id: user.id,
-          title: validated.title,
-          original_text: validated.content,
-        })
-        .select()
-        .single();
-
-      if (projectError) throw projectError;
-
-      // Generate content with AI (includes rate limiting)
-      const generated = await generateContentWithAI(
-        validated.title,
-        validated.content,
-        project.id
-      );
-
-      setGeneratedContent(generated);
-
-      // Update generation count
-      fetchGenerationCount(user.id);
-
-      // Save generated content to database
-      const contentPromises = Object.entries(generated).map(([platform, text]) =>
-        supabase.from("generated_content").insert({
-          project_id: project.id,
-          platform,
-          content_text: text,
-        })
-      );
-
-      await Promise.all(contentPromises);
-
-      setSelectedProjectId(project.id);
-      toast.success("Content generated successfully!");
-    } catch (error: any) {
-      console.error('Generation error:', error);
-
-      // Handle rate limit errors
-      if (error.message?.includes('Rate limit exceeded') || error.message?.includes('429')) {
-        toast.error("You've reached the limit of 10 generations per hour. Please try again later.");
-      } else if (error.message?.includes('402')) {
-        toast.error("AI service requires payment. Please contact support.");
-      } else {
-        toast.error(error.message || "Failed to generate content");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadProjectContent = async (projectId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("generated_content")
-        .select("platform, content_text")
-        .eq("project_id", projectId);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const content: any = {};
-        data.forEach((item) => {
-          content[item.platform] = item.content_text;
-        });
-        setGeneratedContent(content);
-      }
-    } catch (error: any) {
-      toast.error("Failed to load project content");
-    }
-  };
-
-  const handleSelectProject = (projectId: string | null) => {
-    setSelectedProjectId(projectId);
-    if (projectId) {
-      loadProjectContent(projectId);
-    } else {
-      setGeneratedContent(null);
-    }
-  };
+  const {
+    user,
+    isAdmin,
+    loading,
+    selectedProjectId,
+    generatedContent,
+    generationCount,
+    gamification,
+    handleLogout,
+    handleNewProject,
+    handleGenerate,
+    handleRemix,
+    handleSelectProject,
+  } = useDashboardLogic();
 
   if (!user) {
     return null;
@@ -212,51 +30,111 @@ const Dashboard = () => {
 
   const remainingGenerations = Math.max(0, 10 - generationCount);
   const rateLimitStatus = Math.min(100, (generationCount / 10) * 100);
+  const xpProgress = (gamification.xp / gamification.xpToNextLevel) * 100;
 
   return (
-    <div className="flex h-screen overflow-hidden flex-col">
-      <div className="flex items-center justify-between border-b border-border px-6 py-3 bg-background">
-        <h1 className="text-lg font-semibold">ContentFlow AI</h1>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Button onClick={() => navigate("/admin")} variant="outline" size="sm">
-              <Shield className="mr-2 h-4 w-4" />
-              Admin
-            </Button>
-          )}
-          <Button onClick={() => navigate("/mint-nft")} variant="outline" size="sm">
-            Mint NFT
-          </Button>
-          <ConnectWallet />
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Sidebar - Hidden on mobile, handled by MobileNav */}
+      <div className="hidden md:block w-64 border-r border-white/10 bg-black/20 backdrop-blur-xl">
         <ProjectSidebar
           selectedProjectId={selectedProjectId}
           onSelectProject={handleSelectProject}
           onNewProject={handleNewProject}
         />
-
-        <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 border-r border-border overflow-auto">
-            <ContentInput onGenerate={handleGenerate} loading={loading} />
-          </div>
-
-          <div className="flex-1 overflow-auto bg-muted/30">
-            <ContentResults
-              content={generatedContent}
-              remainingGenerations={remainingGenerations}
-              rateLimitStatus={rateLimitStatus}
-            />
-          </div>
-        </div>
       </div>
-      <MobileNav />
+
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Background Ambient Glow */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-purple-600/10 blur-[100px]" />
+          <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-600/10 blur-[100px]" />
+        </div>
+
+        {/* Header */}
+        <header className="h-16 border-b border-white/10 bg-black/20 backdrop-blur-md flex items-center justify-between px-6 z-10">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+              Studio
+            </h1>
+
+            {/* Gamification Widgets */}
+            <div className="hidden sm:flex items-center gap-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium" title="Daily Streak">
+                <Flame className="w-3.5 h-3.5 fill-orange-400" />
+                <span>{gamification.streak} Day Streak</span>
+              </div>
+
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-medium" title={`Level ${gamification.level}`}>
+                <Trophy className="w-3.5 h-3.5" />
+                <span>Lvl {gamification.level}</span>
+                <div className="w-16 h-1.5 bg-blue-950 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${xpProgress}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Button onClick={() => window.location.href = "/admin"} variant="ghost" size="sm" className="text-muted-foreground hover:text-white">
+                <Shield className="mr-2 h-4 w-4" />
+                Admin
+              </Button>
+            )}
+
+            <Button variant="outline" size="sm" className="hidden sm:flex border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20">
+              <Sparkles className="mr-2 h-3.5 w-3.5" />
+              {remainingGenerations} Credits
+            </Button>
+
+            <ConnectWallet />
+
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-white hover:bg-white/10">
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        </header>
+
+        {/* Main Workspace */}
+        <main className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            {/* Input Section */}
+            <div className="flex-1 overflow-y-auto p-6 border-r border-white/5">
+              <div className="max-w-2xl mx-auto space-y-6">
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold mb-2">Create Content</h2>
+                  <p className="text-muted-foreground">Transform your ideas into viral posts for all platforms.</p>
+                </div>
+                <div className="glass-card p-6 rounded-xl border-white/5">
+                  <ContentInput onGenerate={handleGenerate} loading={loading} />
+                </div>
+              </div>
+            </div>
+
+            {/* Results Section */}
+            <div className="flex-1 overflow-y-auto p-6 bg-black/20">
+              <div className="max-w-2xl mx-auto h-full flex flex-col">
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Generated Results</h2>
+                  <div className="text-xs text-muted-foreground">
+                    {rateLimitStatus}% Rate Limit
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <ContentResults
+                    content={generatedContent}
+                    remainingGenerations={remainingGenerations}
+                    rateLimitStatus={rateLimitStatus}
+                    onRemix={handleRemix}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <MobileNav />
+      </div>
     </div>
   );
 };

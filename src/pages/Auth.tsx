@@ -60,7 +60,7 @@ const Auth = () => {
       });
 
       if (error) throw error;
-      
+
       toast.success("Account created! Please check your email to verify.");
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -98,7 +98,7 @@ const Auth = () => {
       });
 
       if (error) throw error;
-      
+
       toast.success("Welcome back!");
       navigate("/");
     } catch (error: any) {
@@ -126,7 +126,7 @@ const Auth = () => {
           <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-bold">ContentFlow AI</CardTitle>
+          <CardTitle className="text-2xl font-bold">FlowAI</CardTitle>
           <CardDescription>
             Transform your content into viral posts across all platforms
           </CardDescription>

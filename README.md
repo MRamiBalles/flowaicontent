@@ -1,17 +1,14 @@
-# FlowAI - AI‑Native Creator Platform
+# FlowAI - AI-Native Creator Platform
 
 <div align="center">
 
 ![FlowAI Logo](https://via.placeholder.com/200x200?text=FlowAI)
 
-**The world’s first platform that combines AI video generation, viral social mechanics, and a blockchain token economy.**
+**An AI-powered content generation platform with viral social mechanics and gamification.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
 [![React](https://img.shields.io/badge/react-18%2B-61dafb.svg)](https://react.dev)
 [![Supabase](https://img.shields.io/badge/supabase-latest-3ecf8e.svg)](https://supabase.com)
-
-[Live Demo](https://flowai.vercel.app) • [Docs](./docs) • [API Docs](https://api.flowai.com/docs) • [Discord](https://discord.gg/flowai)
 
 </div>
 
@@ -19,49 +16,38 @@
 
 ## 🎯 What is FlowAI?
 
-FlowAI is the **first AI‑native creator platform** that brings together:
-- 🎬 **AI video generation** – Stable Video Diffusion, LoRA style packs
-- 🌊 **Viral social mechanics** – TikTok‑style feeds, Season Pass, Achievements
-- 💰 **Token economy** – ERC‑20 utility token on Polygon, fiat‑on‑ramp
-- 📈 **Freemium monetisation** – 4‑tier pricing from FREE to BUSINESS
-
-No other product offers all four pillars.
-
----
-
-## 📊 Traction (90‑day snapshot)
-- **$10 k MRR** (3× MoM growth)
-- **1 000 beta users** (10 k wait‑list)
-- **30 % DAU/MAU** (2× industry avg)
-- **5 % conversion** to paid (2–3 % industry avg)
-- **1.3× viral coefficient**
+FlowAI is an **AI-native creator platform** featuring:
+- 🎬 **AI Content Generation** – Transform ideas into viral posts for Twitter, LinkedIn, and Instagram
+- 🎮 **Gamification Engine** – Streaks, levels, and XP to drive daily engagement
+- 🔄 **Remix Workflow** – Iterate on generated content with AI variations
+- 💰 **Token Economy** – ERC-20 utility token on Polygon (in development)
+- 📱 **Mobile PWA** – Installable app with offline support
 
 ---
 
 ## ✨ Core Features
 
 ### Platform Core
-- ✅ AI video generation (text‑to‑video)
-- ✅ Supabase auth + RBAC (admin, moderator, user)
-- ✅ Real‑time analytics dashboard
+- ✅ AI content generation (multi-platform optimization)
+- ✅ Supabase auth + RBAC (admin, moderator, user)
+- ✅ Premium Landing Page with glassmorphism design
+- ✅ Pro Dashboard with floating header and ambient effects
 
-### AI & Content (Sprints 7-8)
-- ✅ **Video Studio**: Text-to-Video using Stable Video Diffusion (SVD)
-- ✅ **Style Packs**: LoRA adapters for custom visual styles
-- ✅ **Co-Streaming**: AI-matched collaboration and raids
-- ✅ **Safety**: Deepfake detection and content moderation
+### Gamification & Engagement
+- ✅ **Daily Streaks**: Track consecutive creation days
+- ✅ **Leveling System**: Earn XP and unlock new features
+- ✅ **Sound Effects**: Audio feedback for actions and achievements
+- ✅ **Remix Mode**: AI-powered content variations
 
-### Web3 Economy (Sprint 9)
-- ✅ **$FLOW Token**: ERC-20 utility token on Polygon
-- ✅ **Staking**: Earn rewards by locking tokens
-- ✅ **NFT Marketplace**: Buy/Sell AI assets and prompts
-- ✅ **Creator Coins**: Bonding curve economy for creators
+### Web3 Economy (Planned)
+- 🚧 **$FLOW Token**: ERC-20 utility token on Polygon
+- 🚧 **NFT Marketplace**: Buy/Sell AI assets and prompts
+- 🚧 **Creator Coins**: Bonding curve economy for creators
 
-### Growth & Mobile (Sprint 10)
-- ✅ **Mobile PWA**: Installable app with offline support
+### Mobile & Growth
+- ✅ **Mobile PWA**: Installable app
 - ✅ **Push Notifications**: Real-time engagement alerts
-- ✅ **Viral Loops**: Gamified referrals and TikTok/Reels export
-- ✅ **Social Export**: Auto-formatting for vertical video
+- 🚧 **Viral Loops**: Gamified referrals
 
 ---
 
@@ -69,130 +55,91 @@ No other product offers all four pillars.
 
 **Frontend**
 ```
-React 18 + TypeScript + Vite
+React 18 + TypeScript + Vite
 ├─ shadcn/ui (components)
 ├─ TailwindCSS (styling)
-├─ Zustand (state)
-└─ React Query (API)
+└─ React Query (API)
 ```
 
 **Backend**
 ```
-FastAPI + Python 3.11
-├─ PostgreSQL (Supabase)
-├─ Redis (Upstash) – rate‑limiting
-├─ Stripe (payments)
-└─ AWS S3 (storage)
+Supabase
+├─ PostgreSQL (database)
+├─ Edge Functions (serverless)
+├─ Auth (authentication)
+└─ Storage (file uploads)
 ```
 
 **AI/ML**
 ```
-Stable Video Diffusion
-├─ PyTorch 2.1
-├─ Diffusers
-└─ LoRA adapters
+OpenAI API
+└─ GPT-4 for content generation
 ```
 
-**Blockchain**
+**Blockchain (In Development)**
 ```
-Polygon (Layer 2)
-└─ FloToken (ERC‑20)
+Polygon (Layer 2)
+└─ FlowToken (ERC-20)
 ```
 
 ---
 
-## 🚀 Quick‑Start (Local Development)
+## 🚀 Quick Start (Local Development)
 
 ### Prerequisites
-- Node ≥ 18
-- Python ≥ 3.11
+- Node ≥ 18
 - Supabase account (free tier works)
 - Git
 
 ### 1️⃣ Clone & Install
 ```bash
-git clone https://github.com/yourusername/flowaicontent-1.git
-cd flowaicontent-1
+git clone https://github.com/yourusername/flowaicontent-7.git
+cd flowaicontent-7
 
 # Frontend
 npm install
 cp .env.example .env.local   # edit with your Supabase URL & anon key
-
-# Backend
-cd backend
-pip install -r requirements.txt
-cp .env.example .env        # edit with DB & Supabase keys
 ```
 
 ### 2️⃣ Run Services
 ```bash
-# Terminal 1 – Frontend
+# Development server
 npm run dev   # http://localhost:5173
-
-# Terminal 2 – Backend
-uvicorn app.main:app --reload   # http://localhost:8000
 ```
 
 ### 3️⃣ Database
-- Open Supabase dashboard → **SQL editor** → run `docs/database/migrations.sql`
-- The `user_profiles` and `user_roles` tables are created automatically via triggers.
+- Open Supabase dashboard → **SQL editor** → run migrations from `supabase/migrations/`
 
 ---
 
 ## 📚 Documentation
-- **Architecture** – `docs/ARCHITECTURE.md`
-- **API reference** – `docs/API.md` (Swagger UI at `/docs`)
-- **Deployment guide** – `docs/DEPLOYMENT.md`
-- **Roadmap** – `docs/ROADMAP.md`
+- **Architecture** – See `docs/ARCHITECTURE.md`
+- **Contributing** – See `CONTRIBUTING.md`
+- **Testing** – See `TESTING_GUIDE.md`
 
 ---
 
-## 💼 Business Model
+## 🎨 Design Philosophy
 
-| Revenue Stream | % of MRR | Current MRR |
-|----------------|----------|-------------|
-| Subscriptions  | 70 %     | $7.3 k |
-| Style packs    | 20 %     | $2.1 k |
-| Token economy  | 10 %     | $1.0 k |
-
-**Unit Economics**
-- CAC ≈ $50
-- LTV ≈ $180 (3.6× CAC)
-- Gross margin ≈ 75 %
-- Payback ≈ 4 months
-
----
-
-## 📈 Fundraising
-
-**Goal:** $750 k Pre‑Seed @ $3 M post‑money valuation
-
-**Use of funds**
-- 50 % Engineering (2 full‑stack, 1 ML)
-- 30 % Growth & Marketing (ads, creator partnerships)
-- 20 % Operations (legal, GPU costs)
-
-**Milestones (12 months)**
-- 100 k MAU
-- $100 k MRR
-- Series‑Seed raise ($5 M+)
+FlowAI follows these principles:
+1. **Premium First**: Glassmorphism, smooth animations, dark mode
+2. **Gamification**: Every action should feel rewarding
+3. **Performance**: Code splitting, lazy loading, optimized assets
+4. **Accessibility**: WCAG 2.1 AA compliant
 
 ---
 
 ## 🤝 Contributing
 See `CONTRIBUTING.md` for guidelines on:
 - Forking & branching
-- Code standards (PEP 8, Airbnb TS)
-- Testing (Jest, PyTest)
-- Pull‑request process
+- Code standards (ESLint, Prettier)
+- Pull-request process
 
 ---
 
 ## 📞 Contact
-- **Website:** https://flowai.com
-- **Email:** founders@flowai.com
-- **Twitter:** @FlowAI_app
-- **Discord:** https://discord.gg/flowai
+- **Email**: contact@flowai.app
+- **Twitter**: @FlowAI_app
 
 ---
 

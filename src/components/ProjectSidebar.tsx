@@ -78,7 +78,7 @@ export const ProjectSidebar = ({ selectedProjectId, onSelectProject, onNewProjec
   return (
     <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-screen">
       <div className="p-4 border-b border-sidebar-border">
-        <h2 className="text-lg font-semibold text-sidebar-foreground">ContentFlow AI</h2>
+        <h2 className="text-lg font-semibold text-sidebar-foreground">FlowAI</h2>
       </div>
 
       <div className="p-4 space-y-2">
