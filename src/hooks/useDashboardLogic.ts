@@ -163,20 +163,8 @@ export const useDashboardLogic = () => {
             // Gamification Action
             performAction('generate');
 
-            // 4. Save to `generated_content` table (The Edge Function only updates `generation_jobs`)
-            // Ideally Edge Function should do this, but for now we follow the existing pattern
-            // or we updated Edge Function? -> Checking my previous edit:
-            // "Update Job to Completed" with "result". It does NOT insert into "generated_content".
-            // So we MUST do it here.
-            const contentPromises = Object.entries(generated).map(([platform, text]) =>
-                supabase.from("generated_content").insert({
-                    project_id: project.id,
-                    platform,
-                    content_text: text,
-                })
-            );
-
-            await Promise.all(contentPromises);
+            // 4. Content is already saved by the Edge Function to `generated_content`
+            // We just need to update the UI state.
 
             setSelectedProjectId(project.id);
             toast.success("Content generated successfully!");

@@ -1,10 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from '../_shared/cors.ts'
 
 interface AuditLogWithEmails {
     id: string;
@@ -94,7 +91,7 @@ serve(async (req: Request) => {
             const { data: searchLogs, error: searchError } = await query
                 .order('created_at', { ascending: false })
                 .limit(1000); // Get more logs for searching
-            
+
             if (searchError) throw searchError;
             allLogs = searchLogs || [];
         }
@@ -148,7 +145,7 @@ serve(async (req: Request) => {
         // Apply search filter after enrichment
         if (search) {
             const searchLower = search.toLowerCase();
-            enrichedLogs = enrichedLogs.filter(log => 
+            enrichedLogs = enrichedLogs.filter(log =>
                 log.action.toLowerCase().includes(searchLower) ||
                 log.admin_email.toLowerCase().includes(searchLower) ||
                 (log.admin_name?.toLowerCase().includes(searchLower) || false) ||
@@ -156,9 +153,9 @@ serve(async (req: Request) => {
                 (log.target_name?.toLowerCase().includes(searchLower) || false) ||
                 JSON.stringify(log.details).toLowerCase().includes(searchLower)
             );
-            
+
             count = enrichedLogs.length;
-            
+
             // Apply pagination to search results
             enrichedLogs = enrichedLogs.slice(from, to + 1);
         }
