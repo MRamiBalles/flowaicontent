@@ -83,31 +83,38 @@ export const useDashboardLogic = () => {
         setGeneratedContent(null);
     };
 
-    const generateContentWithAI = async (
-        title: string,
-        content: string,
-        projectId: string
-    ): Promise<GeneratedContent> => {
-        const injectionCheck = detectPromptInjection(content);
-        if (injectionCheck.isInjection) {
-            console.warn("Potential prompt injection detected:", injectionCheck.patterns);
-            toast.warning("Your input contains patterns that may not process correctly. Please review your content.");
+    const pollJobStatus = async (jobId: string, projectId: string): Promise<GeneratedContent> => {
+        const MAX_RETRIES = 30; // 30 attempts * 2s = 60s max wait
+        const POLL_INTERVAL = 2000;
+
+        for (let i = 0; i < MAX_RETRIES; i++) {
+            const { data: job, error } = await supabase
+                .from('generation_jobs')
+                .select('status, result, error')
+                .eq('id', jobId)
+                .single();
+
+            if (error) throw new Error('Failed to check job status');
+
+            if (job.status === 'completed' && job.result) {
+                // If the job didn't write to generated_content, we do it here?
+                // The edge function should have written it, or returned it.
+                // Our edge function writes to generated_content? 
+                // Let's check the edge function logic again. 
+                // Ah, the edge function writes to 'result' in 'generation_jobs', 
+                // AND returns it. But for polling, we read 'result' column.
+                return job.result as GeneratedContent;
+            }
+
+            if (job.status === 'failed') {
+                throw new Error(job.error || 'Generation failed');
+            }
+
+            // Still processing, wait
+            await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
         }
 
-        const { data, error } = await supabase.functions.invoke('generate-content', {
-            body: { title, content, projectId }
-        });
-
-        if (error) {
-            console.error('Edge function error:', error);
-            throw new Error(error.message || 'Failed to generate content');
-        }
-
-        if (!data.success) {
-            throw new Error(data.error || 'Content generation failed');
-        }
-
-        return data.content;
+        throw new Error('Generation timed out');
     };
 
     const handleGenerate = async (title: string, content: string) => {
@@ -116,6 +123,7 @@ export const useDashboardLogic = () => {
         try {
             const validated = projectSchema.parse({ title, content });
 
+            // 1. Create Project
             const { data: project, error: projectError } = await supabase
                 .from("projects")
                 .insert({
@@ -128,11 +136,26 @@ export const useDashboardLogic = () => {
 
             if (projectError) throw projectError;
 
-            const generated = await generateContentWithAI(
-                validated.title,
-                validated.content,
-                project.id
-            );
+            // 2. Start Generation Job
+            const injectionCheck = detectPromptInjection(content);
+            if (injectionCheck.isInjection) {
+                console.warn("Potential prompt injection detected:", injectionCheck.patterns);
+                toast.warning("Your input contains patterns that may not process correctly.");
+            }
+
+            const { data: jobData, error: fnError } = await supabase.functions.invoke('generate-content', {
+                body: { title, content, projectId: project.id }
+            });
+
+            if (fnError) throw new Error(fnError.message || 'Failed to start generation');
+            if (jobData?.error) throw new Error(jobData.error);
+
+            // 3. Poll for Completion of Job
+            const jobId = jobData.jobId;
+            if (!jobId) throw new Error('No job ID returned');
+
+            toast.info("AI is processing your content...");
+            const generated = await pollJobStatus(jobId, project.id);
 
             setGeneratedContent(generated);
             fetchGenerationCount(user.id);
@@ -140,6 +163,11 @@ export const useDashboardLogic = () => {
             // Gamification Action
             performAction('generate');
 
+            // 4. Save to `generated_content` table (The Edge Function only updates `generation_jobs`)
+            // Ideally Edge Function should do this, but for now we follow the existing pattern
+            // or we updated Edge Function? -> Checking my previous edit:
+            // "Update Job to Completed" with "result". It does NOT insert into "generated_content".
+            // So we MUST do it here.
             const contentPromises = Object.entries(generated).map(([platform, text]) =>
                 supabase.from("generated_content").insert({
                     project_id: project.id,
