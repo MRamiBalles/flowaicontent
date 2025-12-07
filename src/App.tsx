@@ -23,6 +23,8 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const StreamerStudio = lazy(() => import("./pages/StreamerStudio"));
+const MusicVideo = lazy(() => import("./pages/MusicVideo"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -53,6 +55,8 @@ const App = () => (
                 <Route path="/editor" element={<VideoEditor />} />
                 <Route path="/mint-nft" element={<MintNFT />} />
                 <Route path="/pricing" element={<Pricing />} />
+                <Route path="/streamer-mode" element={<StreamerStudio />} />
+                <Route path="/music-video" element={<MusicVideo />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
