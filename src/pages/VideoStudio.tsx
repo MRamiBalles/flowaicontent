@@ -9,12 +9,15 @@ import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/hooks/useUser";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Link } from "react-router-dom";
 
 export default function VideoStudio() {
   const [prompt, setPrompt] = useState("");
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const { toast } = useToast();
   const { user, isAdmin } = useUser();
+  const { canAccess, subscription } = useSubscription();
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -65,6 +68,16 @@ export default function VideoStudio() {
               </h1>
               <p className="text-muted-foreground">Create AI videos from text.</p>
             </div>
+
+            {!canAccess("pro") && (
+              <div className="bg-primary/10 border border-primary/20 p-4 rounded-lg">
+                <p className="text-sm font-medium text-primary mb-2">Upgrade to Pro</p>
+                <p className="text-xs text-muted-foreground mb-3">Unlock premium styles and faster generation.</p>
+                <Link to="/pricing">
+                  <Button variant="outline" size="sm" className="w-full">View Plans</Button>
+                </Link>
+              </div>
+            )}
 
             <PromptEditor
               value={prompt}

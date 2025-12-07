@@ -21,6 +21,8 @@ const CoStream = lazy(() => import("./pages/CoStream"));
 const MintNFT = lazy(() => import("./pages/MintNFT"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
