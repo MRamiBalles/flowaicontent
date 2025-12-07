@@ -152,7 +152,6 @@ export default function CoStream() {
                     />
                 )}
             </div>
-        </div>
-        </AppLayout >
+        </AppLayout>
     );
 }
