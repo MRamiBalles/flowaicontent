@@ -10,7 +10,14 @@ The AI Video space is crowded but growing rapidly.
 | **Sora (OpenAI)** | Unmatched realism (hype) | Not widely available, no audio | **Audio-reactivity** & **Social features**. |
 | **Kaiber** | Specialized in music visualization | Rendering time | **Real-time Co-streaming** elements. |
 
-## 2. "Millionaire Ideas" (High ROI Pivots)
+## 2. Super App Competitors (New Pivot)
+| Platform | Strength | Weakness | FlowAI Advantage |
+| :--- | :--- | :--- | :--- |
+| **YouTube** | Infinite content, massive reach | Algorithm rewards "Clickbait" & Addiction | **Constructive Algo**: Rewards *learning*, not just watch time. |
+| **Twitch/Kick** | Best live interaction | Kick is "Trashy" / Gambling focused | **Classy/Educational**: "The Anti-Doomscrolling" platform. |
+| **Omegle (RIP)** | Instant discovery | Dangerous, Unmoderated | **Safe/Verified**: AI-moderated, Reputation/Interest-based matching. |
+
+## 3. "Millionaire Ideas" (High ROI Pivots)
 To compete, FlowAI should not just "do video" but solve a specific expensive problem.
 
 ### 💡 Idea A: "The Streamer's AI Studio" (Niche: Gaming/Live)
