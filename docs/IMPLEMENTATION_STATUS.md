@@ -55,12 +55,12 @@ FlowAI es una plataforma de generación de contenido con IA que combina creació
 ### Fase 1: MVP Completion (Semanas 1-2)
 | Task | Prioridad | Esfuerzo | Estado |
 |------|-----------|----------|--------|
-| **Stripe Integration** | P0 | 1 semana | ⬜ Pendiente |
-| **Planes de Suscripción UI** | P0 | 3 días | ⬜ Pendiente |
-| **Email Notifications** | P1 | 2 días | ⬜ Pendiente |
-| **Onboarding Flow Mejorado** | P1 | 2 días | ⬜ Pendiente |
-| **Privacy Policy & ToS** | P0 | 1 día | ⬜ Pendiente |
-| **Error Monitoring (Sentry)** | P1 | 4 horas | ⬜ Pendiente |
+| **Stripe Integration** | P0 | 1 semana | ✅ Completo |
+| **Planes de Suscripción UI** | P0 | 3 días | ✅ Completo |
+| **Email Notifications** | P1 | 2 días | ✅ Completo |
+| **Onboarding Flow Mejorado** | P1 | 2 días | ✅ Completo |
+| **Privacy Policy & ToS** | P0 | 1 día | ✅ Completo |
+| **Error Monitoring (Sentry)** | P1 | 4 horas | ⬜ Pendiente (Config) |
 
 ### Fase 2: Beta Features (Semanas 3-4)
 | Task | Prioridad | Esfuerzo | Estado |
