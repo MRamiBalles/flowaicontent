@@ -28,6 +28,7 @@ const MusicVideo = lazy(() => import("./pages/MusicVideo"));
 const Feed = lazy(() => import("./pages/Feed"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const FlowRoulette = lazy(() => import("./pages/FlowRoulette"));
+const Watch = lazy(() => import("./pages/Watch"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="/feed" element={<Feed />} />
                 <Route path="/profile/:id" element={<ProfilePage />} />
                 <Route path="/roulette" element={<FlowRoulette />} />
+                <Route path="/watch/:videoId" element={<Watch />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
