@@ -97,13 +97,11 @@ export const useDashboardLogic = () => {
             if (error) throw new Error('Failed to check job status');
 
             if (job.status === 'completed' && job.result) {
-                // If the job didn't write to generated_content, we do it here?
-                // The edge function should have written it, or returned it.
-                // Our edge function writes to generated_content? 
-                // Let's check the edge function logic again. 
-                // Ah, the edge function writes to 'result' in 'generation_jobs', 
-                // AND returns it. But for polling, we read 'result' column.
-                return job.result as GeneratedContent;
+                const result = job.result as unknown as GeneratedContent;
+                if (result.twitter && result.linkedin && result.instagram) {
+                    return result;
+                }
+                throw new Error('Invalid result format');
             }
 
             if (job.status === 'failed') {
