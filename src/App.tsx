@@ -19,6 +19,8 @@ const Index = lazy(() => import("./pages/Index"));
 const VideoStudio = lazy(() => import("./pages/VideoStudio"));
 const CoStream = lazy(() => import("./pages/CoStream"));
 const MintNFT = lazy(() => import("./pages/MintNFT"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App = () => (
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/editor" element={<VideoEditor />} />
               <Route path="/mint-nft" element={<MintNFT />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

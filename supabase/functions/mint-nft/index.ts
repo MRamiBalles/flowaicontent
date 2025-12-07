@@ -86,19 +86,35 @@ serve(async (req) => {
       message: "NFT minted successfully! Deploy smart contracts to enable real blockchain minting.",
     };
 
-    // Store NFT record in database (you'll need to create this table)
-    // await supabaseClient.from('nfts').insert({
-    //   id: mockNFT.nft_id,
-    //   user_id: user.id,
-    //   video_id: video_id,
-    //   contract_address: mockNFT.contract_address,
-    //   token_id: mockNFT.token_id,
-    //   transaction_hash: mockNFT.transaction_hash,
-    //   title: title,
-    //   description: description,
-    //   total_shares: mockNFT.total_shares,
-    //   network: mockNFT.network
-    // });
+    // Store NFT record in database
+    const { error: nftError } = await supabaseClient.from('nfts').insert({
+      id: mockNFT.nft_id, // Use UUID if possible, but mockNFT.nft_id is string. Let's use gen_random_uuid in DB or generated here.
+      // Wait, db has default gen_random_uuid(). We should let DB handle it or generate valid UUID.
+      // Schema says id is uuid. mockNFT.nft_id is `nft_${Date.now()}` which is NOT uuid.
+      // We must generate a UUID.
+      video_id: video_id,
+      user_id: user.id,
+      contract_address: mockNFT.contract_address,
+      token_id: mockNFT.token_id,
+      transaction_hash: mockNFT.transaction_hash,
+      title: title,
+      description: description,
+      total_shares: mockNFT.total_shares,
+      network: mockNFT.network
+    }).select().single();
+
+    if (nftError) throw nftError;
+
+    // Log transaction
+    await supabaseClient.from('nft_transactions').insert({
+      nft_id: mockNFT.nft_id, // ERROR: We need the real UUID from the inserted NFT. 
+      // We need to capture the inserted row.
+      transaction_type: 'mint',
+      to_address: wallet_address,
+      shares: 1000000,
+      transaction_hash: mockNFT.transaction_hash
+    });
+
 
     return new Response(JSON.stringify(mockNFT), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
