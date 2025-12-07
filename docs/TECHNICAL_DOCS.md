@@ -30,6 +30,8 @@ FlowAI follows a **Serverless-First** architecture leveraging the T3 Stack philo
 -   `subscriptions`: Stripe subscription status map
 -   `admin_audit_logs`: Security trail for admin actions
 -   `generation_attempts`: Rate limit tracking
+-   `categories`: Content classification with "Learn-to-Earn" multipliers
+-   `followers`: Social graph (Follow/Unfollow relationships)
 
 ## 3. Security Implementation
 -   **Row Level Security (RLS)**: Enabled on ALL tables. Users can only SELECT/UPDATE their own data.

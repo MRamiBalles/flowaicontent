@@ -25,6 +25,9 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const StreamerStudio = lazy(() => import("./pages/StreamerStudio"));
 const MusicVideo = lazy(() => import("./pages/MusicVideo"));
+const Feed = lazy(() => import("./pages/Feed"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const FlowRoulette = lazy(() => import("./pages/FlowRoulette"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -57,6 +60,9 @@ const App = () => (
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/streamer-mode" element={<StreamerStudio />} />
                 <Route path="/music-video" element={<MusicVideo />} />
+                <Route path="/feed" element={<Feed />} />
+                <Route path="/profile/:id" element={<ProfilePage />} />
+                <Route path="/roulette" element={<FlowRoulette />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
