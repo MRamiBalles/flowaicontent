@@ -87,11 +87,8 @@ serve(async (req) => {
     };
 
     // Store NFT record in database
-    const { error: nftError } = await supabaseClient.from('nfts').insert({
-      id: mockNFT.nft_id, // Use UUID if possible, but mockNFT.nft_id is string. Let's use gen_random_uuid in DB or generated here.
-      // Wait, db has default gen_random_uuid(). We should let DB handle it or generate valid UUID.
-      // Schema says id is uuid. mockNFT.nft_id is `nft_${Date.now()}` which is NOT uuid.
-      // We must generate a UUID.
+    // Store NFT record in database
+    const { data: insertedNft, error: nftError } = await supabaseClient.from('nfts').insert({
       video_id: video_id,
       user_id: user.id,
       contract_address: mockNFT.contract_address,
@@ -107,13 +104,15 @@ serve(async (req) => {
 
     // Log transaction
     await supabaseClient.from('nft_transactions').insert({
-      nft_id: mockNFT.nft_id, // ERROR: We need the real UUID from the inserted NFT. 
-      // We need to capture the inserted row.
+      nft_id: insertedNft.id,
       transaction_type: 'mint',
       to_address: wallet_address,
       shares: 1000000,
       transaction_hash: mockNFT.transaction_hash
     });
+
+    // Update mock response with real ID
+    mockNFT.nft_id = insertedNft.id;
 
 
     return new Response(JSON.stringify(mockNFT), {

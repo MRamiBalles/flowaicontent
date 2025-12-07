@@ -18,18 +18,14 @@ export const SubscriptionSettings = () => {
 
     const fetchSubscriptionData = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const { data, error } = await supabase.functions.invoke('subscriptions?action=current', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
 
-            if (token) {
-                const response = await fetch('http://localhost:8000/v1/subscriptions/current', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-                setSubscription(data);
-            }
+            if (error) throw error;
+            setSubscription(data);
+
         } catch (error) {
             toast.error('Failed to load subscription data');
         } finally {
@@ -39,18 +35,12 @@ export const SubscriptionSettings = () => {
 
     const fetchUsageData = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
-            if (token) {
-                const response = await fetch('http://localhost:8000/v1/subscriptions/usage', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = await response.json();
-                setUsage(data.usage);
-            }
+            const { data, error } = await supabase.functions.invoke('subscriptions', {
+                method: 'POST',
+                body: { action: 'usage' }
+            });
+            if (error) throw error;
+            setUsage(data.usage);
         } catch (error) {
             console.error('Failed to load usage data');
         }
@@ -62,21 +52,16 @@ export const SubscriptionSettings = () => {
         }
 
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
-            if (!token) return;
-
-            const response = await fetch('http://localhost:8000/v1/subscriptions/cancel', {
+            const { error } = await supabase.functions.invoke('subscriptions', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                body: { action: 'cancel' }
             });
 
-            if (response.ok) {
+            if (!error) {
                 toast.success('Subscription will be canceled at period end');
-                fetchSubscriptionData();
+                // Refresh data
+                // fetchSubscriptionData(); // Need to refactor to be callable or just reload
+                window.location.reload();
             } else {
                 throw new Error('Failed to cancel');
             }
@@ -87,21 +72,14 @@ export const SubscriptionSettings = () => {
 
     const handleReactivate = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
-            if (!token) return;
-
-            const response = await fetch('http://localhost:8000/v1/subscriptions/reactivate', {
+            const { error } = await supabase.functions.invoke('subscriptions', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                body: { action: 'reactivate' }
             });
 
-            if (response.ok) {
+            if (!error) {
                 toast.success('Subscription reactivated!');
-                fetchSubscriptionData();
+                window.location.reload();
             } else {
                 throw new Error('Failed to reactivate');
             }
@@ -112,17 +90,11 @@ export const SubscriptionSettings = () => {
 
     const handleManageBilling = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-
-            if (!token) return;
-
-            const response = await fetch('http://localhost:8000/v1/subscriptions/portal?return_url=' + window.location.href, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const { data, error } = await supabase.functions.invoke('subscriptions', {
+                method: 'POST',
+                body: { action: 'portal' }
             });
-            const data = await response.json();
+            if (error) throw error;
             window.location.href = data.url;
         } catch (error) {
             toast.error('Failed to open billing portal');

@@ -1,9 +1,12 @@
-import { Check, Star, Zap, Building, Crown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Star, Zap, Building, Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useUser } from "@/hooks/useUser";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const PLANS = [
     {

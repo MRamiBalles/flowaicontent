@@ -22,6 +22,7 @@ const MintNFT = lazy(() => import("./pages/MintNFT"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
 const queryClient = new QueryClient();
 
@@ -37,16 +38,21 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/video-studio" element={<VideoStudio />} />
-              <Route path="/co-stream" element={<CoStream />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/editor" element={<VideoEditor />} />
-              <Route path="/mint-nft" element={<MintNFT />} />
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/pricing" element={<Pricing />} />
+
+              {/* Protected Routes requiring Onboarding */}
+              <Route element={<RequireOnboarding />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/video-studio" element={<VideoStudio />} />
+                <Route path="/co-stream" element={<CoStream />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/editor" element={<VideoEditor />} />
+                <Route path="/mint-nft" element={<MintNFT />} />
+                <Route path="/pricing" element={<Pricing />} />
+              </Route>
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
