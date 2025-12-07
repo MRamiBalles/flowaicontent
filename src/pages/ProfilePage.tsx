@@ -169,15 +169,32 @@ export default function ProfilePage() {
                     </Card>
                 </div>
 
-                {/* Content Tabs (Placeholder) */}
+                {/* Content Tabs */}
                 <div className="space-y-4">
-                    <h2 className="text-xl font-bold">Recent Creations</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="aspect-video bg-muted rounded-lg border border-border/50 animate-pulse" />
+                    <div className="flex border-b border-border w-full">
+                        <button className="px-4 py-2 border-b-2 border-primary font-medium text-sm">Videos</button>
+                        <button className="px-4 py-2 border-b-2 border-transparent text-muted-foreground hover:text-foreground font-medium text-sm">Playlists</button>
+                        <button className="px-4 py-2 border-b-2 border-transparent text-muted-foreground hover:text-foreground font-medium text-sm">Community</button>
+                        <button className="px-4 py-2 border-b-2 border-transparent text-muted-foreground hover:text-foreground font-medium text-sm">About</button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={i} className="group cursor-pointer space-y-2">
+                                <div className="aspect-video bg-muted rounded-xl overflow-hidden relative border border-border/50">
+                                    <img
+                                        src={`https://images.unsplash.com/photo-${1600000000000 + i}?w=400&auto=format&fit=crop&q=60`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] px-1 rounded">10:00</div>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-sm leading-tight group-hover:text-primary transition-colors">How to build a SaaS in 2025 #{i}</h4>
+                                    <p className="text-xs text-muted-foreground">1.2K views • 3 days ago</p>
+                                </div>
+                            </div>
                         ))}
                     </div>
-                    <p className="text-center text-muted-foreground py-8">User has not published any public collections yet.</p>
                 </div>
 
             </div>

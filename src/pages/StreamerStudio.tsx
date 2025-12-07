@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Camera, Smile, Zap, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,60 +66,101 @@ export default function StreamerStudio() {
                     </div>
                 </div>
 
+                <div className="flex gap-4 mb-6">
+                    <Button
+                        variant={selectedStyle !== 'avatar' ? 'default' : 'outline'}
+                        onClick={() => setSelectedStyle('pixel')}
+                        className="w-full"
+                    >
+                        Emote Generator
+                    </Button>
+                    <Button
+                        variant={selectedStyle === 'avatar' ? 'default' : 'outline'}
+                        onClick={() => setSelectedStyle('avatar')}
+                        className="w-full relative"
+                    >
+                        Avatar Studio <Badge className="absolute -top-2 -right-2 bg-yellow-500 text-black">NEW</Badge>
+                    </Button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Capture Area */}
                     <Card className="border-border/50 bg-card/50 backdrop-blur">
                         <CardContent className="p-6 space-y-6">
-                            <div className="aspect-video bg-black/80 rounded-xl overflow-hidden relative flex items-center justify-center border-2 border-dashed border-muted-foreground/20">
-                                {isCameraOn ? (
-                                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
-                                ) : (
-                                    <div className="text-center space-y-4">
-                                        <Camera className="w-12 h-12 text-muted-foreground mx-auto" />
-                                        <Button onClick={startCamera} variant="outline">
-                                            Enable Webcam
-                                        </Button>
+                            {selectedStyle === 'avatar' ? (
+                                <div className="space-y-6">
+                                    <div className="aspect-square bg-muted rounded-xl flex items-center justify-center border-2 border-dashed border-primary/20 relative overflow-hidden group">
+                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} className="w-full h-full object-cover p-4" />
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                            <Button variant="secondary">Upload Custom Skin</Button>
+                                            <p className="text-xs text-white/70">.VRM or .PNG</p>
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {["Cyber", "Fantasy", "Realism"].map(theme => (
+                                            <Button key={theme} variant="outline" size="sm" onClick={() => toast.success(`Applied ${theme} Skin`)}>
+                                                {theme}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <Button className="w-full" disabled>Generate New Skin (Premium)</Button>
+                                </div>
+                            ) : (
+                                <div className="aspect-video bg-black/80 rounded-xl overflow-hidden relative flex items-center justify-center border-2 border-dashed border-muted-foreground/20">
+                                    {isCameraOn ? (
+                                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
+                                    ) : (
+                                        <div className="text-center space-y-4">
+                                            <Camera className="w-12 h-12 text-muted-foreground mx-auto" />
+                                            <Button onClick={startCamera} variant="outline">
+                                                Enable Webcam
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
-                            <div className="space-y-4">
-                                <label className="text-sm font-medium">Choose Emote Style</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {EMOTE_STYLES.map(style => (
-                                        <button
-                                            key={style.id}
-                                            onClick={() => setSelectedStyle(style.id)}
-                                            className={`p-3 rounded-lg border flex flex-col items-center gap-2 transition-all ${selectedStyle === style.id
+                            {selectedStyle !== 'avatar' && (
+                                <div className="space-y-4">
+                                    <label className="text-sm font-medium">Choose Emote Style</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {EMOTE_STYLES.map(style => (
+                                            <button
+                                                key={style.id}
+                                                onClick={() => setSelectedStyle(style.id)}
+                                                className={`p-3 rounded-lg border flex flex-col items-center gap-2 transition-all ${selectedStyle === style.id
                                                     ? "border-purple-500 bg-purple-500/10 text-purple-500"
                                                     : "border-border hover:border-primary/50"
-                                                }`}
-                                        >
-                                            <span className="text-2xl">{style.emoji}</span>
-                                            <span className="text-xs font-medium">{style.name}</span>
-                                        </button>
-                                    ))}
+                                                    }`}
+                                            >
+                                                <span className="text-2xl">{style.emoji}</span>
+                                                <span className="text-xs font-medium">{style.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
-                            <Button
-                                size="lg"
-                                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                                onClick={generateEmote}
-                                disabled={isGenerating || !isCameraOn}
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Generating Magic...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Zap className="w-4 h-4 mr-2" />
-                                        Generate Emote
-                                    </>
-                                )}
-                            </Button>
+                            {selectedStyle !== 'avatar' && (
+                                <Button
+                                    size="lg"
+                                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                                    onClick={generateEmote}
+                                    disabled={isGenerating || !isCameraOn}
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            Generating Magic...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Zap className="w-4 h-4 mr-2" />
+                                            Generate Emote
+                                        </>
+                                    )}
+                                </Button>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -127,29 +169,40 @@ export default function StreamerStudio() {
                         <CardContent className="p-6">
                             <h3 className="font-semibold mb-4 flex items-center gap-2">
                                 <Smile className="w-4 h-4 text-primary" />
-                                Your Emote Gallery
+                                {selectedStyle === 'avatar' ? "Your Avatar Collection" : "Your Emote Gallery"}
                             </h3>
 
-                            {generatedEmotes.length === 0 ? (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    No emotes yet. Make a funny face and hit generate!
+                            {selectedStyle === 'avatar' ? (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="aspect-square bg-primary/10 rounded-lg flex items-center justify-center border-2 border-primary">
+                                        Active
+                                    </div>
+                                    <div className="aspect-square bg-muted rounded-lg flex items-center justify-center border border-dashed">
+                                        Empty Slot
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-3 gap-4">
-                                    {generatedEmotes.map((url, idx) => (
-                                        <div key={idx} className="group relative aspect-square bg-muted/20 rounded-lg p-2 border border-border/50 hover:border-primary/50 transition-all">
-                                            <img src={url} alt="Emote" className="w-full h-full object-contain" />
-                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                                                <Button size="icon" variant="secondary" className="h-8 w-8">
-                                                    <Download className="w-4 h-4" />
-                                                </Button>
+                                generatedEmotes.length === 0 ? (
+                                    <div className="text-center py-12 text-muted-foreground">
+                                        No emotes yet. Make a funny face and hit generate!
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {generatedEmotes.map((url, idx) => (
+                                            <div key={idx} className="group relative aspect-square bg-muted/20 rounded-lg p-2 border border-border/50 hover:border-primary/50 transition-all">
+                                                <img src={url} alt="Emote" className="w-full h-full object-contain" />
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                                                    <Button size="icon" variant="secondary" className="h-8 w-8">
+                                                        <Download className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="absolute top-1 right-1 bg-black/60 text-[10px] px-1 rounded text-white font-mono">
+                                                    112x112
+                                                </div>
                                             </div>
-                                            <div className="absolute top-1 right-1 bg-black/60 text-[10px] px-1 rounded text-white font-mono">
-                                                112x112
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )
                             )}
                         </CardContent>
                     </Card>
