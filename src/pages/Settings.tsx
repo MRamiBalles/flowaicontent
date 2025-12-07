@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ProjectSidebar } from "@/components/ProjectSidebar";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { useUser } from "@/hooks/useUser";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -23,8 +24,8 @@ interface GenerationHistory {
 
 const Settings = () => {
     const navigate = useNavigate();
+    const { user, isAdmin, loading: authLoading } = useUser();
     const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<any>(null);
     const [profile, setProfile] = useState<any>(null);
     const [displayName, setDisplayName] = useState("");
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -32,15 +33,12 @@ const Settings = () => {
     const [history, setHistory] = useState<GenerationHistory[]>([]);
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
-                navigate("/auth");
-            } else {
-                setUser(session.user);
-                fetchData(session.user.id);
-            }
-        });
-    }, [navigate]);
+        if (!authLoading && !user) {
+            navigate("/auth");
+        } else if (user) {
+            fetchData(user.id);
+        }
+    }, [user, authLoading, navigate]);
 
     const fetchData = async (userId: string) => {
         setLoading(true);
@@ -109,20 +107,14 @@ const Settings = () => {
         }
     };
 
-    if (!user) return null;
+    if (authLoading || !user) return null;
 
     const remainingGenerations = Math.max(0, 10 - generationCount);
     const rateLimitStatus = Math.min(100, (generationCount / 10) * 100);
 
     return (
-        <div className="flex h-screen overflow-hidden">
-            <ProjectSidebar
-                selectedProjectId={null}
-                onSelectProject={() => navigate("/")}
-                onNewProject={() => navigate("/")}
-            />
-
-            <div className="flex-1 overflow-auto p-8 bg-muted/30">
+        <AppLayout user={user} isAdmin={isAdmin}>
+            <div className="flex-1 overflow-auto p-8 bg-muted/30 min-h-screen">
                 <div className="max-w-4xl mx-auto space-y-8">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
@@ -274,6 +266,7 @@ const Settings = () => {
                 </div>
             </div>
         </div>
+        </AppLayout >
     );
 };
 
