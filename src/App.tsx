@@ -33,6 +33,8 @@ const VoiceStudio = lazy(() => import("./pages/VoiceStudio"));
 const LicensingMarketplace = lazy(() => import("./pages/LicensingMarketplace"));
 const VideoEditorPro = lazy(() => import("./pages/VideoEditorPro"));
 const EnterpriseAdmin = lazy(() => import("./pages/EnterpriseAdmin"));
+const BrandDealsMarketplace = lazy(() => import("./pages/BrandDealsMarketplace"));
+const DeveloperPortal = lazy(() => import("./pages/DeveloperPortal"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -73,6 +75,8 @@ const App = () => (
                 <Route path="/licensing" element={<LicensingMarketplace />} />
                 <Route path="/video-editor-pro" element={<VideoEditorPro />} />
                 <Route path="/enterprise" element={<EnterpriseAdmin />} />
+                <Route path="/brand-deals" element={<BrandDealsMarketplace />} />
+                <Route path="/developers" element={<DeveloperPortal />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
