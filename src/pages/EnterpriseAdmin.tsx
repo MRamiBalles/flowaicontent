@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ interface Tenant {
     custom_domain: string | null;
     user_limit: number;
     status: string;
-    features: Record<string, boolean>;
+    features: Record<string, boolean> | unknown;
 }
 
 interface EnterpriseUser {
@@ -57,10 +57,10 @@ interface EnterpriseUser {
 interface AuditLog {
     id: string;
     action: string;
-    resource_type: string;
-    details: Record<string, unknown>;
+    resource_type: string | null;
+    details: Record<string, unknown> | unknown;
     created_at: string;
-    user?: { email: string };
+    user_id?: string;
 }
 
 interface ApiKey {
@@ -149,7 +149,7 @@ const EnterpriseAdmin: React.FC = () => {
                 .single();
 
             if (tenantData) {
-                setTenant(tenantData);
+                setTenant(tenantData as Tenant);
 
                 // Load users
                 const { data: usersData } = await supabase
@@ -165,12 +165,12 @@ const EnterpriseAdmin: React.FC = () => {
                 if (['owner', 'admin'].includes(membership.role)) {
                     const { data: logsData } = await supabase
                         .from('enterprise_audit_logs')
-                        .select('*, user:user_id(email)')
+                        .select('*')
                         .eq('tenant_id', membership.tenant_id)
                         .order('created_at', { ascending: false })
                         .limit(50);
 
-                    setAuditLogs(logsData || []);
+                    setAuditLogs((logsData || []) as AuditLog[]);
 
                     // Load API keys
                     const { data: keysData } = await supabase
@@ -622,7 +622,7 @@ const EnterpriseAdmin: React.FC = () => {
                                                 <div>
                                                     <p className="text-sm font-medium">{log.action}</p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {log.user?.email || 'System'} • {log.resource_type}
+                                                        {log.user_id ? 'User action' : 'System'} • {log.resource_type || 'N/A'}
                                                     </p>
                                                 </div>
                                             </div>

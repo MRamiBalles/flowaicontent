@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -296,14 +296,22 @@ const VideoEditorPro: React.FC = () => {
             const compositionData = {
                 tracks: tracks.map(track => ({
                     ...track,
-                    clips: clips.filter(c => c.track_id === track.id),
+                    clips: clips.filter(c => c.track_id === track.id).map(c => ({
+                        id: c.id,
+                        track_id: c.track_id,
+                        clip_type: c.clip_type,
+                        start_frame: c.start_frame,
+                        end_frame: c.end_frame,
+                        text_content: c.text_content || null,
+                        source_url: c.source_url || null,
+                    })),
                 })),
             };
 
             const { error } = await supabase
                 .from('video_projects')
                 .update({
-                    composition_data: compositionData,
+                    composition_data: JSON.parse(JSON.stringify(compositionData)),
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', project.id);
