@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useUser } from "@/hooks/useUser";
-import { CommentSection } from "@/components/social/CommentSection";
-import { DonationModal } from "@/components/social/DonationModal";
+import { CommentSection } from "@/components/Social/CommentSection";
+import { DonationModal } from "@/components/Social/DonationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
