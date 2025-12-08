@@ -13,11 +13,12 @@ import { toast } from "sonner";
 
 interface Profile {
     id: string;
-    username: string;
-    avatar_url: string;
-    bio: string;
-    flow_points: number;
-    total_minutes_watched: number;
+    full_name?: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+    bio?: string | null;
+    flow_points?: number;
+    total_minutes_watched?: number;
 }
 
 export default function ProfilePage() {
@@ -34,7 +35,7 @@ export default function ProfilePage() {
             // For now, mocking or fetching basic auth user data if public, 
             // but since RLS might restrict auth.users, we typically read from a public 'profiles' table.
             // Assuming 'profiles' table exists from previous context.
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from("profiles")
                 .select("*")
                 .eq("id", id)
@@ -50,7 +51,7 @@ export default function ProfilePage() {
     useEffect(() => {
         async function checkFollow() {
             if (!user || !id) return;
-            const { data } = await supabase
+            const { data } = await (supabase as any)
                 .from("followers")
                 .select("*")
                 .eq("follower_id", user.id)
@@ -67,14 +68,14 @@ export default function ProfilePage() {
             if (!user) throw new Error("Must be logged in");
 
             if (isFollowing) {
-                const { error } = await supabase
+                const { error } = await (supabase as any)
                     .from("followers")
                     .delete()
                     .eq("follower_id", user.id)
                     .eq("following_id", id);
                 if (error) throw error;
             } else {
-                const { error } = await supabase
+                const { error } = await (supabase as any)
                     .from("followers")
                     .insert({ follower_id: user.id, following_id: id });
                 if (error) throw error;

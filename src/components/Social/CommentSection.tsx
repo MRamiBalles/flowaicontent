@@ -30,7 +30,7 @@ export function CommentSection({ videoId }: { videoId: string }) {
     const { data: comments, isLoading } = useQuery({
         queryKey: ["comments", videoId],
         queryFn: async () => {
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from("comments")
                 .select(`
             *,
@@ -42,7 +42,6 @@ export function CommentSection({ videoId }: { videoId: string }) {
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
-            // Use "any" casting effectively because relation types might not be auto-generated yet
             return data as any[];
         }
     });
@@ -51,7 +50,7 @@ export function CommentSection({ videoId }: { videoId: string }) {
     const postMutation = useMutation({
         mutationFn: async (content: string) => {
             if (!user) throw new Error("Login required");
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from("comments")
                 .insert({
                     video_id: videoId,

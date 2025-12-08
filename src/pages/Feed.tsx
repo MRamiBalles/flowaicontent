@@ -13,11 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 export default function Feed() {
     const { user, isAdmin } = useUser();
 
-    // Mock fetching categories
+    // Fetch categories
     const { data: categories } = useQuery({
         queryKey: ["categories"],
         queryFn: async () => {
-            const { data } = await supabase.from("categories").select("*");
+            const { data } = await (supabase as any).from("categories").select("*");
             return data || [];
         }
     });

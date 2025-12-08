@@ -41,6 +41,57 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       creator_earnings: {
         Row: {
           amount_cents: number
@@ -94,6 +145,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      donations: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          donor_id: string
+          id: string
+          message: string | null
+          streamer_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          donor_id: string
+          id?: string
+          message?: string | null
+          streamer_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          donor_id?: string
+          id?: string
+          message?: string | null
+          streamer_id?: string
+        }
+        Relationships: []
+      }
+      followers: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
       }
       generated_content: {
         Row: {
@@ -335,19 +434,34 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
           created_at: string
+          flow_points: number
           full_name: string | null
           id: string
+          total_minutes_watched: number
+          username: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          flow_points?: number
           full_name?: string | null
           id: string
+          total_minutes_watched?: number
+          username?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          flow_points?: number
           full_name?: string | null
           id?: string
+          total_minutes_watched?: number
+          username?: string | null
         }
         Relationships: []
       }
