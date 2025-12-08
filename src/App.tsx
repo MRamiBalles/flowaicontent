@@ -41,6 +41,7 @@ const MobileApp = lazy(() => import("./pages/MobileApp"));
 const CreatorAnalytics = lazy(() => import("./pages/CreatorAnalytics"));
 const VideoDubbing = lazy(() => import("./pages/VideoDubbing"));
 const ThumbnailGenerator = lazy(() => import("./pages/ThumbnailGenerator"));
+const Syndication = lazy(() => import("./pages/Syndication"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -89,6 +90,7 @@ const App = () => (
                 <Route path="/analytics" element={<CreatorAnalytics />} />
                 <Route path="/dubbing" element={<VideoDubbing />} />
                 <Route path="/thumbnails" element={<ThumbnailGenerator />} />
+                <Route path="/syndication" element={<Syndication />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
