@@ -47,6 +47,46 @@ serve(async (req) => {
       });
     }
 
+    // Rate Limiting - 10 transactions per hour per user
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const RATE_LIMIT = 10;
+    const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+    const windowStart = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
+
+    const { count: recentMints, error: countError } = await supabaseAdmin
+      .from("nft_transactions")
+      .select("*", { count: "exact", head: true })
+      .eq("transaction_type", "mint")
+      .gte("created_at", windowStart)
+      .eq("to_address", user.user_metadata?.wallet_address);
+
+    if (recentMints !== null && recentMints >= RATE_LIMIT) {
+      return new Response(
+        JSON.stringify({
+          error: "Rate limit exceeded. Maximum 10 mints per hour.",
+          retryAfter: "1 hour",
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": "3600",
+          },
+          status: 429,
+        }
+      );
+    }
+
     const body = await req.json();
 
     // Validate request body with Zod
