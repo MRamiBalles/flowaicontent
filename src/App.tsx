@@ -31,6 +31,8 @@ const FlowRoulette = lazy(() => import("./pages/FlowRoulette"));
 const Watch = lazy(() => import("./pages/Watch"));
 const VoiceStudio = lazy(() => import("./pages/VoiceStudio"));
 const LicensingMarketplace = lazy(() => import("./pages/LicensingMarketplace"));
+const VideoEditorPro = lazy(() => import("./pages/VideoEditorPro"));
+const EnterpriseAdmin = lazy(() => import("./pages/EnterpriseAdmin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -69,6 +71,8 @@ const App = () => (
                 <Route path="/watch/:videoId" element={<Watch />} />
                 <Route path="/voice-studio" element={<VoiceStudio />} />
                 <Route path="/licensing" element={<LicensingMarketplace />} />
+                <Route path="/video-editor-pro" element={<VideoEditorPro />} />
+                <Route path="/enterprise" element={<EnterpriseAdmin />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
