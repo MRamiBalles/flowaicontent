@@ -39,6 +39,7 @@ const InteractivePlayer = lazy(() => import("./pages/InteractivePlayer"));
 const TokenStaking = lazy(() => import("./pages/TokenStaking"));
 const MobileApp = lazy(() => import("./pages/MobileApp"));
 const CreatorAnalytics = lazy(() => import("./pages/CreatorAnalytics"));
+const VideoDubbing = lazy(() => import("./pages/VideoDubbing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -85,6 +86,7 @@ const App = () => (
                 <Route path="/staking" element={<TokenStaking />} />
                 <Route path="/mobile" element={<MobileApp />} />
                 <Route path="/analytics" element={<CreatorAnalytics />} />
+                <Route path="/dubbing" element={<VideoDubbing />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
