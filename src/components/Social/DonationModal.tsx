@@ -41,7 +41,7 @@ export function DonationModal({ streamerId, streamerName }: { streamerId: string
 
         try {
             // 1. Record in DB
-            const { error } = await supabase.from("donations").insert({
+            const { error } = await (supabase as any).from("donations").insert({
                 donor_id: user.id,
                 streamer_id: streamerId,
                 amount_cents: selectedAmount,
