@@ -80,11 +80,16 @@ serve(async (req) => {
         }
 
         // 8. Perform transaction
+        // Generate a unique transaction hash for tracking
+        const txHash = `local_${Date.now()}_${crypto.randomUUID()}`
+        let fromAddress: string | null = null
+        let toAddress: string = userAddress
+
         if (action === 'buy') {
             // Check if seller has enough shares
             const { data: availableShares } = await supabaseAdmin
                 .from('nft_shares')
-                .select('shares')
+                .select('shares, owner_address')
                 .eq('nft_id', nftId)
                 .neq('owner_address', userAddress)
                 .order('shares', { ascending: false })
@@ -94,6 +99,9 @@ serve(async (req) => {
             if (!availableShares || availableShares.shares < shares) {
                 throw new Error('Not enough shares available for purchase')
             }
+
+            // Track the seller address for transaction logging
+            fromAddress = availableShares.owner_address
 
             // Update or create user's share record
             const { data: existingShare } = await supabaseAdmin
@@ -130,6 +138,10 @@ serve(async (req) => {
                 throw new Error('Insufficient shares to sell')
             }
 
+            // For sell, the user is the sender
+            fromAddress = userAddress
+            toAddress = 'marketplace' // Placeholder for marketplace pool
+
             // Update user's shares
             const newShares = userShare.shares - shares
             if (newShares === 0) {
@@ -143,6 +155,25 @@ serve(async (req) => {
                     .update({ shares: newShares })
                     .eq('id', userShare.id)
             }
+        }
+
+        // Log the transaction for audit trail and fraud detection
+        const { error: txError } = await supabaseAdmin
+            .from('nft_transactions')
+            .insert({
+                nft_id: nftId,
+                transaction_type: action, // 'buy' or 'sell'
+                from_address: fromAddress,
+                to_address: toAddress,
+                shares: shares,
+                price_matic: price || null,
+                transaction_hash: txHash
+            })
+
+        if (txError) {
+            console.error('Failed to log transaction:', txError)
+            // Don't fail the operation, just log the error
+            // Transaction was successful, logging is secondary
         }
 
         return new Response(
