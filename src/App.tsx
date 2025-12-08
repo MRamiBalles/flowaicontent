@@ -35,6 +35,7 @@ const VideoEditorPro = lazy(() => import("./pages/VideoEditorPro"));
 const EnterpriseAdmin = lazy(() => import("./pages/EnterpriseAdmin"));
 const BrandDealsMarketplace = lazy(() => import("./pages/BrandDealsMarketplace"));
 const DeveloperPortal = lazy(() => import("./pages/DeveloperPortal"));
+const InteractivePlayer = lazy(() => import("./pages/InteractivePlayer"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -77,6 +78,7 @@ const App = () => (
                 <Route path="/enterprise" element={<EnterpriseAdmin />} />
                 <Route path="/brand-deals" element={<BrandDealsMarketplace />} />
                 <Route path="/developers" element={<DeveloperPortal />} />
+                <Route path="/interactive" element={<InteractivePlayer />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
