@@ -37,6 +37,7 @@ const BrandDealsMarketplace = lazy(() => import("./pages/BrandDealsMarketplace")
 const DeveloperPortal = lazy(() => import("./pages/DeveloperPortal"));
 const InteractivePlayer = lazy(() => import("./pages/InteractivePlayer"));
 const TokenStaking = lazy(() => import("./pages/TokenStaking"));
+const MobileApp = lazy(() => import("./pages/MobileApp"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/developers" element={<DeveloperPortal />} />
                 <Route path="/interactive" element={<InteractivePlayer />} />
                 <Route path="/staking" element={<TokenStaking />} />
+                <Route path="/mobile" element={<MobileApp />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

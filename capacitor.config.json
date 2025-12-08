@@ -1,0 +1,10 @@
+{
+    "appId": "com.flowai.app",
+    "appName": "FlowAI",
+    "webDir": "dist",
+    "bundledWebRuntime": false,
+    "server": {
+        "url": "https://flowai.example.com",
+        "cleartext": true
+    }
+}
