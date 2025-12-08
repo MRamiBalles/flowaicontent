@@ -1600,330 +1600,329 @@ export type Database = {
           },
         ]
       }
-    }
-    governance_proposals: {
-      Row: {
-        author_id: string
-        category: string
-        created_at: string
-        description: string
-        end_time: string
-        id: string
-        start_time: string
-        status: string
-        title: string
-        votes_against: number | null
-        votes_for: number | null
-      }
-      Insert: {
-        author_id: string
-        category: string
-        created_at?: string
-        description: string
-        end_time: string
-        id?: string
-        start_time?: string
-        status?: string
-        title: string
-        votes_against?: number | null
-        votes_for?: number | null
-      }
-      Update: {
-        author_id?: string
-        category?: string
-        created_at?: string
-        description?: string
-        end_time?: string
-        id?: string
-        start_time?: string
-        status?: string
-        title?: string
-        votes_against?: number | null
-        votes_for?: number | null
-      }
-      Relationships: []
-    }
-    governance_votes: {
-      Row: {
-        created_at: string
-        id: string
-        proposal_id: string
-        user_id: string
-        vote_type: string
-        voting_power: number
-      }
-      Insert: {
-        created_at?: string
-        id?: string
-        proposal_id: string
-        user_id: string
-        vote_type: string
-        voting_power: number
-      }
-      Update: {
-        created_at?: string
-        id?: string
-        proposal_id?: string
-        user_id?: string
-        vote_type?: string
-        voting_power?: number
-      }
-      Relationships: [
-        {
-          foreignKeyName: "governance_votes_proposal_id_fkey"
-          columns: ["proposal_id"]
-          isOneToOne: false
-          referencedRelation: "governance_proposals"
-          referencedColumns: ["id"]
+      governance_proposals: {
+        Row: {
+          author_id: string
+          category: string
+          created_at: string
+          description: string
+          end_time: string
+          id: string
+          start_time: string
+          status: string
+          title: string
+          votes_against: number | null
+          votes_for: number | null
         }
-      ]
-    }
-    mobile_app_config: {
-      Row: {
-        current_latest_version: string
-        features: Json | null
-        force_update: boolean | null
-        id: string
-        is_maintenance_mode: boolean | null
-        maintenance_message: string | null
-        min_supported_version: string
-        updated_at: string
-      }
-      Insert: {
-        current_latest_version?: string
-        features?: Json | null
-        force_update?: boolean | null
-        id?: string
-        is_maintenance_mode?: boolean | null
-        maintenance_message?: string | null
-        min_supported_version?: string
-        updated_at?: string
-      }
-      Update: {
-        current_latest_version?: string
-        features?: Json | null
-        force_update?: boolean | null
-        id?: string
-        is_maintenance_mode?: boolean | null
-        maintenance_message?: string | null
-        min_supported_version?: string
-        updated_at?: string
-      }
-      Relationships: []
-    }
-    mobile_devices: {
-      Row: {
-        app_version: string | null
-        apns_token: string | null
-        background_refresh: boolean | null
-        created_at: string
-        device_model: string | null
-        device_name: string
-        device_type: string
-        fcm_token: string | null
-        id: string
-        is_active: boolean | null
-        last_active_at: string | null
-        os_version: string | null
-        sync_chat: boolean | null
-        sync_notifications: boolean | null
-        updated_at: string
-        user_id: string
-      }
-      Insert: {
-        app_version?: string | null
-        apns_token?: string | null
-        background_refresh?: boolean | null
-        created_at?: string
-        device_model?: string | null
-        device_name: string
-        device_type: string
-        fcm_token?: string | null
-        id?: string
-        is_active?: boolean | null
-        last_active_at?: string | null
-        os_version?: string | null
-        sync_chat?: boolean | null
-        sync_notifications?: boolean | null
-        updated_at?: string
-        user_id: string
-      }
-      Update: {
-        app_version?: string | null
-        apns_token?: string | null
-        background_refresh?: boolean | null
-        created_at?: string
-        device_model?: string | null
-        device_name?: string
-        device_type?: string
-        fcm_token?: string | null
-        id?: string
-        is_active?: boolean | null
-        last_active_at?: string | null
-        os_version?: string | null
-        sync_chat?: boolean | null
-        sync_notifications?: boolean | null
-        updated_at?: string
-        user_id?: string
-      }
-      Relationships: []
-    }
-    mobile_sync_events: {
-      Row: {
-        attempts: number | null
-        created_at: string
-        device_id: string | null
-        event_type: string
-        id: string
-        next_retry_at: string | null
-        payload: Json
-        priority: string | null
-        processed_at: string | null
-        status: string
-        user_id: string
-      }
-      Insert: {
-        attempts?: number | null
-        created_at?: string
-        device_id?: string | null
-        event_type: string
-        id?: string
-        next_retry_at?: string | null
-        payload: Json
-        priority?: string | null
-        processed_at?: string | null
-        status?: string
-        user_id: string
-      }
-      Update: {
-        attempts?: number | null
-        created_at?: string
-        device_id?: string | null
-        event_type?: string
-        id?: string
-        next_retry_at?: string | null
-        payload?: Json
-        priority?: string | null
-        processed_at?: string | null
-        status?: string
-        user_id?: string
-      }
-      Relationships: [
-        {
-          foreignKeyName: "mobile_sync_events_device_id_fkey"
-          columns: ["device_id"]
-          isOneToOne: false
-          referencedRelation: "mobile_devices"
-          referencedColumns: ["id"]
+        Insert: {
+          author_id: string
+          category: string
+          created_at?: string
+          description: string
+          end_time: string
+          id?: string
+          start_time?: string
+          status?: string
+          title: string
+          votes_against?: number | null
+          votes_for?: number | null
         }
-      ]
-    }
-    staking_pools: {
-      Row: {
-        apy_percentage: number
-        created_at: string
-        description: string | null
-        id: string
-        is_active: boolean | null
-        lock_period_days: number | null
-        max_stake_amount: number | null
-        min_stake_amount: number | null
-        name: string
-        total_staked: number | null
-        updated_at: string
-      }
-      Insert: {
-        apy_percentage: number
-        created_at?: string
-        description?: string | null
-        id?: string
-        is_active?: boolean | null
-        lock_period_days?: number | null
-        max_stake_amount?: number | null
-        min_stake_amount?: number | null
-        name: string
-        total_staked?: number | null
-        updated_at?: string
-      }
-      Update: {
-        apy_percentage?: number
-        created_at?: string
-        description?: string | null
-        id?: string
-        is_active?: boolean | null
-        lock_period_days?: number | null
-        max_stake_amount?: number | null
-        min_stake_amount?: number | null
-        name?: string
-        total_staked?: number | null
-        updated_at?: string
-      }
-      Relationships: []
-    }
-    user_stakes: {
-      Row: {
-        amount: number
-        id: string
-        last_rewards_claimed_at: string | null
-        pool_id: string
-        rewards_earned: number | null
-        staked_at: string
-        status: string
-        unlocks_at: string | null
-        user_id: string
-      }
-      Insert: {
-        amount: number
-        id?: string
-        last_rewards_claimed_at?: string | null
-        pool_id: string
-        rewards_earned?: number | null
-        staked_at?: string
-        status?: string
-        unlocks_at?: string | null
-        user_id: string
-      }
-      Update: {
-        amount?: number
-        id?: string
-        last_rewards_claimed_at?: string | null
-        pool_id?: string
-        rewards_earned?: number | null
-        staked_at?: string
-        status?: string
-        unlocks_at?: string | null
-        user_id?: string
-      }
-      Relationships: [
-        {
-          foreignKeyName: "user_stakes_pool_id_fkey"
-          columns: ["pool_id"]
-          isOneToOne: false
-          referencedRelation: "staking_pools"
-          referencedColumns: ["id"]
+        Update: {
+          author_id?: string
+          category?: string
+          created_at?: string
+          description?: string
+          end_time?: string
+          id?: string
+          start_time?: string
+          status?: string
+          title?: string
+          votes_against?: number | null
+          votes_for?: number | null
         }
-      ]
-    }
-  }
-  Views: {
-    [_ in never]: never
-  }
-  Functions: {
-    has_role: {
-      Args: {
-        _role: Database["public"]["Enums"]["app_role"]
-        _user_id: string
+        Relationships: []
       }
-      Returns: boolean
+      governance_votes: {
+        Row: {
+          created_at: string
+          id: string
+          proposal_id: string
+          user_id: string
+          vote_type: string
+          voting_power: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          proposal_id: string
+          user_id: string
+          vote_type: string
+          voting_power: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          proposal_id?: string
+          user_id?: string
+          vote_type?: string
+          voting_power?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "governance_votes_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "governance_proposals"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      mobile_app_config: {
+        Row: {
+          current_latest_version: string
+          features: Json | null
+          force_update: boolean | null
+          id: string
+          is_maintenance_mode: boolean | null
+          maintenance_message: string | null
+          min_supported_version: string
+          updated_at: string
+        }
+        Insert: {
+          current_latest_version?: string
+          features?: Json | null
+          force_update?: boolean | null
+          id?: string
+          is_maintenance_mode?: boolean | null
+          maintenance_message?: string | null
+          min_supported_version?: string
+          updated_at?: string
+        }
+        Update: {
+          current_latest_version?: string
+          features?: Json | null
+          force_update?: boolean | null
+          id?: string
+          is_maintenance_mode?: boolean | null
+          maintenance_message?: string | null
+          min_supported_version?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mobile_devices: {
+        Row: {
+          app_version: string | null
+          apns_token: string | null
+          background_refresh: boolean | null
+          created_at: string
+          device_model: string | null
+          device_name: string
+          device_type: string
+          fcm_token: string | null
+          id: string
+          is_active: boolean | null
+          last_active_at: string | null
+          os_version: string | null
+          sync_chat: boolean | null
+          sync_notifications: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          apns_token?: string | null
+          background_refresh?: boolean | null
+          created_at?: string
+          device_model?: string | null
+          device_name: string
+          device_type: string
+          fcm_token?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_active_at?: string | null
+          os_version?: string | null
+          sync_chat?: boolean | null
+          sync_notifications?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          apns_token?: string | null
+          background_refresh?: boolean | null
+          created_at?: string
+          device_model?: string | null
+          device_name?: string
+          device_type?: string
+          fcm_token?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_active_at?: string | null
+          os_version?: string | null
+          sync_chat?: boolean | null
+          sync_notifications?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mobile_sync_events: {
+        Row: {
+          attempts: number | null
+          created_at: string
+          device_id: string | null
+          event_type: string
+          id: string
+          next_retry_at: string | null
+          payload: Json
+          priority: string | null
+          processed_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string
+          device_id?: string | null
+          event_type: string
+          id?: string
+          next_retry_at?: string | null
+          payload: Json
+          priority?: string | null
+          processed_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string
+          device_id?: string | null
+          event_type?: string
+          id?: string
+          next_retry_at?: string | null
+          payload?: Json
+          priority?: string | null
+          processed_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_sync_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_devices"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      staking_pools: {
+        Row: {
+          apy_percentage: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          lock_period_days: number | null
+          max_stake_amount: number | null
+          min_stake_amount: number | null
+          name: string
+          total_staked: number | null
+          updated_at: string
+        }
+        Insert: {
+          apy_percentage: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lock_period_days?: number | null
+          max_stake_amount?: number | null
+          min_stake_amount?: number | null
+          name: string
+          total_staked?: number | null
+          updated_at?: string
+        }
+        Update: {
+          apy_percentage?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lock_period_days?: number | null
+          max_stake_amount?: number | null
+          min_stake_amount?: number | null
+          name?: string
+          total_staked?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_stakes: {
+        Row: {
+          amount: number
+          id: string
+          last_rewards_claimed_at: string | null
+          pool_id: string
+          rewards_earned: number | null
+          staked_at: string
+          status: string
+          unlocks_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          last_rewards_claimed_at?: string | null
+          pool_id: string
+          rewards_earned?: number | null
+          staked_at?: string
+          status?: string
+          unlocks_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          last_rewards_claimed_at?: string | null
+          pool_id?: string
+          rewards_earned?: number | null
+          staked_at?: string
+          status?: string
+          unlocks_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stakes_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "staking_pools"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      app_role: "admin" | "moderator" | "user"
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
-  Enums: {
-    app_role: "admin" | "moderator" | "user"
-  }
-  CompositeTypes: {
-    [_ in never]: never
-  }
-}
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
