@@ -1,8 +1,8 @@
 # 🗄️ FlowAI - Database Documentation
 
-> **Versión**: 1.0.0  
+> **Versión**: 1.1.0  
 > **Database**: PostgreSQL 15 (Supabase)  
-> **Última actualización**: 2024  
+> **Última actualización**: 2025-12-08  
 > **Owner**: Backend Lead
 
 ---

@@ -1,8 +1,8 @@
 # 💼 FlowAI - Business Case
 
 > **Strategic Document for Investors and Stakeholders**  
-> **Version**: 1.0  
-> **Last Updated**: 2024  
+> **Version**: 1.1  
+> **Last Updated**: 2025-12-08  
 > **Classification**: Confidential
 
 ---

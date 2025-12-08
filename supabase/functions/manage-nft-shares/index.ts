@@ -47,6 +47,38 @@ serve(async (req) => {
             throw new Error('Unauthorized')
         }
 
+        // 4.5 Rate Limiting - 10 transactions per hour per user
+        const RATE_LIMIT = 10
+        const RATE_WINDOW_MS = 60 * 60 * 1000 // 1 hour in milliseconds
+        const windowStart = new Date(Date.now() - RATE_WINDOW_MS).toISOString()
+
+        // Count recent transactions by this user
+        const { count: recentTransactions, error: countError } = await supabaseAdmin
+            .from('nft_transactions')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', windowStart)
+            .or(`from_address.eq.${user.user_metadata?.wallet_address},to_address.eq.${user.user_metadata?.wallet_address}`)
+
+        if (countError) {
+            console.error('Rate limit check failed:', countError)
+            // Don't block on rate limit check failure, but log it
+        } else if (recentTransactions !== null && recentTransactions >= RATE_LIMIT) {
+            return new Response(
+                JSON.stringify({
+                    error: 'Rate limit exceeded. Maximum 10 transactions per hour.',
+                    retryAfter: '1 hour'
+                }),
+                {
+                    headers: {
+                        ...corsHeaders,
+                        'Content-Type': 'application/json',
+                        'Retry-After': '3600'
+                    },
+                    status: 429,
+                }
+            )
+        }
+
         // 5. Parse and validate input
         const { nftId, shares, action, price } = await req.json()
 

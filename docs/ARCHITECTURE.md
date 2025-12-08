@@ -1,9 +1,9 @@
 # 🏗️ FlowAI - Arquitectura del Sistema
 
-> **Versión**: 1.0.0 (DRAFT)  
-> **Última actualización**: 2024  
+> **Versión**: 1.1.0  
+> **Última actualización**: 2025-12-08  
 > **Owner**: Tech Lead  
-> **Estado**: 🚧 En desarrollo - Sección para completar por el equipo técnico
+> **Estado**: ✅ Activo - Arquitectura de producción
 
 ---
 

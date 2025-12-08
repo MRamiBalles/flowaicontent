@@ -1,7 +1,7 @@
 # 🔒 FlowAI Privacy Policy
 
-> **Effective Date**: November 25, 2024
-> **Version**: 1.0
+> **Effective Date**: December 8, 2025
+> **Version**: 1.1
 
 At FlowAI ("we", "us", "our"), we respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.
 

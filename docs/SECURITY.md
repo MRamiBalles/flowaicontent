@@ -1,8 +1,8 @@
 # 🔒 FlowAI - Security Documentation
 
 > **Security Practices, Audits, and Vulnerability Management**  
-> **Version**: 1.0  
-> **Last Updated**: 2024-11-25  
+> **Version**: 1.1  
+> **Last Updated**: 2025-12-08  
 > **Classification**: Public (for investors & security researchers)
 
 ---

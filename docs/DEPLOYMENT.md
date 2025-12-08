@@ -1,8 +1,8 @@
 # 🚀 FlowAI - Deployment Guide
 
 > **Infrastructure, CI/CD, and Production Operations**  
-> **Version**: 1.0  
-> **Last Updated**: 2024  
+> **Version**: 1.1  
+> **Last Updated**: 2025-12-08  
 > **Target Audience**: DevOps, SRE, Backend Engineers
 
 ---

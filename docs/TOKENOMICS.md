@@ -1,8 +1,8 @@
 # 💰 FlowAI - Tokenomics
 
 > **$FLOW Token Economic Model & Distribution Strategy**  
-> **Version**: 1.0  
-> **Last Updated**: 2024  
+> **Version**: 1.1  
+> **Last Updated**: 2025-12-08  
 > **Target Audience**: Investors, Token Holders, Community
 
 ---

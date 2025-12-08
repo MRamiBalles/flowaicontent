@@ -2,7 +2,7 @@
 
 > **FlowAI**: Plataforma AI-native de creación de contenido con economía de tokens Web3
 > 
-> **Versión**: 1.0.0 | **Última actualización**: 2024 | **Estado**: Pre-Seed Fundraising
+> **Versión**: 1.1.0 | **Última actualización**: 2025-12-08 | **Estado**: Pre-Seed Fundraising
 
 ---
 

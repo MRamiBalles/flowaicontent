@@ -1,8 +1,8 @@
 # 🚀 FlowAI - Pitch Deck
 
 > **Pre-Seed Fundraising**: $750k @ $3M post-money valuation  
-> **Fecha**: 2024  
-> **Versión**: 1.0  
+> **Fecha**: 2025-12-08  
+> **Versión**: 1.1  
 > **Confidencial**
 
 ---

@@ -1,8 +1,8 @@
 # 📖 FlowAI - Complete User Manual
 
 > **Guide for Creators, Viewers, and Token Holders**  
-> **Version**: 2.0  
-> **Last Updated**: 2024-11-25  
+> **Version**: 2.1  
+> **Last Updated**: 2025-12-08  
 > **Target Audience**: End Users
 
 ---

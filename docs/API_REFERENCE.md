@@ -1,8 +1,8 @@
 # 🔌 FlowAI - Complete API Reference
 
 > **Backend API Documentation for Developers**  
-> **Version**: 2.0  
-> **Last Updated**: 2024-11-25  
+> **Version**: 2.1  
+> **Last Updated**: 2025-12-08  
 > **Base URL**: `https://api.flowai.com/api/v1`
 
 ---

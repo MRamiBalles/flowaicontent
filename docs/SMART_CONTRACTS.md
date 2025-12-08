@@ -1,10 +1,10 @@
 # ⛓️ FlowAI - Smart Contracts Documentation
 
-> **Versión**: 1.0.0  
+> **Versión**: 1.1.0  
 > **Network**: Polygon (Testnet: Mumbai | Mainnet: TBD)  
 > **Solidity**: ^0.8.20  
 > **OpenZeppelin**: Latest stable  
-> **Última actualización**: 2024  
+> **Última actualización**: 2025-12-08  
 
 ---
 
