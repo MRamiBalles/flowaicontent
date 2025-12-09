@@ -3,13 +3,19 @@
  * 
  * Auto-reframe engine for converting horizontal (16:9) video to vertical (9:16).
  * Detects subject position and calculates optimal crop rectangles.
+ * Supports both simulated detection (fast) and ML-based COCO-SSD detection (accurate).
  * 
  * @module lib/auto-reframe
  */
 
+import { analyzeVideoFrames, interpolateDetections, getModelStatus } from './subject-detector';
+
 // ============================================================
 // TYPE DEFINITIONS
 // ============================================================
+
+/** Detection mode for subject tracking */
+export type DetectionMode = 'simulated' | 'ml';
 
 /** Bounding box for detected subject */
 export interface BoundingBox {
@@ -340,4 +346,106 @@ export function getCropAtFrame(
         width: Math.round(config.sourceHeight * config.targetAspectRatio),
         height: config.sourceHeight
     };
+}
+
+// ============================================================
+// ML-POWERED REFRAME
+// ============================================================
+
+/**
+ * Options for ML-powered auto-reframe
+ */
+export interface MLReframeOptions extends Partial<typeof DEFAULT_REFRAME_CONFIG> {
+    /** Video URL for frame analysis */
+    videoUrl: string;
+    /** Frames per second */
+    fps: number;
+    /** Progress callback (0-1) */
+    onProgress?: (progress: number) => void;
+}
+
+/**
+ * Generates auto-reframe keyframes using ML-based subject detection.
+ * Uses TensorFlow.js COCO-SSD for accurate person/object tracking.
+ * 
+ * @param sourceWidth - Source video width
+ * @param sourceHeight - Source video height
+ * @param totalFrames - Total video duration in frames
+ * @param options - ML reframe options including video URL
+ * @returns Smoothed position keyframes based on ML detection
+ * 
+ * @example
+ * const keyframes = await autoReframeML(1920, 1080, 300, {
+ *   videoUrl: 'https://example.com/video.mp4',
+ *   fps: 30,
+ *   onProgress: (p) => console.log(`${p * 100}%`)
+ * });
+ */
+export async function autoReframeML(
+    sourceWidth: number,
+    sourceHeight: number,
+    totalFrames: number,
+    options: MLReframeOptions
+): Promise<PositionKeyframe[]> {
+    const { videoUrl, fps, onProgress, ...configOptions } = options;
+
+    const config: ReframeConfig = {
+        sourceWidth,
+        sourceHeight,
+        ...DEFAULT_REFRAME_CONFIG,
+        ...configOptions
+    };
+
+    const keyframeInterval = 15; // Sample every 0.5s at 30fps
+
+    // Analyze video frames with ML
+    const detections = await analyzeVideoFrames(
+        videoUrl,
+        totalFrames,
+        fps,
+        keyframeInterval,
+        onProgress
+    );
+
+    // Interpolate missing detections
+    const interpolated = interpolateDetections(detections, totalFrames);
+
+    // Convert detections to position keyframes
+    const keyframes: PositionKeyframe[] = [];
+    const frames = Array.from(interpolated.keys()).sort((a, b) => a - b);
+
+    for (const frame of frames) {
+        const subject = interpolated.get(frame);
+        const crop = calculateCropRect(config, subject || null);
+
+        keyframes.push({
+            frame,
+            cropX: crop.x,
+            cropY: crop.y
+        });
+    }
+
+    // Apply smoothing for cinematic movement
+    const smoothedKeyframes = smoothKeyframes(keyframes, config.smoothing);
+
+    return smoothedKeyframes;
+}
+
+/**
+ * Checks if ML detection model is ready.
+ * Use this before offering ML-based reframing.
+ * 
+ * @returns Model status
+ */
+export function isMLModelReady(): boolean {
+    return getModelStatus().loaded;
+}
+
+/**
+ * Checks if ML model is currently loading.
+ * 
+ * @returns True if model is loading
+ */
+export function isMLModelLoading(): boolean {
+    return getModelStatus().loading;
 }

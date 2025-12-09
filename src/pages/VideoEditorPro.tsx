@@ -1044,6 +1044,88 @@ const VideoEditorPro: React.FC = () => {
                                         Remove LUT
                                     </Button>
                                 )}
+
+                                {/* Viral Suite */}
+                                <div className="pt-2 mt-2 border-t border-zinc-700 space-y-2">
+                                    <p className="text-xs text-zinc-500">Viral Suite</p>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full"
+                                        size="sm"
+                                        onClick={() => {
+                                            if (!project) return;
+                                            const keyframes = autoReframe(
+                                                project.width,
+                                                project.height,
+                                                project.duration_frames,
+                                                { targetAspectRatio: ASPECT_RATIOS.PORTRAIT_9_16 }
+                                            );
+                                            setReframeKeyframes(keyframes);
+                                            toast.success(`Auto-Reframe: ${keyframes.length} keyframes generated for 9:16`);
+                                        }}
+                                    >
+                                        <Crop className="h-4 w-4 mr-2" />
+                                        Auto-Reframe 9:16
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full"
+                                        size="sm"
+                                        disabled={isAnalyzingViral}
+                                        onClick={async () => {
+                                            const audioClip = clips.find(c =>
+                                                (c.clip_type === 'audio' || c.clip_type === 'video') && c.source_url
+                                            );
+                                            if (!audioClip || !audioClip.source_url) {
+                                                toast.error('Add an audio/video clip first');
+                                                return;
+                                            }
+
+                                            setIsAnalyzingViral(true);
+                                            try {
+                                                const audioBuffer = await loadAudioBuffer(audioClip.source_url);
+                                                const moments = findViralMoments(audioBuffer, {
+                                                    topMoments: 5,
+                                                    fps: project?.fps || 30
+                                                });
+
+                                                if (moments.length === 0) {
+                                                    toast.info('No high-energy moments found');
+                                                    return;
+                                                }
+
+                                                setViralMoments(moments);
+                                                toast.success(`Found ${moments.length} viral moments!`);
+                                            } catch (error) {
+                                                console.error('Viral finder error:', error);
+                                                toast.error('Failed to analyze video');
+                                            } finally {
+                                                setIsAnalyzingViral(false);
+                                            }
+                                        }}
+                                    >
+                                        {isAnalyzingViral ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Zap className="h-4 w-4 mr-2" />
+                                        )}
+                                        Find Viral Moments
+                                    </Button>
+                                    {viralMoments.length > 0 && (
+                                        <div className="text-xs space-y-1">
+                                            {viralMoments.map((m, i) => (
+                                                <div
+                                                    key={i}
+                                                    className="flex justify-between items-center p-1 bg-zinc-800 rounded cursor-pointer hover:bg-zinc-700"
+                                                    onClick={() => seekTo(m.startFrame)}
+                                                >
+                                                    <span>{m.label}</span>
+                                                    <span className="text-zinc-500">{Math.round(m.startFrame / (project?.fps || 30))}s</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </TabsContent>
                         </ScrollArea>
                     </Tabs>

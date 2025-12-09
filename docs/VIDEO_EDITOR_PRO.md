@@ -162,6 +162,8 @@ Content-Type: application/json
 - **Keyframe Animation** (animate opacity, position, scale, rotation with easing)
 - **Audio Auto-Ducking** (automatically lowers music when voice is detected)
 - **LUT Support** (load .CUBE files for professional color grading)
+- **Auto-Reframe 9:16** (convert horizontal video to vertical with smooth pan)
+- **Viral Moment Finder** (identify high-energy segments for clips)
 
 ## Planned Features
 
