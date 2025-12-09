@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeDevices } from '@/hooks/useRealtimeSync';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,49 +9,17 @@ import {
     Smartphone,
     Download,
     Wifi,
+    WifiOff,
     Check,
     Apple,
     Cpu,
     Loader2
 } from 'lucide-react';
 
-interface MobileDevice {
-    id: string;
-    device_name: string;
-    device_type: string;
-    last_active_at: string;
-    is_active: boolean;
-}
-
 const MobileApp = () => {
     const { user } = useAuth();
-    const [devices, setDevices] = useState<MobileDevice[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (user) {
-            loadDevices();
-        } else {
-            setIsLoading(false);
-        }
-    }, [user]);
-
-    const loadDevices = async () => {
-        try {
-            const { data, error } = await (supabase as any)
-                .from('mobile_devices')
-                .select('*')
-                .eq('user_id', user?.id)
-                .order('last_active_at', { ascending: false });
-
-            if (error) throw error;
-            setDevices(data || []);
-        } catch (error) {
-            console.error('Error loading devices:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const { devices, isConnected } = useRealtimeDevices(user?.id);
+    const [isLoading] = useState(false);
 
     const handleSendLink = () => {
         toast.success('Download link sent to your email!');
@@ -67,6 +35,18 @@ const MobileApp = () => {
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                     Take your creative studio anywhere. Manage streams, edit videos, and track analytics from your pocket.
                 </p>
+                {/* Realtime Connection Status */}
+                <div className="mt-4 flex items-center justify-center gap-2 text-sm">
+                    {isConnected ? (
+                        <Badge variant="outline" className="text-green-600 border-green-600">
+                            <Wifi className="h-3 w-3 mr-1" /> Live Sync Active
+                        </Badge>
+                    ) : (
+                        <Badge variant="outline" className="text-muted-foreground">
+                            <WifiOff className="h-3 w-3 mr-1" /> Connecting...
+                        </Badge>
+                    )}
+                </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 mb-12">
@@ -116,15 +96,22 @@ const MobileApp = () => {
                 </Card>
             </div>
 
-            {/* Device Management */}
+            {/* Device Management - Now with Realtime! */}
             <Card>
                 <CardHeader>
-                    <div className="flex items-center gap-2">
-                        <Wifi className="h-5 w-5 text-primary" />
-                        <CardTitle>Connected Devices</CardTitle>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Wifi className="h-5 w-5 text-primary" />
+                            <CardTitle>Connected Devices</CardTitle>
+                        </div>
+                        {isConnected && (
+                            <Badge variant="secondary" className="text-xs">
+                                ⚡ Realtime
+                            </Badge>
+                        )}
                     </div>
                     <CardDescription>
-                        Manage devices connected to your FlowAI account
+                        Devices update automatically when changes occur
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
