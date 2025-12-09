@@ -11,13 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import {
     Coins,
-    Lock,
     TrendingUp,
-    Vote,
-    ArrowRight,
     Loader2,
     Wallet,
-    ShieldCheck,
     Check,
     X
 } from 'lucide-react';
@@ -65,41 +61,42 @@ const TokenStaking = () => {
     useEffect(() => {
         if (user) {
             loadData();
+        } else {
+            setIsLoading(false);
         }
     }, [user]);
 
     const loadData = async () => {
         setIsLoading(true);
         try {
-            // Load pools
-            const { data: poolsData } = await supabase
+            // Load pools using any to bypass type checking until types are regenerated
+            const { data: poolsData } = await (supabase as any)
                 .from('staking_pools')
                 .select('*')
                 .eq('is_active', true)
-                .order('apy_percentage', { ascending: true });
-            setPools(poolsData as StakingPool[] || []);
+                .order('apy_percentage', { ascending: false });
+            setPools(poolsData || []);
 
             // Load user stakes
-            const { data: stakesData } = await supabase
+            const { data: stakesData } = await (supabase as any)
                 .from('user_stakes')
                 .select('*, pool:pool_id(*)')
                 .eq('user_id', user?.id)
                 .eq('status', 'active');
-            setMyStakes(stakesData as UserStake[] || []);
+            setMyStakes(stakesData || []);
 
             // Load proposals
-            const { data: proposalsData } = await supabase
+            const { data: proposalsData } = await (supabase as any)
                 .from('governance_proposals')
                 .select('*')
                 .eq('status', 'active')
                 .order('end_time', { ascending: true });
-            setProposals(proposalsData as Proposal[] || []);
+            setProposals(proposalsData || []);
 
-            // Load stats
-            const statsRes = await callApi('get_stats');
-            if (statsRes.success) {
-                setStats(statsRes.stats);
-            }
+            // Calculate stats from stakes
+            const totalStaked = (stakesData || []).reduce((acc: number, s: any) => acc + Number(s.amount || 0), 0);
+            const totalRewards = (stakesData || []).reduce((acc: number, s: any) => acc + Number(s.rewards_earned || 0), 0);
+            setStats({ totalStaked, totalRewards });
 
         } catch (error) {
             console.error('Error loading data:', error);
@@ -219,7 +216,13 @@ const TokenStaking = () => {
                 <TabsContent value="staking" className="space-y-8">
                     {/* Pools Grid */}
                     <div className="grid md:grid-cols-3 gap-6">
-                        {pools.map((pool) => (
+                        {pools.length === 0 ? (
+                            <div className="col-span-3 text-center py-12 text-muted-foreground">
+                                <Coins className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                <p>No staking pools available yet.</p>
+                                <p className="text-sm">Check back soon!</p>
+                            </div>
+                        ) : pools.map((pool) => (
                             <Card key={pool.id} className="relative overflow-hidden hover:border-primary/50 transition-colors">
                                 <div className="absolute top-0 right-0 p-3">
                                     <Badge variant="outline" className="bg-background">
@@ -243,7 +246,7 @@ const TokenStaking = () => {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Total Staked</span>
-                                            <span>{pool.total_staked.toLocaleString()}</span>
+                                            <span>{Number(pool.total_staked).toLocaleString()}</span>
                                         </div>
                                     </div>
 
@@ -271,7 +274,7 @@ const TokenStaking = () => {
                                                             variant="ghost"
                                                             size="sm"
                                                             className="absolute right-1 top-1 h-7 text-xs"
-                                                            onClick={() => setStakeAmount('1000')} // Mock max
+                                                            onClick={() => setStakeAmount('1000')}
                                                         >
                                                             MAX
                                                         </Button>
@@ -315,8 +318,8 @@ const TokenStaking = () => {
                                         <CardContent className="p-6 flex items-center justify-between">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <h3 className="font-semibold">{stake.pool.name}</h3>
-                                                    <Badge variant="outline">{stake.pool.apy_percentage}% APY</Badge>
+                                                    <h3 className="font-semibold">{stake.pool?.name || 'Pool'}</h3>
+                                                    <Badge variant="outline">{stake.pool?.apy_percentage || 0}% APY</Badge>
                                                 </div>
                                                 <div className="flex gap-4 text-sm text-muted-foreground">
                                                     <span>Staked: {Number(stake.amount).toLocaleString()} FLOW</span>
@@ -330,7 +333,7 @@ const TokenStaking = () => {
                                                 <div className="text-right">
                                                     <p className="text-xs text-muted-foreground uppercase font-bold">Unclaimed Rewards</p>
                                                     <p className="font-mono font-medium text-green-500">
-                                                        +{((Number(stake.amount) * (stake.pool.apy_percentage / 100) / 365) * 1).toFixed(4)} FLOW
+                                                        +{Number(stake.rewards_earned || 0).toFixed(4)} FLOW
                                                     </p>
                                                 </div>
                                                 <Button size="sm" onClick={() => handleClaim(stake.id)}>
@@ -360,55 +363,64 @@ const TokenStaking = () => {
                     </div>
 
                     <div className="space-y-4">
-                        {proposals.map((proposal) => (
-                            <Card key={proposal.id}>
-                                <CardHeader>
-                                    <div className="flex justify-between items-start">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className="capitalize">{proposal.category}</Badge>
-                                                <span className="text-xs text-muted-foreground">Ends {new Date(proposal.end_time).toLocaleDateString()}</span>
-                                            </div>
-                                            <CardTitle>{proposal.title}</CardTitle>
-                                        </div>
-                                        <Badge variant={proposal.status === 'active' ? 'default' : 'secondary'}>
-                                            {proposal.status}
-                                        </Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="space-y-6">
-                                    <p className="text-sm text-muted-foreground">
-                                        {proposal.description}
-                                    </p>
+                        {proposals.length === 0 ? (
+                            <div className="text-center py-12 text-muted-foreground">
+                                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                <p>No active proposals at the moment.</p>
+                                <p className="text-sm">Check back soon for governance votes!</p>
+                            </div>
+                        ) : proposals.map((proposal) => {
+                            const totalVotes = Number(proposal.votes_for) + Number(proposal.votes_against);
+                            const forPercentage = totalVotes > 0 ? (Number(proposal.votes_for) / totalVotes) * 100 : 50;
 
-                                    <div className="space-y-3">
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="flex items-center gap-1"><Check className="h-3 w-3 text-green-500" /> For</span>
-                                                <span>{Number(proposal.votes_for).toLocaleString()}</span>
+                            return (
+                                <Card key={proposal.id}>
+                                    <CardHeader>
+                                        <div className="flex justify-between items-start">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="outline" className="capitalize">{proposal.category}</Badge>
+                                                    <span className="text-xs text-muted-foreground">Ends {new Date(proposal.end_time).toLocaleDateString()}</span>
+                                                </div>
+                                                <CardTitle>{proposal.title}</CardTitle>
                                             </div>
-                                            <Progress value={(proposal.votes_for / (proposal.votes_for + proposal.votes_against || 1)) * 100} className="h-2" />
+                                            <Badge variant={proposal.status === 'active' ? 'default' : 'secondary'}>
+                                                {proposal.status}
+                                            </Badge>
                                         </div>
-                                        <div className="space-y-1">
+                                        <CardDescription className="mt-2">{proposal.description}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="space-y-2">
                                             <div className="flex justify-between text-sm">
-                                                <span className="flex items-center gap-1"><X className="h-3 w-3 text-red-500" /> Against</span>
-                                                <span>{Number(proposal.votes_against).toLocaleString()}</span>
+                                                <span className="text-green-500">For: {Number(proposal.votes_for).toLocaleString()}</span>
+                                                <span className="text-red-500">Against: {Number(proposal.votes_against).toLocaleString()}</span>
                                             </div>
-                                            <Progress value={(proposal.votes_against / (proposal.votes_for + proposal.votes_against || 1)) * 100} className="h-2 bg-red-100" />
+                                            <Progress value={forPercentage} className="h-2" />
                                         </div>
-                                    </div>
 
-                                    <div className="flex gap-2">
-                                        <Button className="flex-1" variant="outline" onClick={() => handleVote(proposal.id, 'for')}>
-                                            Vote For
-                                        </Button>
-                                        <Button className="flex-1" variant="outline" onClick={() => handleVote(proposal.id, 'against')}>
-                                            Vote Against
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                className="flex-1 border-green-500/50 hover:bg-green-500/10"
+                                                onClick={() => handleVote(proposal.id, 'for')}
+                                            >
+                                                <Check className="h-4 w-4 mr-2 text-green-500" />
+                                                Vote For
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="flex-1 border-red-500/50 hover:bg-red-500/10"
+                                                onClick={() => handleVote(proposal.id, 'against')}
+                                            >
+                                                <X className="h-4 w-4 mr-2 text-red-500" />
+                                                Vote Against
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
                 </TabsContent>
             </Tabs>
