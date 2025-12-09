@@ -103,6 +103,27 @@ const VideoDubbing = () => {
 
         setIsCreating(true);
         try {
+            const cost = selectedLanguages.length * 5; // 5 credits per language
+
+            // 1. Deduct Credits
+            const { data: billingData, error: billingError } = await supabase.functions.invoke('billing-engine', {
+                body: {
+                    action: 'deduct_credits',
+                    amount: cost,
+                    service: 'video_dubbing',
+                    metadata: { url: videoUrl, languages: selectedLanguages }
+                }
+            });
+
+            if (billingError) {
+                if (billingError.context?.response?.status === 402) {
+                    toast.error(`Insufficient credits. You need ${cost} credits.`);
+                    return;
+                }
+                throw billingError;
+            }
+
+            // 2. Create Job
             const session = await supabase.auth.getSession();
             const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-dubbing`, {
                 method: 'POST',
@@ -120,7 +141,7 @@ const VideoDubbing = () => {
 
             const data = await response.json();
             if (data.success) {
-                toast.success('Dubbing job created!');
+                toast.success(`Dubbing job started! (-${cost} credits)`);
                 setVideoUrl('');
                 setSelectedLanguages([]);
                 loadData();
@@ -128,6 +149,7 @@ const VideoDubbing = () => {
                 throw new Error(data.error);
             }
         } catch (error) {
+            console.error(error);
             toast.error('Failed to create job');
         } finally {
             setIsCreating(false);
@@ -147,34 +169,6 @@ const VideoDubbing = () => {
             case 'completed': return 'default';
             case 'failed': return 'destructive';
             default: return 'secondary';
-        }
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
-
-    return (
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
-            {/* Header */}
-            <div className="text-center mb-10">
-                <h1 className="text-4xl font-bold flex items-center justify-center gap-3 mb-4">
-                    <Languages className="h-10 w-10 text-primary" />
-                    AI Video Dubbing
-                </h1>
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                    Automatically translate and dub your videos into 29 languages using your cloned voice
-                </p>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-8">
-                {/* Create Job Form */}
-                <Card>
-                    <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Sparkles className="h-5 w-5 text-primary" />
                             Create New Dubbing Job
@@ -182,80 +176,84 @@ const VideoDubbing = () => {
                         <CardDescription>
                             Upload a video and select target languages
                         </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="video-url">Video URL</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="video-url"
-                                    placeholder="https://example.com/video.mp4"
-                                    value={videoUrl}
-                                    onChange={(e) => setVideoUrl(e.target.value)}
-                                />
-                            </div>
-                        </div>
+                    </CardHeader >
+    <CardContent className="space-y-6">
+        <div className="space-y-2">
+            <Label htmlFor="video-url">Video URL</Label>
+            <div className="flex gap-2">
+                <Input
+                    id="video-url"
+                    placeholder="https://example.com/video.mp4"
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                />
+            </div>
+        </div>
 
-                        <div className="space-y-2">
-                            <Label>Source Language</Label>
-                            <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {languages.map((lang) => (
-                                        <SelectItem key={lang.code} value={lang.code}>
-                                            {lang.name} ({lang.native_name})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+        <div className="space-y-2">
+            <Label>Source Language</Label>
+            <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+                <SelectTrigger>
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    {languages.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                            {lang.name} ({lang.native_name})
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
 
-                        <div className="space-y-3">
-                            <Label>Target Languages ({selectedLanguages.length} selected)</Label>
-                            <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto p-2 border rounded-lg">
-                                {languages.filter(l => l.code !== sourceLanguage).map((lang) => (
-                                    <div
-                                        key={lang.code}
-                                        className="flex items-center space-x-2 p-2 rounded hover:bg-muted cursor-pointer"
-                                        onClick={() => handleLanguageToggle(lang.code)}
-                                    >
-                                        <Checkbox
-                                            checked={selectedLanguages.includes(lang.code)}
-                                            onCheckedChange={() => handleLanguageToggle(lang.code)}
-                                        />
-                                        <span className="text-sm">{lang.name}</span>
-                                        <span className="text-xs text-muted-foreground">({lang.native_name})</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+        <div className="space-y-3">
+            <Label>Target Languages ({selectedLanguages.length} selected)</Label>
+            <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto p-2 border rounded-lg">
+                {languages.filter(l => l.code !== sourceLanguage).map((lang) => (
+                    <div
+                        key={lang.code}
+                        className="flex items-center space-x-2 p-2 rounded hover:bg-muted cursor-pointer"
+                        onClick={() => handleLanguageToggle(lang.code)}
+                    >
+                        <Checkbox
+                            checked={selectedLanguages.includes(lang.code)}
+                            onCheckedChange={() => handleLanguageToggle(lang.code)}
+                        />
+                        <span className="text-sm">{lang.name}</span>
+                        <span className="text-xs text-muted-foreground">({lang.native_name})</span>
+                    </div>
+                ))}
+            </div>
+        </div>
 
-                        <div className="p-4 bg-muted/50 rounded-lg">
-                            <p className="text-sm text-muted-foreground">
-                                <strong>Estimated Cost:</strong> ~{selectedLanguages.length * 120} credits
-                            </p>
-                        </div>
+        <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+            <p className="text-sm text-muted-foreground flex justify-between">
+                <strong>Translation Cost:</strong>
+                <span>{selectedLanguages.length * 5} credits</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+                (5 credits per language)
+            </p>
+        </div>
 
-                        <Button
-                            className="w-full"
-                            size="lg"
-                            onClick={handleCreateJob}
-                            disabled={isCreating || !videoUrl || selectedLanguages.length === 0}
-                        >
-                            {isCreating ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                                <Globe className="h-4 w-4 mr-2" />
-                            )}
-                            Start Dubbing ({selectedLanguages.length} languages)
-                        </Button>
-                    </CardContent>
-                </Card>
+        <Button
+            className="w-full"
+            size="lg"
+            onClick={handleCreateJob}
+            disabled={isCreating || !videoUrl || selectedLanguages.length === 0}
+        >
+            {isCreating ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+                <Globe className="h-4 w-4 mr-2" />
+            )}
+            Start Dubbing ({selectedLanguages.length * 5} Credits)
+        </Button>
+    </CardContent>
+                </Card >
 
-                {/* Jobs List */}
-                <Card>
+    {/* Jobs List */ }
+    < Card >
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Video className="h-5 w-5 text-primary" />
@@ -307,9 +305,9 @@ const VideoDubbing = () => {
                             </div>
                         )}
                     </CardContent>
-                </Card>
-            </div>
-        </div>
+                </Card >
+            </div >
+        </div >
     );
 };
 
