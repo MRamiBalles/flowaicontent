@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
     Play,
@@ -196,6 +197,9 @@ const VideoEditorPro: React.FC = () => {
     // Silence removal state
     const [isAnalyzingSilence, setIsAnalyzingSilence] = useState(false);
     const [detectedSilences, setDetectedSilences] = useState<SilenceRange[]>([]);
+    const [showSilenceSettings, setShowSilenceSettings] = useState(false);
+    const [silenceThresholdDb, setSilenceThresholdDb] = useState(-40);
+    const [silenceMinDurationMs, setSilenceMinDurationMs] = useState(500);
     // Magnetic timeline state
     const [magneticSnap, setMagneticSnap] = useState(true);
     // Keyframe state
@@ -595,10 +599,13 @@ const VideoEditorPro: React.FC = () => {
             // Load and analyze audio
             const audioBuffer = await loadAudioBuffer(selectedClip.source_url);
             const silences = detectSilence(audioBuffer, {
-                thresholdDb: -40,
-                minDurationMs: 500,
+                thresholdDb: silenceThresholdDb,
+                minDurationMs: silenceMinDurationMs,
                 fps: project?.fps || 30
             });
+
+            // Close settings dialog
+            setShowSilenceSettings(false);
 
             if (silences.length === 0) {
                 toast.info('No silent segments detected');
@@ -1223,17 +1230,90 @@ const VideoEditorPro: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Render clips that are visible at current frame */}
+                            {/* Render clips that are visible at current frame with keyframe animations */}
                             {clips
                                 .filter(clip => currentFrame >= clip.start_frame && currentFrame < clip.end_frame)
-                                .map(clip => clip.clip_type === 'text' && (
-                                    <div
-                                        key={clip.id}
-                                        className="absolute inset-0 flex items-center justify-center text-4xl font-bold"
-                                    >
-                                        {clip.text_content}
-                                    </div>
-                                ))
+                                .map(clip => {
+                                    // Get interpolated properties at current frame
+                                    const clipKeyframes = keyframes.filter(k => k.clip_id === clip.id);
+                                    const localFrame = currentFrame - clip.start_frame;
+                                    const props = getClipPropertiesAtFrame(clipKeyframes, localFrame);
+
+                                    // Build animated style
+                                    const animatedStyle: React.CSSProperties = {
+                                        position: 'absolute',
+                                        opacity: props.opacity,
+                                        transform: `
+                                            translateX(${props.position_x}px) 
+                                            translateY(${props.position_y}px) 
+                                            scaleX(${props.scale_x}) 
+                                            scaleY(${props.scale_y}) 
+                                            rotate(${props.rotation}deg)
+                                        `.trim(),
+                                        transformOrigin: 'center center',
+                                        transition: 'none', // No CSS transitions, we handle via keyframes
+                                    };
+
+                                    // Render based on clip type
+                                    if (clip.clip_type === 'text') {
+                                        return (
+                                            <div
+                                                key={clip.id}
+                                                style={{
+                                                    ...animatedStyle,
+                                                    inset: 0,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: clip.font_size || 48,
+                                                    fontFamily: clip.font_family || 'inherit',
+                                                    color: clip.font_color || '#FFFFFF',
+                                                    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                                                }}
+                                            >
+                                                {clip.text_content}
+                                            </div>
+                                        );
+                                    }
+
+                                    if (clip.clip_type === 'image' && clip.source_url) {
+                                        return (
+                                            <img
+                                                key={clip.id}
+                                                src={clip.source_url}
+                                                alt="Clip"
+                                                style={{
+                                                    ...animatedStyle,
+                                                    inset: 0,
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                }}
+                                            />
+                                        );
+                                    }
+
+                                    if (clip.clip_type === 'video' && clip.source_url) {
+                                        return (
+                                            <video
+                                                key={clip.id}
+                                                src={clip.source_url}
+                                                style={{
+                                                    ...animatedStyle,
+                                                    inset: 0,
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                }}
+                                                muted
+                                                playsInline
+                                            />
+                                        );
+                                    }
+
+                                    // Fallback for other types
+                                    return null;
+                                })
                             }
                         </div>
                     </div>
@@ -1260,9 +1340,9 @@ const VideoEditorPro: React.FC = () => {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={handleRemoveSilences}
+                            onClick={() => setShowSilenceSettings(true)}
                             disabled={isAnalyzingSilence || !selectedClipId}
-                            title="Remove Silences"
+                            title="Remove Silences (Settings)"
                         >
                             {isAnalyzingSilence ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -1541,6 +1621,74 @@ const VideoEditorPro: React.FC = () => {
                     </div>
                 </ScrollArea>
             </div>
+            {/* Silence Removal Settings Dialog */}
+            <Dialog open={showSilenceSettings} onOpenChange={setShowSilenceSettings}>
+                <DialogContent className="sm:max-w-md bg-zinc-900 border-zinc-700">
+                    <DialogHeader>
+                        <DialogTitle className="text-white">Silence Removal Settings</DialogTitle>
+                        <DialogDescription className="text-zinc-400">
+                            Configure detection parameters for automatic silence removal.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-6 py-4">
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <Label className="text-white">Threshold</Label>
+                                <span className="text-sm text-zinc-400">{silenceThresholdDb} dB</span>
+                            </div>
+                            <Slider
+                                value={[silenceThresholdDb]}
+                                onValueChange={([val]) => setSilenceThresholdDb(val)}
+                                min={-60}
+                                max={-20}
+                                step={1}
+                                className="w-full"
+                            />
+                            <p className="text-xs text-zinc-500">
+                                Audio below this level is considered silence. Lower = more sensitive.
+                            </p>
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <Label className="text-white">Minimum Duration</Label>
+                                <span className="text-sm text-zinc-400">{silenceMinDurationMs} ms</span>
+                            </div>
+                            <Slider
+                                value={[silenceMinDurationMs]}
+                                onValueChange={([val]) => setSilenceMinDurationMs(val)}
+                                min={100}
+                                max={2000}
+                                step={50}
+                                className="w-full"
+                            />
+                            <p className="text-xs text-zinc-500">
+                                Only remove silences longer than this duration.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowSilenceSettings(false)}
+                            className="border-zinc-700 text-white hover:bg-zinc-800"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleRemoveSilences}
+                            disabled={isAnalyzingSilence}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            {isAnalyzingSilence ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <VolumeX className="h-4 w-4 mr-2" />
+                            )}
+                            Remove Silences
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
