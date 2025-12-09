@@ -157,6 +157,11 @@ Content-Type: application/json
 - Transitions between adjacent clips
 - Auto-generated subtitles (AI)
 - Cloud rendering via AWS Lambda
+- **AI Silence Removal** (removes silent segments from audio/video clips)
+- **Magnetic Timeline** (clips snap to adjacent edges, ripple delete)
+- **Keyframe Animation** (animate opacity, position, scale, rotation with easing)
+- **Audio Auto-Ducking** (automatically lowers music when voice is detected)
+- **LUT Support** (load .CUBE files for professional color grading)
 
 ## Planned Features
 

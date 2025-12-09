@@ -1,3 +1,12 @@
+/**
+ * ThumbnailGenerator.tsx
+ * 
+ * AI thumbnail generation page using DALL-E 3.
+ * Supports style presets, templates, and generation history.
+ * 
+ * @module pages/ThumbnailGenerator
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +20,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Image, Sparkles, Loader2, Download, Copy, Wand2, Coins } from 'lucide-react';
 
+// ============================================================
+// TYPE DEFINITIONS
+// ============================================================
+
+/** Pre-made thumbnail template */
 interface Template {
     id: string;
     name: string;
@@ -19,15 +33,22 @@ interface Template {
     is_premium: boolean;
 }
 
+/** Generated thumbnail history entry */
 interface Generation {
     id: string;
     title: string;
     image_url: string;
+    /** Status: pending | completed | failed */
     status: string;
     style_preset: string;
     created_at: string;
 }
 
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+/** Available style presets for thumbnail generation */
 const STYLE_PRESETS = [
     { value: 'vibrant', label: '🌈 Vibrant', desc: 'Bold, eye-catching colors' },
     { value: 'minimal', label: '✨ Minimal', desc: 'Clean and simple' },
@@ -37,8 +58,17 @@ const STYLE_PRESETS = [
     { value: 'professional', label: '💼 Professional', desc: 'Corporate and clean' },
 ];
 
-const CREDIT_COST = 5; // Updated pricing
+/** Credit cost per thumbnail */
+const CREDIT_COST = 5;
 
+// ============================================================
+// COMPONENT
+// ============================================================
+
+/**
+ * Thumbnail generator page component.
+ * Generates AI thumbnails using DALL-E 3.
+ */
 const ThumbnailGenerator = () => {
     const { user } = useAuth();
     const [templates, setTemplates] = useState<Template[]>([]);
@@ -220,8 +250,8 @@ const ThumbnailGenerator = () => {
                                         key={preset.value}
                                         onClick={() => setStylePreset(preset.value)}
                                         className={`p-3 text-left rounded-lg border transition-all ${stylePreset === preset.value
-                                                ? 'border-primary bg-primary/10'
-                                                : 'border-border hover:border-primary/50'
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-border hover:border-primary/50'
                                             }`}
                                     >
                                         <div className="font-medium text-sm">{preset.label}</div>

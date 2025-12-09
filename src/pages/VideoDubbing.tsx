@@ -1,3 +1,12 @@
+/**
+ * VideoDubbing.tsx
+ * 
+ * AI video dubbing page - translates videos into 29 languages.
+ * Uses OpenAI for translation and ElevenLabs for voice synthesis.
+ * 
+ * @module pages/VideoDubbing
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,25 +21,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Languages, Video, CheckCircle2, XCircle, Loader2, Sparkles, Globe, Coins } from 'lucide-react';
 
+// ============================================================
+// TYPE DEFINITIONS
+// ============================================================
+
+/** Supported dubbing language */
 interface Language {
     code: string;
     name: string;
     native_name: string;
 }
 
+/** Dubbing job with status and outputs */
 interface DubJob {
     id: string;
     source_video_url: string;
     source_language: string;
     target_languages: string[];
+    /** Job status: pending | processing | completed | failed */
     status: string;
+    /** Progress 0-100 */
     progress_percentage: number;
     created_at: string;
+    /** Generated dubbed video URLs per language */
     outputs: { language: string; video_url: string }[];
 }
 
-const CREDIT_COST_PER_LANGUAGE = 10; // Updated pricing
+// ============================================================
+// CONSTANTS
+// ============================================================
 
+/** Credit cost per target language */
+const CREDIT_COST_PER_LANGUAGE = 10;
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
+/**
+ * Video dubbing page component.
+ * Allows users to translate videos into multiple languages.
+ */
 const VideoDubbing = () => {
     const { user } = useAuth();
     const [languages, setLanguages] = useState<Language[]>([]);

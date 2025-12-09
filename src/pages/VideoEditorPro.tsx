@@ -54,8 +54,33 @@ import {
     ZoomOut,
     Scissors,
     Captions,
-    ArrowRightLeft
+    ArrowRightLeft,
+    VolumeX,
+    Magnet,
+    Diamond,
+    Volume2,
+    Palette,
+    Crop,
+    Zap
 } from 'lucide-react';
+import { detectSilence, loadAudioBuffer, getKeepRanges, type SilenceRange } from '@/lib/audio-analysis';
+import {
+    detectVoiceSegments,
+    generateDuckingSegments,
+    generateVolumeEnvelope,
+    type DuckingSegment,
+    type VolumeEnvelopePoint
+} from '@/lib/audio-ducking';
+import {
+    type Keyframe,
+    type KeyframeProperty,
+    getValueAtFrame,
+    getClipPropertiesAtFrame,
+    PROPERTY_DEFAULTS
+} from '@/lib/keyframe-engine';
+import { parseCubeFile, type LUT3D } from '@/lib/lut-parser';
+import { autoReframe, ASPECT_RATIOS, type PositionKeyframe } from '@/lib/auto-reframe';
+import { findViralMoments, getMomentTimeRange, type ViralMoment } from '@/lib/viral-finder';
 
 // ============================================================
 // TYPE DEFINITIONS
@@ -167,6 +192,24 @@ const VideoEditorPro: React.FC = () => {
     const [dragOffset, setDragOffset] = useState<number>(0);
     // Transitions state
     const [transitions, setTransitions] = useState<Transition[]>([]);
+    // Silence removal state
+    const [isAnalyzingSilence, setIsAnalyzingSilence] = useState(false);
+    const [detectedSilences, setDetectedSilences] = useState<SilenceRange[]>([]);
+    // Magnetic timeline state
+    const [magneticSnap, setMagneticSnap] = useState(true);
+    // Keyframe state
+    const [keyframes, setKeyframes] = useState<Keyframe[]>([]);
+    const [selectedProperty, setSelectedProperty] = useState<KeyframeProperty>('opacity');
+    // Auto-ducking state
+    const [isAnalyzingDucking, setIsAnalyzingDucking] = useState(false);
+    const [duckingEnvelope, setDuckingEnvelope] = useState<VolumeEnvelopePoint[]>([]);
+    // LUT state
+    const [activeLUT, setActiveLUT] = useState<LUT3D | null>(null);
+    const lutInputRef = useRef<HTMLInputElement>(null);
+    // Viral Suite state
+    const [reframeKeyframes, setReframeKeyframes] = useState<PositionKeyframe[]>([]);
+    const [viralMoments, setViralMoments] = useState<ViralMoment[]>([]);
+    const [isAnalyzingViral, setIsAnalyzingViral] = useState(false);
 
     // Create new project on mount if none exists
     useEffect(() => {
@@ -350,13 +393,58 @@ const VideoEditorPro: React.FC = () => {
 
     const handleDeleteClip = async (clipId: string) => {
         try {
+            const clipToDelete = clips.find(c => c.id === clipId);
+            if (!clipToDelete) return;
+
             const { error } = await supabase
                 .from('video_clips')
                 .delete()
                 .eq('id', clipId);
 
             if (error) throw error;
-            setClips(clips.filter(c => c.id !== clipId));
+
+            // Magnetic timeline: shift subsequent clips left
+            if (magneticSnap) {
+                const deletedDuration = clipToDelete.end_frame - clipToDelete.start_frame;
+                const trackClips = clips.filter(
+                    c => c.track_id === clipToDelete.track_id && c.id !== clipId
+                );
+
+                // Find clips that start after the deleted clip
+                const subsequentClips = trackClips.filter(
+                    c => c.start_frame >= clipToDelete.end_frame
+                );
+
+                // Shift them left to fill the gap
+                const updatedClips = clips
+                    .filter(c => c.id !== clipId)
+                    .map(c => {
+                        if (subsequentClips.some(sc => sc.id === c.id)) {
+                            return {
+                                ...c,
+                                start_frame: c.start_frame - deletedDuration,
+                                end_frame: c.end_frame - deletedDuration
+                            };
+                        }
+                        return c;
+                    });
+
+                setClips(updatedClips);
+
+                // Persist shifted clips (fire-and-forget for better UX)
+                subsequentClips.forEach(async (clip) => {
+                    await supabase
+                        .from('video_clips')
+                        .update({
+                            start_frame: clip.start_frame - deletedDuration,
+                            end_frame: clip.end_frame - deletedDuration
+                        })
+                        .eq('id', clip.id);
+                });
+            } else {
+                setClips(clips.filter(c => c.id !== clipId));
+            }
+
             setSelectedClipId(null);
             toast.success('Clip deleted');
         } catch (error) {
@@ -476,7 +564,78 @@ const VideoEditorPro: React.FC = () => {
         }
     };
 
-    // Drag & Drop Handlers
+    // ==================== SILENCE REMOVAL ====================
+    /**
+     * Analyzes selected audio clip for silent segments.
+     * Uses Web Audio API for client-side analysis.
+     */
+    const handleRemoveSilences = async () => {
+        if (!selectedClipId) {
+            toast.error('Select an audio clip first');
+            return;
+        }
+
+        const selectedClip = clips.find(c => c.id === selectedClipId);
+        if (!selectedClip || !selectedClip.source_url) {
+            toast.error('Selected clip has no audio source');
+            return;
+        }
+
+        if (!['audio', 'video'].includes(selectedClip.clip_type)) {
+            toast.error('Silence removal only works on audio/video clips');
+            return;
+        }
+
+        setIsAnalyzingSilence(true);
+        try {
+            // Load and analyze audio
+            const audioBuffer = await loadAudioBuffer(selectedClip.source_url);
+            const silences = detectSilence(audioBuffer, {
+                thresholdDb: -40,
+                minDurationMs: 500,
+                fps: project?.fps || 30
+            });
+
+            if (silences.length === 0) {
+                toast.info('No silent segments detected');
+                return;
+            }
+
+            setDetectedSilences(silences);
+            toast.success(`Found ${silences.length} silent segment(s)`);
+
+            // Calculate segments to keep (inverse of silences)
+            const clipDuration = selectedClip.end_frame - selectedClip.start_frame;
+            const keepRanges = getKeepRanges(silences, clipDuration);
+
+            // Create new clips from kept ranges
+            const newClips: Clip[] = keepRanges.map((range, index) => ({
+                id: crypto.randomUUID(),
+                track_id: selectedClip.track_id,
+                clip_type: selectedClip.clip_type,
+                start_frame: selectedClip.start_frame + range.startFrame,
+                end_frame: selectedClip.start_frame + range.endFrame,
+                source_url: selectedClip.source_url,
+                text_content: selectedClip.text_content
+            }));
+
+            // Remove original clip, add new ones
+            setClips(prev => [
+                ...prev.filter(c => c.id !== selectedClipId),
+                ...newClips
+            ]);
+
+            toast.success(`Removed ${silences.length} silent segments`);
+            setSelectedClipId(null);
+        } catch (error) {
+            console.error('Silence removal error:', error);
+            toast.error('Failed to analyze audio');
+        } finally {
+            setIsAnalyzingSilence(false);
+        }
+    };
+
+    // ==================== DRAG & DROP HANDLERS ====================
     const handleDragStart = (e: React.DragEvent, clipId: string) => {
         e.dataTransfer.effectAllowed = 'move';
         setDraggingClipId(clipId);
@@ -497,7 +656,40 @@ const VideoEditorPro: React.FC = () => {
         if (!clip) return;
 
         const duration = clip.end_frame - clip.start_frame;
-        const newStart = Math.max(0, dropFrame);
+        let newStart = Math.max(0, dropFrame);
+
+        // Magnetic snap: find nearest clip edge to snap to
+        if (magneticSnap) {
+            const SNAP_THRESHOLD = 15; // frames (0.5s at 30fps)
+            const trackClips = clips.filter(
+                c => c.track_id === trackId && c.id !== draggingClipId
+            );
+
+            let closestEdge: number | null = null;
+            let minDistance = SNAP_THRESHOLD + 1;
+
+            for (const other of trackClips) {
+                // Check snap to other clip's end (our start aligns to their end)
+                const distToEnd = Math.abs(newStart - other.end_frame);
+                if (distToEnd < minDistance) {
+                    minDistance = distToEnd;
+                    closestEdge = other.end_frame;
+                }
+                // Check snap to other clip's start (our end aligns to their start)
+                const ourEndIfSnapToTheirStart = other.start_frame - duration;
+                const distToStart = Math.abs(newStart - ourEndIfSnapToTheirStart);
+                if (distToStart < minDistance && ourEndIfSnapToTheirStart >= 0) {
+                    minDistance = distToStart;
+                    closestEdge = ourEndIfSnapToTheirStart;
+                }
+            }
+
+            // Apply snap if within threshold
+            if (closestEdge !== null && minDistance <= SNAP_THRESHOLD) {
+                newStart = closestEdge;
+            }
+        }
+
         const newEnd = newStart + duration;
 
         // Optimistic update
@@ -742,6 +934,64 @@ const VideoEditorPro: React.FC = () => {
                                     <Mic className="h-4 w-4 mr-2" />
                                     Voice Over
                                 </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    size="sm"
+                                    disabled={isAnalyzingDucking}
+                                    onClick={async () => {
+                                        // Find voice and music tracks
+                                        const voiceClip = clips.find(c =>
+                                            c.clip_type === 'audio' && c.source_url
+                                        );
+                                        if (!voiceClip || !voiceClip.source_url) {
+                                            toast.error('Add an audio clip with voice first');
+                                            return;
+                                        }
+
+                                        setIsAnalyzingDucking(true);
+                                        try {
+                                            const audioBuffer = await loadAudioBuffer(voiceClip.source_url);
+                                            const voiceSegments = detectVoiceSegments(audioBuffer, {
+                                                voiceThresholdDb: -30,
+                                                minVoiceDurationMs: 100
+                                            }, project?.fps || 30);
+
+                                            if (voiceSegments.length === 0) {
+                                                toast.info('No voice detected in audio');
+                                                return;
+                                            }
+
+                                            const duckingSegments = generateDuckingSegments(
+                                                voiceSegments,
+                                                { duckAmountDb: -15, attackMs: 100, releaseMs: 200 },
+                                                project?.fps || 30
+                                            );
+
+                                            const envelope = generateVolumeEnvelope(
+                                                duckingSegments,
+                                                project?.duration_frames || 300,
+                                                {},
+                                                project?.fps || 30
+                                            );
+
+                                            setDuckingEnvelope(envelope);
+                                            toast.success(`Auto-duck: ${voiceSegments.length} voice segments detected`);
+                                        } catch (error) {
+                                            console.error('Auto-duck error:', error);
+                                            toast.error('Failed to analyze audio');
+                                        } finally {
+                                            setIsAnalyzingDucking(false);
+                                        }
+                                    }}
+                                >
+                                    {isAnalyzingDucking ? (
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Volume2 className="h-4 w-4 mr-2" />
+                                    )}
+                                    Auto-Duck Music
+                                </Button>
                             </TabsContent>
 
                             <TabsContent value="ai" className="mt-0 space-y-2">
@@ -753,6 +1003,47 @@ const VideoEditorPro: React.FC = () => {
                                     <Wand2 className="h-4 w-4 mr-2" />
                                     AI Enhance
                                 </Button>
+
+                                {/* LUT Upload */}
+                                <input
+                                    ref={lutInputRef}
+                                    type="file"
+                                    accept=".cube"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+
+                                        try {
+                                            const text = await file.text();
+                                            const lut = parseCubeFile(text);
+                                            setActiveLUT(lut);
+                                            toast.success(`LUT loaded: ${lut.title} (${lut.size}³ grid)`);
+                                        } catch (error) {
+                                            console.error('LUT parse error:', error);
+                                            toast.error('Failed to parse LUT file');
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    variant={activeLUT ? "default" : "outline"}
+                                    className={`w-full ${activeLUT ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                                    size="sm"
+                                    onClick={() => lutInputRef.current?.click()}
+                                >
+                                    <Palette className="h-4 w-4 mr-2" />
+                                    {activeLUT ? activeLUT.title : 'Apply LUT'}
+                                </Button>
+                                {activeLUT && (
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full text-xs"
+                                        size="sm"
+                                        onClick={() => setActiveLUT(null)}
+                                    >
+                                        Remove LUT
+                                    </Button>
+                                )}
                             </TabsContent>
                         </ScrollArea>
                     </Tabs>
@@ -814,11 +1105,35 @@ const VideoEditorPro: React.FC = () => {
                         >
                             <Scissors className="h-5 w-5" />
                         </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleRemoveSilences}
+                            disabled={isAnalyzingSilence || !selectedClipId}
+                            title="Remove Silences"
+                        >
+                            {isAnalyzingSilence ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <VolumeX className="h-5 w-5" />
+                            )}
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => seekTo(currentFrame + project!.fps)}>
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => seekTo(project!.duration_frames - 1)}>
                             <SkipForward className="h-4 w-4" />
+                        </Button>
+
+                        {/* Magnetic Timeline Toggle */}
+                        <Button
+                            variant={magneticSnap ? "default" : "ghost"}
+                            size="icon"
+                            onClick={() => setMagneticSnap(!magneticSnap)}
+                            title={magneticSnap ? "Magnetic Snap: ON" : "Magnetic Snap: OFF"}
+                            className={magneticSnap ? "bg-blue-600 hover:bg-blue-700" : ""}
+                        >
+                            <Magnet className="h-4 w-4" />
                         </Button>
 
                         <div className="ml-4 flex items-center gap-2 text-sm font-mono">
@@ -860,6 +1175,58 @@ const VideoEditorPro: React.FC = () => {
                                     <Label className="text-xs text-zinc-400">Opacity</Label>
                                     <Slider defaultValue={[100]} max={100} step={1} />
                                 </div>
+
+                                {/* Keyframe Controls */}
+                                <div className="space-y-2 pt-2 border-t border-zinc-700">
+                                    <Label className="text-xs text-zinc-400">Animation</Label>
+                                    <Select value={selectedProperty} onValueChange={(v) => setSelectedProperty(v as KeyframeProperty)}>
+                                        <SelectTrigger className="h-8">
+                                            <SelectValue placeholder="Property" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="opacity">Opacity</SelectItem>
+                                            <SelectItem value="position_x">Position X</SelectItem>
+                                            <SelectItem value="position_y">Position Y</SelectItem>
+                                            <SelectItem value="scale">Scale</SelectItem>
+                                            <SelectItem value="rotation">Rotation</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={async () => {
+                                            if (!selectedClipId || !project) return;
+                                            const relativeFrame = currentFrame;
+                                            const defaultValue = PROPERTY_DEFAULTS[selectedProperty];
+
+                                            try {
+                                                const { data: newKf, error } = await supabase
+                                                    .from('video_keyframes')
+                                                    .insert({
+                                                        clip_id: selectedClipId,
+                                                        frame: relativeFrame,
+                                                        property: selectedProperty,
+                                                        value: defaultValue,
+                                                        easing: 'linear'
+                                                    })
+                                                    .select()
+                                                    .single();
+
+                                                if (error) throw error;
+                                                setKeyframes(prev => [...prev, newKf as Keyframe]);
+                                                toast.success(`Keyframe added at frame ${relativeFrame}`);
+                                            } catch (error) {
+                                                console.error('Error adding keyframe:', error);
+                                                toast.error('Failed to add keyframe');
+                                            }
+                                        }}
+                                    >
+                                        <Diamond className="h-4 w-4 mr-2" />
+                                        Add Keyframe
+                                    </Button>
+                                </div>
+
                                 <Button
                                     variant="destructive"
                                     size="sm"
@@ -995,6 +1362,24 @@ const VideoEditorPro: React.FC = () => {
                                                 <div className="px-2 py-1 text-xs truncate">
                                                     {clip.text_content || clip.clip_type}
                                                 </div>
+                                                {/* Keyframe markers */}
+                                                {keyframes
+                                                    .filter(kf => kf.clip_id === clip.id)
+                                                    .map(kf => {
+                                                        const clipDuration = clip.end_frame - clip.start_frame;
+                                                        const relativePos = (kf.frame / clipDuration) * 100;
+                                                        return (
+                                                            <div
+                                                                key={kf.id}
+                                                                className="absolute bottom-0 transform -translate-x-1/2"
+                                                                style={{ left: `${relativePos}%` }}
+                                                                title={`${kf.property}: ${kf.value} (${kf.easing})`}
+                                                            >
+                                                                <Diamond className="h-3 w-3 text-yellow-400 fill-yellow-400" />
+                                                            </div>
+                                                        );
+                                                    })
+                                                }
                                             </div>
                                         ))
                                     }

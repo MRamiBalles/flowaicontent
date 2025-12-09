@@ -1,13 +1,41 @@
+/**
+ * video-dubbing/index.ts
+ * 
+ * AI video dubbing - translates and re-voices videos into 29 languages.
+ * Uses OpenAI for translation and ElevenLabs for voice synthesis.
+ * 
+ * Actions:
+ * - get_languages: List available dubbing languages
+ * - create_job: Start new dubbing job
+ * - get_job_status: Check job progress
+ * - get_my_jobs: List user's jobs
+ * - translate_text: Translate text via OpenAI
+ * 
+ * @module functions/video-dubbing
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// ============================================================
+// CORS HEADERS
+// ============================================================
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ============================================================
+// API KEYS
+// ============================================================
+
 const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+
+// ============================================================
+// MAIN HANDLER
+// ============================================================
 
 serve(async (req) => {
     if (req.method === "OPTIONS") {
