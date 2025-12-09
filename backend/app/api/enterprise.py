@@ -2,10 +2,11 @@
 Enterprise Tenant API Endpoints
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Header
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from app.services.tenant_service import tenant_service
+from app.dependencies.auth import get_admin_user
 
 router = APIRouter(prefix="/enterprise", tags=["enterprise"])
 
@@ -41,13 +42,15 @@ async def get_tenant_config(request: Request):
 @router.post("/register")
 async def register_tenant(
     tenant: TenantCreateRequest,
-    x_admin_key: str = Header(None)
+    current_user: dict = Depends(get_admin_user)
 ):
-    """Create a new tenant (Admin only)"""
-    if x_admin_key != "admin_secret_key": # Mock admin check
-        raise HTTPException(status_code=403, detail="Unauthorized")
-        
+    """
+    Create a new enterprise tenant.
+    
+    Requires: Admin role (verified via JWT + user_roles table)
+    """
     try:
         return await tenant_service.create_tenant(tenant.name, tenant.domain, tenant.config)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
