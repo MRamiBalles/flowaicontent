@@ -1,18 +1,52 @@
+/**
+ * billing-engine/index.ts
+ * 
+ * Unified credit management for all AI features.
+ * Handles balance queries, credit deductions, and admin top-ups.
+ * 
+ * Actions:
+ * - get_balance: Check user's current credit balance
+ * - deduct_credits: Consume credits for AI operations
+ * - add_credits: Admin-only credit top-up
+ * 
+ * @module functions/billing-engine
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// ============================================================
+// CORS HEADERS
+// ============================================================
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ============================================================
+// TYPE DEFINITIONS
+// ============================================================
+
+/**
+ * Request body for billing operations.
+ */
 interface BillingRequest {
+    /** Action to perform */
     action: 'get_balance' | 'deduct_credits' | 'add_credits';
-    userId?: string; // For admin use
+    /** Target user ID (admin only for other users) */
+    userId?: string;
+    /** Credit amount for deduct/add */
     amount?: number;
-    service?: string; // For deduction
-    metadata?: any;
+    /** Service identifier for audit trail */
+    service?: string;
+    /** Additional metadata (job IDs, etc.) */
+    metadata?: Record<string, unknown>;
 }
+
+// ============================================================
+// MAIN HANDLER
+// ============================================================
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') {

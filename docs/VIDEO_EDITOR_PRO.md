@@ -1,141 +1,112 @@
-# 🎬 AI Video Editor Pro - Technical Documentation
+# Video Editor Pro
 
-> **Feature**: AI Video Editor Pro (Remotion)  
-> **Version**: 1.0.0  
-> **Last Updated**: 2025-12-08  
-> **Status**: ✅ Implemented
+Technical reference for the browser-based video editing suite.
 
----
+| Property | Value |
+|----------|-------|
+| Component | `src/pages/VideoEditorPro.tsx` |
+| Backend | Supabase Edge Functions + AWS Lambda |
+| Status | Production |
 
-## Overview
+## System Design
 
-FlowAI's AI Video Editor Pro is a professional-grade video editing suite built with Remotion. It provides a timeline-based editing experience with multi-track support, real-time preview, and cloud rendering via AWS Lambda for high-quality video exports.
+The editor follows a three-tier architecture:
 
----
+1. **Client** - React component with timeline UI, preview canvas, and property panels
+2. **Database** - PostgreSQL stores projects, tracks, clips, and keyframes
+3. **Render Pipeline** - Edge Function triggers AWS Lambda for video encoding
 
-## Architecture
-
-```mermaid
-sequenceDiagram
-    participant User as 👤 User
-    participant Editor as 🖥️ VideoEditorPro.tsx
-    participant DB as 🗄️ PostgreSQL
-    participant EdgeFn as ⚡ render-video
-    participant Lambda as ☁️ AWS Lambda
-    participant S3 as 📦 S3 Storage
-
-    User->>Editor: Edit timeline
-    Editor->>DB: Save project + tracks + clips
-    User->>Editor: Click Export
-    Editor->>EdgeFn: POST /render-video
-    EdgeFn->>Lambda: Invoke Remotion render
-    Lambda->>Lambda: Parallel chunk rendering
-    Lambda->>S3: Upload video
-    S3-->>User: Download link
+```
+┌─────────────────┐     ┌─────────────┐     ┌─────────────┐
+│  React Editor   │────▶│  Supabase   │────▶│ AWS Lambda  │
+│  (Browser)      │     │  (Postgres) │     │ (Remotion)  │
+└─────────────────┘     └─────────────┘     └─────────────┘
+         │                     │                    │
+         ▼                     ▼                    ▼
+   Real-time Edit         Persist Data        Render MP4
 ```
 
----
+## Database Tables
 
-## Database Schema
+### `video_projects`
 
-### Tables
+Stores project metadata and render state.
 
-#### `video_projects`
-Main table for video editing projects.
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key |
+| `user_id` | UUID | Owner reference |
+| `name` | TEXT | Display title |
+| `width`, `height` | INT | Canvas dimensions (default 1920×1080) |
+| `fps` | INT | Frame rate (default 30) |
+| `duration_frames` | INT | Project length in frames |
+| `composition_data` | JSONB | Serialized timeline state |
+| `render_status` | TEXT | `draft` / `queued` / `rendering` / `completed` / `failed` |
+| `rendered_video_url` | TEXT | S3 download link after render |
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | FK to auth.users |
-| name | TEXT | Project name |
-| width | INTEGER | Video width (default: 1920) |
-| height | INTEGER | Video height (default: 1080) |
-| fps | INTEGER | Framerate (default: 30) |
-| duration_frames | INTEGER | Total duration in frames |
-| composition_data | JSONB | Serialized Remotion composition |
-| render_status | TEXT | draft, queued, rendering, completed, failed |
-| render_progress | INTEGER | 0-100 percentage |
-| rendered_video_url | TEXT | Final video URL |
+### `video_tracks`
 
-#### `video_tracks`
-Timeline tracks for organizing clips.
+Vertical lanes in the timeline. Each track holds one media type.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| project_id | UUID | FK to video_projects |
-| track_type | TEXT | video, audio, text, image, shape, effect |
-| name | TEXT | Track display name |
-| order_index | INTEGER | Vertical position |
-| is_locked | BOOLEAN | Prevent edits |
-| is_visible | BOOLEAN | Show/hide |
-| is_muted | BOOLEAN | Audio mute |
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key |
+| `project_id` | UUID | Parent project |
+| `track_type` | TEXT | `video` / `audio` / `text` / `image` |
+| `order_index` | INT | Vertical stacking order (0 = top) |
+| `is_locked` | BOOL | Prevents editing |
+| `is_muted` | BOOL | Silences audio playback |
 
-#### `video_clips`
-Individual clips on tracks.
+### `video_clips`
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| track_id | UUID | FK to video_tracks |
-| clip_type | TEXT | video, audio, text, image, ai_generated, voice_over |
-| start_frame | INTEGER | Timeline start position |
-| end_frame | INTEGER | Timeline end position |
-| source_url | TEXT | Media source URL |
-| position_x/y | NUMERIC | Canvas position |
-| scale_x/y | NUMERIC | Transform scale |
-| rotation | NUMERIC | Rotation degrees |
-| effects | JSONB | Applied effects |
-| text_content | TEXT | For text clips |
-| volume | NUMERIC | For audio clips |
+Individual media segments placed on tracks.
 
-#### `video_keyframes`
-Animation keyframes for smooth transitions.
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key |
+| `track_id` | UUID | Parent track |
+| `clip_type` | TEXT | `video` / `audio` / `text` / `ai_generated` |
+| `start_frame`, `end_frame` | INT | Timeline position |
+| `source_url` | TEXT | Media file location |
+| `position_x`, `position_y` | NUMERIC | Canvas offset |
+| `scale_x`, `scale_y` | NUMERIC | Transform scale |
+| `rotation` | NUMERIC | Degrees |
+| `text_content` | TEXT | Caption text (for text clips) |
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| clip_id | UUID | FK to video_clips |
-| frame | INTEGER | Keyframe position |
-| property | TEXT | Animated property |
-| value | NUMERIC | Value at keyframe |
-| easing | TEXT | Easing function |
+### `video_keyframes`
 
-#### `video_templates`
-Pre-built templates for quick starts.
+Animation data for property interpolation.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| name | TEXT | Template name |
-| category | TEXT | social, youtube, tiktok, etc. |
-| template_data | JSONB | Full project structure |
-| is_premium | BOOLEAN | Paid template |
-| price_cents | INTEGER | Template price |
+| Column | Type | Notes |
+|--------|------|-------|
+| `clip_id` | UUID | Parent clip |
+| `frame` | INT | Keyframe position |
+| `property` | TEXT | `opacity` / `scale` / `position_x` / etc. |
+| `value` | NUMERIC | Value at this frame |
+| `easing` | TEXT | `linear` / `ease-in` / `ease-out` |
 
-#### `render_queue`
-Background rendering job queue.
+### `video_transitions`
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| project_id | UUID | FK to video_projects |
-| output_quality | TEXT | draft, medium, high, ultra |
-| status | TEXT | pending, processing, completed, failed |
-| progress | INTEGER | 0-100 |
-| output_url | TEXT | Rendered video URL |
+Effects applied between adjacent clips.
 
----
+| Column | Type | Notes |
+|--------|------|-------|
+| `from_clip_id` | UUID | Outgoing clip |
+| `to_clip_id` | UUID | Incoming clip |
+| `transition_type` | TEXT | `fade` / `dissolve` / `wipe` / `slide` |
+| `duration_frames` | INT | Transition length (default 15) |
 
 ## API Reference
 
 ### Render Video
 
-**Endpoint**: `POST /functions/v1/render-video`  
-**Auth**: Required (Bearer token)
+Initiates server-side rendering of a project.
 
-#### Request
-```json
+```
+POST /functions/v1/render-video
+Authorization: Bearer <token>
+Content-Type: application/json
+
 {
   "project_id": "uuid",
   "quality": "high",
@@ -143,173 +114,85 @@ Background rendering job queue.
 }
 ```
 
-#### Response (200 OK)
+**Response (202 Accepted)**:
 ```json
 {
-  "success": true,
   "render_id": "uuid",
-  "status": "queued",
-  "message": "Render job added to queue"
+  "status": "queued"
 }
 ```
 
-#### Quality Limits by Plan
+### Quality Tiers
 
-| Quality | Requirements | Resolution |
-|---------|--------------|------------|
-| draft | Free | 720p |
-| medium | PRO+ | 1080p |
-| high | PRO+ | 1080p 60fps |
-| ultra | BUSINESS+ | 4K |
+| Tier | Resolution | Plan Required |
+|------|------------|---------------|
+| `draft` | 720p | Free |
+| `medium` | 1080p | Pro |
+| `high` | 1080p 60fps | Pro |
+| `ultra` | 4K | Business |
 
----
+## Editor Layout
 
-## Frontend Component
-
-### VideoEditorPro.tsx
-
-Location: `src/pages/VideoEditorPro.tsx`
-
-#### Features
-- **Timeline Editing**: Multi-track timeline with drag & drop
-- **Preview Canvas**: Real-time preview with playback controls
-- **Asset Panel**: Upload media, add text, AI generation
-- **Properties Panel**: Edit clip transforms, effects, styles
-- **Keyframe Animation**: Animate any property over time
-- **Cloud Rendering**: Export via AWS Lambda
-
-#### UI Layout
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Header (Project name, Save, Export)                      │
+│ Header: Project Name │ Save │ Export                    │
 ├──────────┬─────────────────────────────────┬────────────┤
-│          │                                  │            │
-│  Assets  │         Preview Canvas          │ Properties │
-│  Panel   │                                  │   Panel    │
+│          │                                 │            │
+│  Assets  │        Preview Canvas           │ Properties │
+│  Panel   │                                 │   Panel    │
 │          ├─────────────────────────────────┤            │
-│          │      Playback Controls          │            │
+│          │       Playback Controls         │            │
 ├──────────┴─────────────────────────────────┴────────────┤
-│                        Timeline                          │
-│  [Track 1] ███████░░░░░░░████████░░░░░░░░░░░░           │
-│  [Track 2] ░░░░░░░░███████████░░░░░░░░░░░░░░           │
-│  [Track 3] ░░░░░████░░░░░░░░░░░░░░░███░░░░░░           │
+│                     Timeline                            │
+│  [Video] ████████░░░░░████████░░░░░░░░░░░░             │
+│  [Audio] ░░░░░░░░████████████░░░░░░░░░░░░░             │
+│  [Text]  ░░░░████░░░░░░░░░░░░░░░░░███░░░░░             │
 └─────────────────────────────────────────────────────────┘
 ```
 
----
+## Current Features
 
-## Remotion Integration
+- Multi-track timeline with drag-and-drop
+- Clip splitting at playhead (scissors tool)
+- Transitions between adjacent clips
+- Auto-generated subtitles (AI)
+- Cloud rendering via AWS Lambda
 
-### Local Development
-```bash
-# Install Remotion dependencies
-npm install @remotion/cli @remotion/player @remotion/bundler
+## Planned Features
 
-# Start Remotion Studio
-npx remotion studio
-```
+See [Gap Analysis](VIDEO_EDITOR_GAP_ANALYSIS.md) for comparison with Premiere/CapCut.
 
-### AWS Lambda Rendering
+**High Priority**:
+- Keyframe animation engine
+- AI silence removal
+- Magnetic timeline (auto-snap)
 
-#### Prerequisites
-1. AWS Account with Lambda access
-2. IAM role with Remotion permissions
-3. S3 bucket for renders
+**Medium Priority**:
+- Color correction (HSL curves)
+- LUT import (.CUBE)
+- Audio auto-ducking
 
-#### Environment Variables
-```bash
-AWS_ACCESS_KEY_ID=AKIA...
-AWS_SECRET_ACCESS_KEY=...
-AWS_REGION=us-east-1
-REMOTION_SERVE_URL=https://your-remotion-site.s3.amazonaws.com
-```
+## Deployment
 
-#### Deploy Remotion Lambda
-```bash
-npx remotion lambda functions deploy --memory=3009
-npx remotion lambda sites create --site-name=flowai-editor
-```
-
----
-
-## Subscription Tiers
-
-| Feature | Free | PRO | BUSINESS |
-|---------|------|-----|----------|
-| Projects | 3 | Unlimited | Unlimited |
-| Max Duration | 1 min | 30 min | 2 hours |
-| Export Quality | 720p | 1080p 60fps | 4K |
-| Render Priority | Low | Normal | High |
-| Templates | Basic | All | All + Custom |
-| Cloud Storage | 1 GB | 50 GB | 500 GB |
-| AI Generation | ❌ | ✅ | ✅ |
-
----
-
-## Files Created
-
-| File | Purpose |
-|------|---------|
-| `supabase/migrations/20251208170200_video_editor_pro.sql` | Database schema |
-| `supabase/functions/render-video/index.ts` | Render trigger endpoint |
-| `src/pages/VideoEditorPro.tsx` | React UI component |
-| `docs/VIDEO_EDITOR_PRO.md` | This documentation |
-
----
-
-## Deployment Steps
-
-1. **Run database migration**:
+1. Apply database migrations:
    ```bash
    npx supabase db push
    ```
 
-2. **Deploy Edge Function**:
+2. Deploy Edge Function:
    ```bash
    npx supabase functions deploy render-video
    ```
 
-3. **Set AWS secrets** (for Lambda rendering):
-   ```bash
-   # In Supabase Dashboard → Edge Functions → Secrets
-   AWS_ACCESS_KEY_ID
-   AWS_SECRET_ACCESS_KEY
-   AWS_REGION
-   REMOTION_SERVE_URL
-   ```
+3. Configure AWS credentials in Supabase dashboard:
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `REMOTION_SERVE_URL`
 
-4. **Install Remotion Lambda** (optional, for production):
-   ```bash
-   npx remotion lambda functions deploy
-   npx remotion lambda sites create
-   ```
+## Files
 
----
-
-## Helper Functions
-
-### `get_full_project(project_id)`
-Returns complete project with all tracks, clips, and keyframes as nested JSON.
-
-### `queue_render(project_id, quality, format)`
-Adds a render job to the queue and updates project status.
-
----
-
-## Future Enhancements
-
-- [ ] Real-time collaboration
-- [ ] AI-powered auto-editing
-- [ ] Audio waveform visualization
-- [ ] Stock media library integration
-- [ ] Green screen/chroma key
-- [ ] Motion tracking
-- [ ] Audio ducking
-
----
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2025-12-08 | Initial implementation |
+| Path | Purpose |
+|------|---------|
+| `src/pages/VideoEditorPro.tsx` | Main editor component |
+| `supabase/functions/render-video/index.ts` | Render trigger |
+| `supabase/migrations/*video*.sql` | Database schema |

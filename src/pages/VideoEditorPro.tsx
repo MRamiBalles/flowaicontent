@@ -1,3 +1,18 @@
+/**
+ * VideoEditorPro.tsx
+ * 
+ * Browser-based non-linear video editor with multi-track timeline.
+ * 
+ * Features:
+ * - Multi-track timeline (video, audio, text, images)
+ * - Drag-and-drop clip repositioning
+ * - Clip splitting at playhead
+ * - Transitions between clips
+ * - Cloud rendering via AWS Lambda
+ * 
+ * @module pages/VideoEditorPro
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,47 +57,74 @@ import {
     ArrowRightLeft
 } from 'lucide-react';
 
+// ============================================================
+// TYPE DEFINITIONS
+// ============================================================
+
+/** Video project metadata and render state */
 interface Project {
     id: string;
     name: string;
+    /** Canvas width in pixels */
     width: number;
+    /** Canvas height in pixels */
     height: number;
+    /** Frames per second */
     fps: number;
+    /** Total project length in frames */
     duration_frames: number;
+    /** Current render status: draft | queued | rendering | completed | failed */
     render_status: string;
+    /** Render progress 0-100 */
     render_progress: number;
+    /** S3 URL of rendered video */
     rendered_video_url: string | null;
 }
 
+/** Timeline track containing clips of a single media type */
 interface Track {
     id: string;
+    /** Type of media: video | audio | text | image */
     track_type: string;
     name: string;
+    /** Vertical position (0 = top) */
     order_index: number;
     is_locked: boolean;
     is_visible: boolean;
     is_muted: boolean;
 }
 
+/** Individual clip placed on a track */
 interface Clip {
     id: string;
     track_id: string;
     clip_type: string;
+    /** Timeline start position in frames */
     start_frame: number;
+    /** Timeline end position in frames */
     end_frame: number;
+    /** Text content for captions */
     text_content?: string;
+    /** Media source URL */
     source_url?: string;
 }
 
+/** Transition effect between adjacent clips */
 interface Transition {
     id: string;
     project_id: string;
     from_clip_id: string | null;
     to_clip_id: string | null;
     transition_type: 'fade' | 'dissolve' | 'wipe' | 'slide' | 'zoom';
+    /** Duration in frames (default: 15 = 0.5s at 30fps) */
     duration_frames: number;
 }
 
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+/** Color mapping for track types (Tailwind classes) */
 const TRACK_COLORS: Record<string, string> = {
     video: 'bg-blue-500',
     audio: 'bg-green-500',
@@ -92,6 +134,14 @@ const TRACK_COLORS: Record<string, string> = {
     effect: 'bg-orange-500',
 };
 
+// ============================================================
+// COMPONENT
+// ============================================================
+
+/**
+ * Main video editor component.
+ * Renders the full editing interface: assets panel, preview, properties, and timeline.
+ */
 const VideoEditorPro: React.FC = () => {
     const { user, session } = useAuth();
 
@@ -518,445 +568,444 @@ const VideoEditorPro: React.FC = () => {
                         clips.some(c => c.track_id === track.id && (c.id === t.from_clip_id || c.id === t.to_clip_id))
                     )
                 })),
-            })),
-        };
+            };
 
-        const { error } = await supabase
-            .from('video_projects')
-            .update({
-                composition_data: JSON.parse(JSON.stringify(compositionData)),
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', project.id);
+            const { error } = await supabase
+                .from('video_projects')
+                .update({
+                    composition_data: JSON.parse(JSON.stringify(compositionData)),
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', project.id);
 
-        if (error) throw error;
-        toast.success('Project saved');
-    } catch (error) {
-        console.error('Save error:', error);
-        toast.error('Failed to save project');
-    } finally {
-        setIsSaving(false);
-    }
-};
-
-const handleRender = async () => {
-    if (!project) return;
-
-    setIsRendering(true);
-    try {
-        // Save first
-        await handleSave();
-
-        const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/render-video`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${session?.access_token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    project_id: project.id,
-                    quality: 'high',
-                    format: 'mp4',
-                }),
-            }
-        );
-
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error);
+            if (error) throw error;
+            toast.success('Project saved');
+        } catch (error) {
+            console.error('Save error:', error);
+            toast.error('Failed to save project');
+        } finally {
+            setIsSaving(false);
         }
+    };
 
-        toast.success('Render job started!', {
-            description: 'You will be notified when your video is ready.',
-        });
+    const handleRender = async () => {
+        if (!project) return;
 
-        // Update local status
-        setProject({ ...project, render_status: 'queued' });
-    } catch (error) {
-        console.error('Render error:', error);
-        toast.error(error instanceof Error ? error.message : 'Failed to start render');
-    } finally {
-        setIsRendering(false);
+        setIsRendering(true);
+        try {
+            // Save first
+            await handleSave();
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/render-video`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session?.access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        project_id: project.id,
+                        quality: 'high',
+                        format: 'mp4',
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+
+            toast.success('Render job started!', {
+                description: 'You will be notified when your video is ready.',
+            });
+
+            // Update local status
+            setProject({ ...project, render_status: 'queued' });
+        } catch (error) {
+            console.error('Render error:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to start render');
+        } finally {
+            setIsRendering(false);
+        }
+    };
+
+    const togglePlayback = () => {
+        setIsPlaying(!isPlaying);
+    };
+
+    const seekTo = (frame: number) => {
+        setCurrentFrame(Math.max(0, Math.min(frame, (project?.duration_frames || 300) - 1)));
+    };
+
+    const formatTimecode = (frame: number) => {
+        const fps = project?.fps || 30;
+        const totalSeconds = frame / fps;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const frames = frame % fps;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${frames.toString().padStart(2, '0')}`;
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
     }
-};
 
-const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
-};
-
-const seekTo = (frame: number) => {
-    setCurrentFrame(Math.max(0, Math.min(frame, (project?.duration_frames || 300) - 1)));
-};
-
-const formatTimecode = (frame: number) => {
-    const fps = project?.fps || 30;
-    const totalSeconds = frame / fps;
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = Math.floor(totalSeconds % 60);
-    const frames = frame % fps;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${frames.toString().padStart(2, '0')}`;
-};
-
-if (isLoading) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-    );
-}
-
-return (
-    <div className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden">
-        {/* Header */}
-        <header className="h-14 border-b border-zinc-800 flex items-center justify-between px-4">
-            <div className="flex items-center gap-4">
-                <Film className="h-6 w-6 text-primary" />
-                <Input
-                    value={project?.name || 'Untitled'}
-                    onChange={(e) => project && setProject({ ...project, name: e.target.value })}
-                    className="w-64 bg-transparent border-none text-lg font-semibold"
-                />
-                <Badge variant="outline" className="text-xs">
-                    {project?.width}x{project?.height} @ {project?.fps}fps
-                </Badge>
-            </div>
-
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    <span className="ml-2">Save</span>
-                </Button>
-                <Button
-                    size="sm"
-                    onClick={handleRender}
-                    disabled={isRendering || project?.render_status === 'rendering'}
-                >
-                    {isRendering ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <Download className="h-4 w-4" />
-                    )}
-                    <span className="ml-2">Export</span>
-                </Button>
-            </div>
-        </header>
-
-        {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden">
-            {/* Left Panel - Assets */}
-            <aside className="w-64 border-r border-zinc-800 flex flex-col">
-                <Tabs defaultValue="media" className="flex-1 flex flex-col">
-                    <TabsList className="mx-2 mt-2">
-                        <TabsTrigger value="media" className="text-xs">Media</TabsTrigger>
-                        <TabsTrigger value="text" className="text-xs">Text</TabsTrigger>
-                        <TabsTrigger value="audio" className="text-xs">Audio</TabsTrigger>
-                        <TabsTrigger value="ai" className="text-xs">AI</TabsTrigger>
-                    </TabsList>
-
-                    <ScrollArea className="flex-1 p-2">
-                        <TabsContent value="media" className="mt-0 space-y-2">
-                            <Button variant="outline" className="w-full" size="sm">
-                                <Upload className="h-4 w-4 mr-2" />
-                                Upload Media
-                            </Button>
-                            <div className="grid grid-cols-2 gap-2 mt-4">
-                                {/* Placeholder media items */}
-                                <div className="aspect-video bg-zinc-800 rounded cursor-pointer hover:ring-2 ring-primary transition-all" />
-                                <div className="aspect-video bg-zinc-800 rounded cursor-pointer hover:ring-2 ring-primary transition-all" />
-                            </div>
-                        </TabsContent>
-
-                        <TabsContent value="text" className="mt-0 space-y-2">
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                size="sm"
-                                onClick={() => {
-                                    const textTrack = tracks.find(t => t.track_type === 'text');
-                                    if (textTrack) handleAddClip(textTrack.id, 'text');
-                                }}
-                            >
-                                <Type className="h-4 w-4 mr-2" />
-                                Add Text
-                            </Button>
-                        </TabsContent>
-
-                        <TabsContent value="audio" className="mt-0 space-y-2">
-                            <Button variant="outline" className="w-full" size="sm">
-                                <Music className="h-4 w-4 mr-2" />
-                                Add Music
-                            </Button>
-                            <Button variant="outline" className="w-full" size="sm">
-                                <Mic className="h-4 w-4 mr-2" />
-                                Voice Over
-                            </Button>
-                        </TabsContent>
-
-                        <TabsContent value="ai" className="mt-0 space-y-2">
-                            <Button variant="outline" className="w-full" size="sm">
-                                <Sparkles className="h-4 w-4 mr-2" />
-                                AI Generate Video
-                            </Button>
-                            <Button variant="outline" className="w-full" size="sm">
-                                <Wand2 className="h-4 w-4 mr-2" />
-                                AI Enhance
-                            </Button>
-                        </TabsContent>
-                    </ScrollArea>
-                </Tabs>
-            </aside>
-
-            {/* Center - Preview */}
-            <div className="flex-1 flex flex-col">
-                {/* Preview Area */}
-                <div className="flex-1 flex items-center justify-center bg-zinc-900 p-4">
-                    <div
-                        ref={playerRef}
-                        className="relative bg-black rounded-lg overflow-hidden shadow-2xl"
-                        style={{
-                            aspectRatio: `${project?.width || 1920}/${project?.height || 1080}`,
-                            maxWidth: '100%',
-                            maxHeight: '100%',
-                        }}
-                    >
-                        {/* Canvas placeholder */}
-                        <div className="absolute inset-0 flex items-center justify-center text-zinc-600">
-                            <div className="text-center">
-                                <Film className="h-16 w-16 mx-auto mb-2" />
-                                <p>Preview Canvas</p>
-                                <p className="text-sm text-zinc-700">Frame {currentFrame}</p>
-                            </div>
-                        </div>
-
-                        {/* Render clips that are visible at current frame */}
-                        {clips
-                            .filter(clip => currentFrame >= clip.start_frame && currentFrame < clip.end_frame)
-                            .map(clip => clip.clip_type === 'text' && (
-                                <div
-                                    key={clip.id}
-                                    className="absolute inset-0 flex items-center justify-center text-4xl font-bold"
-                                >
-                                    {clip.text_content}
-                                </div>
-                            ))
-                        }
-                    </div>
+        <div className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden">
+            {/* Header */}
+            <header className="h-14 border-b border-zinc-800 flex items-center justify-between px-4">
+                <div className="flex items-center gap-4">
+                    <Film className="h-6 w-6 text-primary" />
+                    <Input
+                        value={project?.name || 'Untitled'}
+                        onChange={(e) => project && setProject({ ...project, name: e.target.value })}
+                        className="w-64 bg-transparent border-none text-lg font-semibold"
+                    />
+                    <Badge variant="outline" className="text-xs">
+                        {project?.width}x{project?.height} @ {project?.fps}fps
+                    </Badge>
                 </div>
 
-                {/* Playback Controls */}
-                <div className="h-16 border-t border-zinc-800 flex items-center justify-center gap-4 px-4">
-                    <Button variant="ghost" size="icon" onClick={() => seekTo(0)}>
-                        <SkipBack className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => seekTo(currentFrame - project!.fps)}>
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" onClick={togglePlayback} className="h-10 w-10">
-                        {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={handleSave} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        <span className="ml-2">Save</span>
                     </Button>
                     <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleSplitClip}
-                        title="Split at Playhead"
+                        size="sm"
+                        onClick={handleRender}
+                        disabled={isRendering || project?.render_status === 'rendering'}
                     >
-                        <Scissors className="h-5 w-5" />
+                        {isRendering ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Download className="h-4 w-4" />
+                        )}
+                        <span className="ml-2">Export</span>
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => seekTo(currentFrame + project!.fps)}>
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => seekTo(project!.duration_frames - 1)}>
-                        <SkipForward className="h-4 w-4" />
-                    </Button>
-
-                    <div className="ml-4 flex items-center gap-2 text-sm font-mono">
-                        <Clock className="h-4 w-4 text-zinc-500" />
-                        <span>{formatTimecode(currentFrame)}</span>
-                        <span className="text-zinc-600">/</span>
-                        <span className="text-zinc-500">{formatTimecode(project?.duration_frames || 300)}</span>
-                    </div>
                 </div>
-            </div>
+            </header>
 
-            {/* Right Panel - Properties */}
-            <aside className="w-72 border-l border-zinc-800 flex flex-col">
-                <div className="p-3 border-b border-zinc-800">
-                    <h3 className="font-semibold text-sm">Properties</h3>
-                </div>
-                <ScrollArea className="flex-1 p-3">
-                    {selectedClipId ? (
-                        <div className="space-y-4">
-                            {/* Show selected clip properties */}
-                            <div className="space-y-2">
-                                <Label className="text-xs text-zinc-400">Position</Label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <Label className="text-xs">X</Label>
-                                        <Input type="number" defaultValue={0} className="h-8" />
-                                    </div>
-                                    <div>
-                                        <Label className="text-xs">Y</Label>
-                                        <Input type="number" defaultValue={0} className="h-8" />
-                                    </div>
+            {/* Main Content */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Left Panel - Assets */}
+                <aside className="w-64 border-r border-zinc-800 flex flex-col">
+                    <Tabs defaultValue="media" className="flex-1 flex flex-col">
+                        <TabsList className="mx-2 mt-2">
+                            <TabsTrigger value="media" className="text-xs">Media</TabsTrigger>
+                            <TabsTrigger value="text" className="text-xs">Text</TabsTrigger>
+                            <TabsTrigger value="audio" className="text-xs">Audio</TabsTrigger>
+                            <TabsTrigger value="ai" className="text-xs">AI</TabsTrigger>
+                        </TabsList>
+
+                        <ScrollArea className="flex-1 p-2">
+                            <TabsContent value="media" className="mt-0 space-y-2">
+                                <Button variant="outline" className="w-full" size="sm">
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Upload Media
+                                </Button>
+                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                    {/* Placeholder media items */}
+                                    <div className="aspect-video bg-zinc-800 rounded cursor-pointer hover:ring-2 ring-primary transition-all" />
+                                    <div className="aspect-video bg-zinc-800 rounded cursor-pointer hover:ring-2 ring-primary transition-all" />
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="text" className="mt-0 space-y-2">
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    size="sm"
+                                    onClick={() => {
+                                        const textTrack = tracks.find(t => t.track_type === 'text');
+                                        if (textTrack) handleAddClip(textTrack.id, 'text');
+                                    }}
+                                >
+                                    <Type className="h-4 w-4 mr-2" />
+                                    Add Text
+                                </Button>
+                            </TabsContent>
+
+                            <TabsContent value="audio" className="mt-0 space-y-2">
+                                <Button variant="outline" className="w-full" size="sm">
+                                    <Music className="h-4 w-4 mr-2" />
+                                    Add Music
+                                </Button>
+                                <Button variant="outline" className="w-full" size="sm">
+                                    <Mic className="h-4 w-4 mr-2" />
+                                    Voice Over
+                                </Button>
+                            </TabsContent>
+
+                            <TabsContent value="ai" className="mt-0 space-y-2">
+                                <Button variant="outline" className="w-full" size="sm">
+                                    <Sparkles className="h-4 w-4 mr-2" />
+                                    AI Generate Video
+                                </Button>
+                                <Button variant="outline" className="w-full" size="sm">
+                                    <Wand2 className="h-4 w-4 mr-2" />
+                                    AI Enhance
+                                </Button>
+                            </TabsContent>
+                        </ScrollArea>
+                    </Tabs>
+                </aside>
+
+                {/* Center - Preview */}
+                <div className="flex-1 flex flex-col">
+                    {/* Preview Area */}
+                    <div className="flex-1 flex items-center justify-center bg-zinc-900 p-4">
+                        <div
+                            ref={playerRef}
+                            className="relative bg-black rounded-lg overflow-hidden shadow-2xl"
+                            style={{
+                                aspectRatio: `${project?.width || 1920}/${project?.height || 1080}`,
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                            }}
+                        >
+                            {/* Canvas placeholder */}
+                            <div className="absolute inset-0 flex items-center justify-center text-zinc-600">
+                                <div className="text-center">
+                                    <Film className="h-16 w-16 mx-auto mb-2" />
+                                    <p>Preview Canvas</p>
+                                    <p className="text-sm text-zinc-700">Frame {currentFrame}</p>
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-xs text-zinc-400">Scale</Label>
-                                <Slider defaultValue={[100]} max={200} step={1} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-xs text-zinc-400">Opacity</Label>
-                                <Slider defaultValue={[100]} max={100} step={1} />
-                            </div>
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                className="w-full"
-                                onClick={() => handleDeleteClip(selectedClipId)}
-                            >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Clip
-                            </Button>
+
+                            {/* Render clips that are visible at current frame */}
+                            {clips
+                                .filter(clip => currentFrame >= clip.start_frame && currentFrame < clip.end_frame)
+                                .map(clip => clip.clip_type === 'text' && (
+                                    <div
+                                        key={clip.id}
+                                        className="absolute inset-0 flex items-center justify-center text-4xl font-bold"
+                                    >
+                                        {clip.text_content}
+                                    </div>
+                                ))
+                            }
                         </div>
-                    ) : (
-                        <div className="text-center text-zinc-500 py-8">
-                            <Layers className="h-8 w-8 mx-auto mb-2" />
-                            <p className="text-sm">Select a clip to edit properties</p>
+                    </div>
+
+                    {/* Playback Controls */}
+                    <div className="h-16 border-t border-zinc-800 flex items-center justify-center gap-4 px-4">
+                        <Button variant="ghost" size="icon" onClick={() => seekTo(0)}>
+                            <SkipBack className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => seekTo(currentFrame - project!.fps)}>
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" onClick={togglePlayback} className="h-10 w-10">
+                            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleSplitClip}
+                            title="Split at Playhead"
+                        >
+                            <Scissors className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => seekTo(currentFrame + project!.fps)}>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => seekTo(project!.duration_frames - 1)}>
+                            <SkipForward className="h-4 w-4" />
+                        </Button>
+
+                        <div className="ml-4 flex items-center gap-2 text-sm font-mono">
+                            <Clock className="h-4 w-4 text-zinc-500" />
+                            <span>{formatTimecode(currentFrame)}</span>
+                            <span className="text-zinc-600">/</span>
+                            <span className="text-zinc-500">{formatTimecode(project?.duration_frames || 300)}</span>
                         </div>
-                    )}
-                </ScrollArea>
-            </aside>
-        </div>
+                    </div>
+                </div>
 
-        {/* Timeline */}
-        <div className="h-48 border-t border-zinc-800 flex flex-col">
-            {/* Timeline header */}
-            <div className="h-8 border-b border-zinc-800 flex items-center px-2 gap-2">
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <ZoomOut className="h-3 w-3" />
-                </Button>
-                <Slider
-                    value={[zoom * 100]}
-                    min={25}
-                    max={400}
-                    step={25}
-                    onValueChange={([v]) => setZoom(v / 100)}
-                    className="w-24"
-                />
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <ZoomIn className="h-3 w-3" />
-                </Button>
-
-                <div className="flex-1" />
-
-                <Select defaultValue="video" onValueChange={(v) => handleAddTrack(v)}>
-                    <SelectTrigger className="w-32 h-7 text-xs">
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add Track
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="video">Video Track</SelectItem>
-                        <SelectItem value="audio">Audio Track</SelectItem>
-                        <SelectItem value="text">Text Track</SelectItem>
-                        <SelectItem value="image">Image Track</SelectItem>
-                    </SelectContent>
-                </Select>
+                {/* Right Panel - Properties */}
+                <aside className="w-72 border-l border-zinc-800 flex flex-col">
+                    <div className="p-3 border-b border-zinc-800">
+                        <h3 className="font-semibold text-sm">Properties</h3>
+                    </div>
+                    <ScrollArea className="flex-1 p-3">
+                        {selectedClipId ? (
+                            <div className="space-y-4">
+                                {/* Show selected clip properties */}
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-zinc-400">Position</Label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <Label className="text-xs">X</Label>
+                                            <Input type="number" defaultValue={0} className="h-8" />
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs">Y</Label>
+                                            <Input type="number" defaultValue={0} className="h-8" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-zinc-400">Scale</Label>
+                                    <Slider defaultValue={[100]} max={200} step={1} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs text-zinc-400">Opacity</Label>
+                                    <Slider defaultValue={[100]} max={100} step={1} />
+                                </div>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleDeleteClip(selectedClipId)}
+                                >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Clip
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="text-center text-zinc-500 py-8">
+                                <Layers className="h-8 w-8 mx-auto mb-2" />
+                                <p className="text-sm">Select a clip to edit properties</p>
+                            </div>
+                        )}
+                    </ScrollArea>
+                </aside>
             </div>
 
-            {/* Timeline tracks */}
-            <ScrollArea className="flex-1">
-                <div className="min-w-full">
-                    {/* Ruler */}
-                    <div className="h-6 bg-zinc-900 border-b border-zinc-800 flex items-end pl-32">
-                        {Array.from({ length: Math.ceil((project?.duration_frames || 300) / 30) }).map((_, i) => (
+            {/* Timeline */}
+            <div className="h-48 border-t border-zinc-800 flex flex-col">
+                {/* Timeline header */}
+                <div className="h-8 border-b border-zinc-800 flex items-center px-2 gap-2">
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <ZoomOut className="h-3 w-3" />
+                    </Button>
+                    <Slider
+                        value={[zoom * 100]}
+                        min={25}
+                        max={400}
+                        step={25}
+                        onValueChange={([v]) => setZoom(v / 100)}
+                        className="w-24"
+                    />
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <ZoomIn className="h-3 w-3" />
+                    </Button>
+
+                    <div className="flex-1" />
+
+                    <Select defaultValue="video" onValueChange={(v) => handleAddTrack(v)}>
+                        <SelectTrigger className="w-32 h-7 text-xs">
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Track
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="video">Video Track</SelectItem>
+                            <SelectItem value="audio">Audio Track</SelectItem>
+                            <SelectItem value="text">Text Track</SelectItem>
+                            <SelectItem value="image">Image Track</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Timeline tracks */}
+                <ScrollArea className="flex-1">
+                    <div className="min-w-full">
+                        {/* Ruler */}
+                        <div className="h-6 bg-zinc-900 border-b border-zinc-800 flex items-end pl-32">
+                            {Array.from({ length: Math.ceil((project?.duration_frames || 300) / 30) }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="text-xs text-zinc-500 border-l border-zinc-700"
+                                    style={{ width: `${30 * zoom}px`, paddingLeft: 2 }}
+                                >
+                                    {i}s
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Playhead */}
+                        <div
+                            className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
+                            style={{ left: `${128 + currentFrame * zoom}px` }}
+                        >
+                            <div className="absolute -top-1 -left-2 w-4 h-4 bg-red-500 transform rotate-45" />
+                        </div>
+
+                        {/* Tracks */}
+                        {tracks.map((track) => (
                             <div
-                                key={i}
-                                className="text-xs text-zinc-500 border-l border-zinc-700"
-                                style={{ width: `${30 * zoom}px`, paddingLeft: 2 }}
+                                key={track.id}
+                                className="h-12 border-b border-zinc-800 flex"
                             >
-                                {i}s
+                                {/* Track header */}
+                                <div className="w-32 bg-zinc-900 border-r border-zinc-800 flex items-center px-2 gap-2 shrink-0">
+                                    <div className={`w-2 h-2 rounded-full ${TRACK_COLORS[track.track_type]}`} />
+                                    <span className="text-xs truncate">{track.name}</span>
+                                </div>
+
+                                {/* Track content */}
+                                <div
+                                    className="flex-1 relative bg-zinc-900/50"
+                                    onClick={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        const frame = Math.floor((e.clientX - rect.left) / zoom);
+                                        // If we are not handling a drop, then seek
+                                        // We'll let drop handler handle seeking if needed, but for now click seeks
+                                        seekTo(frame);
+                                    }}
+                                    onDragOver={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        const frame = Math.floor((e.clientX - rect.left) / zoom);
+                                        handleDragOver(e, frame);
+                                    }}
+                                    onDrop={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        const frame = Math.floor((e.clientX - rect.left) / zoom);
+                                        handleDrop(e, track.id, frame);
+                                    }}
+                                >
+                                    {/* Clips */}
+                                    {clips
+                                        .filter(clip => clip.track_id === track.id)
+                                        .map(clip => (
+                                            <div
+                                                key={clip.id}
+                                                className={`absolute top-1 bottom-1 rounded cursor-pointer transition-all
+                          ${selectedClipId === clip.id ? 'ring-2 ring-primary' : ''}
+                          ${TRACK_COLORS[clip.clip_type]} bg-opacity-80 hover:bg-opacity-100`}
+                                                style={{
+                                                    left: `${clip.start_frame * zoom}px`,
+                                                    width: `${(clip.end_frame - clip.start_frame) * zoom}px`,
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedClipId(clip.id);
+                                                }}
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, clip.id)}
+                                            >
+                                                <div className="px-2 py-1 text-xs truncate">
+                                                    {clip.text_content || clip.clip_type}
+                                                </div>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
                             </div>
                         ))}
                     </div>
-
-                    {/* Playhead */}
-                    <div
-                        className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
-                        style={{ left: `${128 + currentFrame * zoom}px` }}
-                    >
-                        <div className="absolute -top-1 -left-2 w-4 h-4 bg-red-500 transform rotate-45" />
-                    </div>
-
-                    {/* Tracks */}
-                    {tracks.map((track) => (
-                        <div
-                            key={track.id}
-                            className="h-12 border-b border-zinc-800 flex"
-                        >
-                            {/* Track header */}
-                            <div className="w-32 bg-zinc-900 border-r border-zinc-800 flex items-center px-2 gap-2 shrink-0">
-                                <div className={`w-2 h-2 rounded-full ${TRACK_COLORS[track.track_type]}`} />
-                                <span className="text-xs truncate">{track.name}</span>
-                            </div>
-
-                            {/* Track content */}
-                            <div
-                                className="flex-1 relative bg-zinc-900/50"
-                                onClick={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const frame = Math.floor((e.clientX - rect.left) / zoom);
-                                    // If we are not handling a drop, then seek
-                                    // We'll let drop handler handle seeking if needed, but for now click seeks
-                                    seekTo(frame);
-                                }}
-                                onDragOver={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const frame = Math.floor((e.clientX - rect.left) / zoom);
-                                    handleDragOver(e, frame);
-                                }}
-                                onDrop={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const frame = Math.floor((e.clientX - rect.left) / zoom);
-                                    handleDrop(e, track.id, frame);
-                                }}
-                            >
-                                {/* Clips */}
-                                {clips
-                                    .filter(clip => clip.track_id === track.id)
-                                    .map(clip => (
-                                        <div
-                                            key={clip.id}
-                                            className={`absolute top-1 bottom-1 rounded cursor-pointer transition-all
-                          ${selectedClipId === clip.id ? 'ring-2 ring-primary' : ''}
-                          ${TRACK_COLORS[clip.clip_type]} bg-opacity-80 hover:bg-opacity-100`}
-                                            style={{
-                                                left: `${clip.start_frame * zoom}px`,
-                                                width: `${(clip.end_frame - clip.start_frame) * zoom}px`,
-                                            }}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedClipId(clip.id);
-                                            }}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, clip.id)}
-                                        >
-                                            <div className="px-2 py-1 text-xs truncate">
-                                                {clip.text_content || clip.clip_type}
-                                            </div>
-                                        </div>
-                                    ))
-                                }
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </ScrollArea>
+                </ScrollArea>
+            </div>
         </div>
-    </div>
-);
+    );
 };
 
 export default VideoEditorPro;

@@ -1,57 +1,51 @@
-# 💰 FlowCredits - Unified Billing System
+# FlowCredits Billing System
 
-> A single currency for all premium AI features in FlowAI.
+Credit-based billing for AI features.
 
----
+## Pricing
 
-## Pricing Model
+| Service | Credits | Notes |
+|---------|---------|-------|
+| AI content generation | 1 | Per post |
+| Thumbnail | 5 | Per image |
+| Video dubbing | 10 | Per language |
+| Voice clone | 100 | One-time setup |
 
-| Service | Cost | Description |
-|---------|------|-------------|
-| **AI Content Generation** | 1 credit | Per post generated |
-| **Video Dubbing** | 10 credits | Per target language |
-| **Thumbnail Generation** | 5 credits | Per image generated |
-| **Voice Cloning** | 100 credits | One-time per voice |
-| **Multi-Platform Syndication** | 2 credits | Per platform post |
+### Subscription Tiers
 
-### Credit Packs (Suggested Retail)
+| Tier | Credits | Price |
+|------|---------|-------|
+| Free | 50 | $0 (signup bonus) |
+| Starter | 200 | $9.99/mo |
+| Creator | 1,000 | $29.99/mo |
+| Pro | 5,000 | $99.99/mo |
 
-| Pack | Credits | Price (USD) |
-|------|---------|-------------|
-| Starter | 50 | Free (Sign-up bonus) |
-| Basic | 200 | $9.99 |
-| Pro | 1,000 | $39.99 |
-| Business | 5,000 | $149.99 |
-| Enterprise | Custom | Contact Sales |
+## Database Schema
 
----
+### `user_credits`
+Current balance per user.
 
-## Technical Implementation
+| Column | Type | Description |
+|--------|------|-------------|
+| `user_id` | UUID | Primary key, FK to auth.users |
+| `balance` | INT | Current credit count |
+| `is_frozen` | BOOL | Admin lock flag |
 
-### Database Schema
+### `credit_transactions`
+Immutable ledger of all credit movements.
 
-**`user_credits`** - Balance ledger
-```sql
-user_id UUID PRIMARY KEY
-balance INTEGER DEFAULT 50
-is_frozen BOOLEAN DEFAULT false
-updated_at TIMESTAMPTZ
-```
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `user_id` | UUID | Account owner |
+| `amount` | INT | Positive = deposit, negative = usage |
+| `transaction_type` | TEXT | `purchase`, `video_dubbing`, etc. |
+| `metadata` | JSONB | Service-specific data (job IDs, etc.) |
 
-**`credit_transactions`** - Immutable audit trail
-```sql
-id UUID PRIMARY KEY
-user_id UUID
-amount INTEGER -- Positive = deposit, Negative = usage
-transaction_type TEXT -- 'purchase', 'video_dubbing', etc.
-description TEXT
-metadata JSONB
-created_at TIMESTAMPTZ
-```
+## API
 
-### API Reference
+### Check Balance
 
-**Check Balance**
 ```typescript
 const { data } = await supabase.functions.invoke('billing-engine', {
   body: { action: 'get_balance' }
@@ -59,7 +53,8 @@ const { data } = await supabase.functions.invoke('billing-engine', {
 // data.balance => 150
 ```
 
-**Deduct Credits**
+### Deduct Credits
+
 ```typescript
 const { error } = await supabase.functions.invoke('billing-engine', {
   body: { 
@@ -71,26 +66,20 @@ const { error } = await supabase.functions.invoke('billing-engine', {
 });
 
 if (error) {
-  // Handle insufficient funds (HTTP 402)
+  // HTTP 402: Insufficient funds
 }
 ```
 
----
-
 ## Integration Pattern
 
-When adding billing to a feature:
-
-1. **Pre-check** (Optional): Display cost to user before action
-2. **Deduct**: Call `billing-engine` with `deduct_credits`
-3. **Execute**: Only proceed if billing succeeds
-4. **Confirm**: Show success message with credits used
+1. Deduct credits before starting the operation
+2. If deduction fails, show error and stop
+3. If deduction succeeds, proceed with the AI call
 
 ```typescript
-// Example: Thumbnail Generation
 const COST = 5;
 
-// 1. Deduct first
+// Step 1: Charge
 const { error } = await supabase.functions.invoke('billing-engine', {
   body: { action: 'deduct_credits', amount: COST, service: 'thumbnail_gen' }
 });
@@ -100,16 +89,14 @@ if (error) {
   return;
 }
 
-// 2. Then generate
+// Step 2: Execute
 const result = await generateThumbnail(params);
 toast.success(`Generated! -${COST} credits`);
 ```
 
----
-
 ## Security
 
-- All credit operations use **SECURITY DEFINER** functions
-- Direct table updates are blocked by RLS
-- Balance changes only via `credit_transactions` trigger
+- Credit operations use `SECURITY DEFINER` functions
+- Direct table writes blocked by RLS
+- Balance updates via trigger on `credit_transactions`
 - Admin-only `add_credits` action for purchases

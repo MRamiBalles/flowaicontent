@@ -1,152 +1,84 @@
-# FlowAI - Technical Brief for Investors
+# FlowAI: Technical Overview for Investors
 
-> **Version**: 1.0  
-> **Date**: December 2025  
-> **Status**: Production Ready
+## Summary
 
----
+FlowAI is a content creation platform for professional creators and media companies. The product combines video editing, AI dubbing, thumbnail generation, and audience analytics in a single web application.
 
-## Executive Summary
+**Target Market**: Creator economy ($250B by 2025)
 
-**FlowAI** is an AI-powered content creation platform targeting the **$250B+ creator economy**. We combine voice cloning, video dubbing, and AI-generated visuals into a unified platform for professional creators and enterprises.
+**Competitive Position**: All-in-one platform vs. point solutions (ElevenLabs for voice, Runway for video, etc.)
 
-### The Opportunity
+## Technology
 
-| Metric | Value | Source |
-|--------|-------|--------|
-| Creator Economy (2025) | **$250B** | Grand View Research |
-| CAGR (2025-2033) | **22-23%** | Multiple analysts |
-| AI Audio Market Leader | ElevenLabs | **$3.3B valuation** |
-| AI Video Market Leaders | Runway, Synthesia | **$4B valuations** |
-
----
-
-## Competitive Landscape
-
-### How Competitors Started
-
-| Company | Founded | Seed | Series A | Current Valuation |
-|---------|---------|------|----------|-------------------|
-| **ElevenLabs** | 2022 | $2M (Jan '23) | $19M (Jun '23) | **$3.3B** (Jan '25) |
-| **Runway** | 2018 | ~$3M | $35M (2021) | **$4B** (Jun '24) |
-| **Synthesia** | 2017 | $3M | $12.5M (2021) | **$4B** (Oct '25) |
-| **Descript** | 2017 | $5M | $15M (2019) | **$550M** (2022) |
-
-### FlowAI Differentiation
-
-| Feature | ElevenLabs | Runway | Synthesia | **FlowAI** |
-|---------|------------|--------|-----------|------------|
-| Voice Cloning | ✅ Core | ❌ | ❌ | ✅ |
-| Video Dubbing | ✅ Limited | ❌ | ❌ | ✅ **29 langs** |
-| Video Generation | ❌ | ✅ Core | ✅ Avatars | 🔜 Planned |
-| Thumbnails | ❌ | ✅ Partial | ❌ | ✅ |
-| Enterprise Multi-Tenant | ❌ | ❌ | ✅ | ✅ |
-| NFT Monetization | ❌ | ❌ | ❌ | ✅ **Unique** |
-| Unified Credits | Token-based | Credits | Per-video | ✅ FlowCredits |
-
----
-
-## Technical Architecture
-
-### Stack (Production-Ready)
-
-| Layer | Technology | Rationale |
-|-------|------------|-----------|
-| Frontend | React 18 + TypeScript | Type-safe, scalable |
-| Backend | Supabase PostgreSQL | Managed, realtime, auth included |
+| Layer | Stack | Notes |
+|-------|-------|-------|
+| Frontend | React, TypeScript | Desktop-first, mobile planned |
+| Database | PostgreSQL (Supabase) | Row-level security enabled |
 | Serverless | Deno Edge Functions | <50ms cold starts |
 | AI | OpenAI, ElevenLabs, Fal.ai | Best-in-class APIs |
-| Payments | Stripe | Industry standard |
-| Mobile | Capacitor | Single codebase, native perf |
+| Payments | Stripe | Subscriptions + usage billing |
+| Video Render | AWS Lambda + Remotion | Parallel encoding |
 
-### Security Posture
+## Security
 
-- ✅ **45 tables** with Row-Level Security
-- ✅ **Enterprise tenant isolation** verified
-- ✅ **Last audit**: Dec 2025 - No critical issues
+- All tables protected by row-level security policies
+- JWT-based authentication
+- Role-based access control
+- Enterprise tenant isolation
+- December 2025 security audit: no critical findings
 
----
+## Revenue Model
 
-## Monetization: FlowCredits
+Credit-based pricing. Users purchase credits consumed by AI features.
 
-Industry-standard credit-based model (similar pricing to competitors):
+| Feature | Credit Cost |
+|---------|-------------|
+| AI text generation | 1 |
+| Thumbnail | 5 |
+| 1-minute dubbing | 10 |
+| Voice clone | 100 |
 
-| Tier | Credits | Price | vs. ElevenLabs |
-|------|---------|-------|----------------|
-| Free | 50 | $0 | Free tier limited |
-| Starter | 200 | **$9.99/mo** | Comparable |
-| Creator | 1,000 | **$29.99/mo** | ~20% lower |
-| Pro | 5,000 | **$99.99/mo** | ~25% lower |
-| Enterprise | Custom | Contact | Competitive |
+### Subscription Tiers
 
-### Unit Economics
+| Tier | Monthly | Credits | Target |
+|------|---------|---------|--------|
+| Free | $0 | 50 | Trial |
+| Starter | $9.99 | 200 | Hobbyists |
+| Creator | $29.99 | 1,000 | Full-time creators |
+| Pro | $99.99 | 5,000 | Agencies |
 
-| Feature | Credits | Our Cost | Margin |
-|---------|---------|----------|--------|
-| AI Text Gen | 1 | ~$0.002 | **~90%** |
-| Thumbnail | 5 | ~$0.02 | **~85%** |
-| Voice Clone | 100 | ~$0.50 | **~70%** |
-| Dubbing/lang | 10 | ~$0.15 | **~75%** |
+## Comparable Companies
 
----
+| Company | Focus | Funding | Valuation |
+|---------|-------|---------|-----------|
+| ElevenLabs | Voice AI | $350M | $3.3B |
+| Runway | Video AI | $240M | $4B |
+| Synthesia | Avatar video | $180M | $4B |
+| Descript | Audio/video editing | $100M | $550M |
 
-## Go-to-Market
+FlowAI differentiates by combining capabilities these companies offer separately.
 
-### Phase 1: Creator Acquisition (Q1 2025)
-- Freemium model with 50 credits
-- Content creator partnerships
-- YouTube/TikTok tutorials
+## Milestones
 
-### Phase 2: Enterprise (Q2-Q3 2025)
-- White-label platform for agencies
-- API access for developers
-- Volume discounts
+| Quarter | Goal |
+|---------|------|
+| Q1 2025 | 1,000 active users, $10K MRR |
+| Q2 2025 | Mobile app launch |
+| Q3 2025 | Enterprise pilots (3 companies) |
+| Q4 2025 | Series A readiness |
 
-### Phase 3: Platform (Q4 2025)
-- $FLOW token governance
-- NFT marketplace
-- Creator revenue sharing
+## Use of Funds (Seed Round)
 
----
-
-## Funding Ask
-
-### Seed Round: **$1.5M**
-
-| Use | Allocation |
-|-----|------------|
-| Engineering (2 FTE) | 50% |
-| Marketing/Growth | 25% |
+| Category | Allocation |
+|----------|------------|
+| Engineering | 50% |
+| Marketing | 25% |
 | Infrastructure | 15% |
 | Operations | 10% |
 
-### Milestones
+## Technical Documentation
 
-| Quarter | Target |
-|---------|--------|
-| Q1 2025 | 1,000 active creators, $10K MRR |
-| Q2 2025 | 5,000 creators, 3 enterprise pilots |
-| Q3 2025 | Mobile launch, $50K MRR |
-| Q4 2025 | Series A ready, $100K+ MRR |
-
----
-
-## Team
-
-**[Founder Name]** - CEO/CTO
-- Full-stack development
-- AI/ML integration experience
-- [Previous relevant experience]
-
-*Seeking*: Technical co-founder, Head of Growth
-
----
-
-## Contact
-
-📧 [Email]  
-🔗 [LinkedIn]  
-📱 [Demo Request]
-
-**Technical Docs**: `docs/README.md`  
-**Security Audit**: `docs/SECURITY_AUDIT_2025-12.md`
+- [Architecture](ARCHITECTURE.md)
+- [Video Editor](VIDEO_EDITOR_PRO.md)
+- [Security Audit](SECURITY_AUDIT_2025-12.md)
+- [API Reference](API_REFERENCE.md)
