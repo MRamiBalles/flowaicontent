@@ -79,7 +79,8 @@ import {
     PROPERTY_DEFAULTS
 } from '@/lib/keyframe-engine';
 import { parseCubeFile, type LUT3D } from '@/lib/lut-parser';
-import { autoReframe, ASPECT_RATIOS, type PositionKeyframe } from '@/lib/auto-reframe';
+import { autoReframe, autoReframeML, isMLModelLoading, ASPECT_RATIOS, type PositionKeyframe } from '@/lib/auto-reframe';
+import { loadDetectionModel, getModelStatus } from '@/lib/subject-detector';
 import { findViralMoments, getMomentTimeRange, type ViralMoment } from '@/lib/viral-finder';
 
 // ============================================================
@@ -210,6 +211,9 @@ const VideoEditorPro: React.FC = () => {
     const [reframeKeyframes, setReframeKeyframes] = useState<PositionKeyframe[]>([]);
     const [viralMoments, setViralMoments] = useState<ViralMoment[]>([]);
     const [isAnalyzingViral, setIsAnalyzingViral] = useState(false);
+    // ML auto-reframe state
+    const [isReframingML, setIsReframingML] = useState(false);
+    const [reframeProgress, setReframeProgress] = useState(0);
 
     // Create new project on mount if none exists
     useEffect(() => {
@@ -1052,20 +1056,86 @@ const VideoEditorPro: React.FC = () => {
                                         variant="outline"
                                         className="w-full"
                                         size="sm"
-                                        onClick={() => {
+                                        disabled={isReframingML || !project}
+                                        onClick={async () => {
                                             if (!project) return;
-                                            const keyframes = autoReframe(
-                                                project.width,
-                                                project.height,
-                                                project.duration_frames,
-                                                { targetAspectRatio: ASPECT_RATIOS.PORTRAIT_9_16 }
+
+                                            // Find a video clip to analyze
+                                            const videoClip = clips.find(c =>
+                                                c.clip_type === 'video' && c.source_url
                                             );
-                                            setReframeKeyframes(keyframes);
-                                            toast.success(`Auto-Reframe: ${keyframes.length} keyframes generated for 9:16`);
+
+                                            if (!videoClip || !videoClip.source_url) {
+                                                // Fallback to simulated mode if no video
+                                                const keyframes = autoReframe(
+                                                    project.width,
+                                                    project.height,
+                                                    project.duration_frames,
+                                                    { targetAspectRatio: ASPECT_RATIOS.PORTRAIT_9_16 }
+                                                );
+                                                setReframeKeyframes(keyframes);
+                                                toast.success(`Auto-Reframe: ${keyframes.length} keyframes (simulated)`);
+                                                return;
+                                            }
+
+                                            setIsReframingML(true);
+                                            setReframeProgress(0);
+
+                                            try {
+                                                // Lazy load ML model on first use
+                                                const modelStatus = getModelStatus();
+                                                if (!modelStatus.loaded && !modelStatus.loading) {
+                                                    toast.info('Loading ML model (first time only)...');
+                                                    await loadDetectionModel();
+                                                }
+
+                                                toast.info('Analyzing video with ML subject detection...');
+
+                                                const keyframes = await autoReframeML(
+                                                    project.width,
+                                                    project.height,
+                                                    project.duration_frames,
+                                                    {
+                                                        videoUrl: videoClip.source_url,
+                                                        fps: project.fps,
+                                                        targetAspectRatio: ASPECT_RATIOS.PORTRAIT_9_16,
+                                                        onProgress: (progress) => {
+                                                            setReframeProgress(Math.round(progress * 100));
+                                                        }
+                                                    }
+                                                );
+
+                                                setReframeKeyframes(keyframes);
+                                                toast.success(`ML Auto-Reframe: ${keyframes.length} keyframes for 9:16`);
+                                            } catch (error) {
+                                                console.error('ML Auto-Reframe error:', error);
+
+                                                // Fallback to simulated on error
+                                                const keyframes = autoReframe(
+                                                    project.width,
+                                                    project.height,
+                                                    project.duration_frames,
+                                                    { targetAspectRatio: ASPECT_RATIOS.PORTRAIT_9_16 }
+                                                );
+                                                setReframeKeyframes(keyframes);
+                                                toast.warning('ML failed, using simulated detection');
+                                            } finally {
+                                                setIsReframingML(false);
+                                                setReframeProgress(0);
+                                            }
                                         }}
                                     >
-                                        <Crop className="h-4 w-4 mr-2" />
-                                        Auto-Reframe 9:16
+                                        {isReframingML ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                {reframeProgress > 0 ? `${reframeProgress}%` : 'Loading...'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Crop className="h-4 w-4 mr-2" />
+                                                Auto-Reframe 9:16 (ML)
+                                            </>
+                                        )}
                                     </Button>
                                     <Button
                                         variant="outline"

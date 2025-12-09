@@ -14,6 +14,102 @@ const AWS_ACCESS_KEY = Deno.env.get('AWS_ACCESS_KEY_ID');
 const AWS_SECRET_KEY = Deno.env.get('AWS_SECRET_ACCESS_KEY');
 const AWS_REGION = Deno.env.get('AWS_REGION') || 'us-east-1';
 const REMOTION_SERVE_URL = Deno.env.get('REMOTION_SERVE_URL');
+const REMOTION_LAMBDA_FUNCTION = Deno.env.get('REMOTION_LAMBDA_FUNCTION') || 'remotion-render';
+
+/**
+ * Signs an AWS request using Signature V4.
+ * Simplified implementation for Lambda invocation.
+ */
+async function signAWSRequest(
+    url: string,
+    method: string,
+    body: string,
+    accessKey: string,
+    secretKey: string,
+    region: string
+): Promise<{ headers: Record<string, string>; body: string }> {
+    const encoder = new TextEncoder();
+    const host = new URL(url).host;
+    const now = new Date();
+
+    // Format dates
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').slice(0, 15) + 'Z';
+    const dateStamp = amzDate.slice(0, 8);
+
+    // Create canonical request
+    const service = 'lambda';
+    const algorithm = 'AWS4-HMAC-SHA256';
+    const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+
+    // Hash the payload
+    const payloadHash = await crypto.subtle.digest('SHA-256', encoder.encode(body));
+    const payloadHashHex = Array.from(new Uint8Array(payloadHash))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+    const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'content-type;host;x-amz-date';
+
+    const canonicalRequest = [
+        method,
+        new URL(url).pathname,
+        '',
+        canonicalHeaders,
+        signedHeaders,
+        payloadHashHex
+    ].join('\n');
+
+    // Create string to sign
+    const canonicalRequestHash = await crypto.subtle.digest('SHA-256', encoder.encode(canonicalRequest));
+    const canonicalRequestHashHex = Array.from(new Uint8Array(canonicalRequestHash))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+    const stringToSign = [
+        algorithm,
+        amzDate,
+        credentialScope,
+        canonicalRequestHashHex
+    ].join('\n');
+
+    // Calculate signature
+    const getSignatureKey = async (key: string, dateStamp: string, region: string, service: string) => {
+        const kDate = await crypto.subtle.importKey(
+            'raw',
+            encoder.encode('AWS4' + key),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['sign']
+        );
+        const kDateSig = await crypto.subtle.sign('HMAC', kDate, encoder.encode(dateStamp));
+
+        const kRegion = await crypto.subtle.importKey('raw', kDateSig, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        const kRegionSig = await crypto.subtle.sign('HMAC', kRegion, encoder.encode(region));
+
+        const kService = await crypto.subtle.importKey('raw', kRegionSig, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        const kServiceSig = await crypto.subtle.sign('HMAC', kService, encoder.encode(service));
+
+        const kSigning = await crypto.subtle.importKey('raw', kServiceSig, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        return kSigning;
+    };
+
+    const signingKey = await getSignatureKey(secretKey, dateStamp, region, service);
+    const signature = await crypto.subtle.sign('HMAC', signingKey, encoder.encode(stringToSign));
+    const signatureHex = Array.from(new Uint8Array(signature))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+    const authorizationHeader = `${algorithm} Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signatureHex}`;
+
+    return {
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Amz-Date': amzDate,
+            'Authorization': authorizationHeader
+        },
+        body
+    };
+}
 
 interface RenderRequest {
     project_id: string;
@@ -181,10 +277,6 @@ serve(async (req) => {
         // If AWS credentials are configured, trigger Lambda render
         if (AWS_ACCESS_KEY && AWS_SECRET_KEY && REMOTION_SERVE_URL) {
             try {
-                // In production, this would call Remotion Lambda
-                // For now, we'll simulate the process
-                console.log('Would trigger Remotion Lambda render...');
-
                 // Update status to rendering
                 await supabase
                     .from('render_queue')
@@ -199,15 +291,99 @@ serve(async (req) => {
                     .update({ render_status: 'rendering' })
                     .eq('id', project_id);
 
-                // TODO: Actual Lambda invocation would go here
-                // const lambdaResponse = await invokeLambda({
-                //   functionName: 'remotion-render',
-                //   payload: { projectData: fullProject, quality, format }
-                // });
+                // Prepare render input for Remotion Lambda
+                const renderInput = {
+                    serveUrl: REMOTION_SERVE_URL,
+                    composition: 'VideoProject',
+                    inputProps: {
+                        project: {
+                            id: fullProject.id,
+                            name: fullProject.name,
+                            width: fullProject.width,
+                            height: fullProject.height,
+                            fps: fullProject.fps,
+                            durationFrames: fullProject.duration_frames
+                        },
+                        tracks: fullProject.tracks || [],
+                        clips: fullProject.clips || [],
+                        keyframes: fullProject.keyframes || [],
+                        transitions: fullProject.transitions || []
+                    },
+                    codec: 'h264',
+                    crf: quality === 'ultra' ? 15 : quality === 'high' ? 18 : quality === 'medium' ? 23 : 28,
+                    jpegQuality: 90,
+                    outName: `project_${project_id}_${Date.now()}.${format}`,
+                    // Webhook for completion notification
+                    webhook: {
+                        url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/render-webhook`,
+                        secret: Deno.env.get('RENDER_WEBHOOK_SECRET') || 'default-secret',
+                        customData: {
+                            render_id: renderJob.id,
+                            project_id: project_id,
+                            user_id: user.id
+                        }
+                    },
+                    // Lambda-specific settings
+                    framesPerLambda: 20,
+                    concurrencyPerLambda: 1,
+                    downloadBehavior: {
+                        type: 'download',
+                        fileName: `flowai_export_${project_id}.${format}`
+                    }
+                };
+
+                // Call Remotion Lambda renderMediaOnLambda equivalent
+                // Using Remotion's render API endpoint
+                const lambdaEndpoint = `https://lambda.${AWS_REGION}.amazonaws.com/2015-03-31/functions/${REMOTION_LAMBDA_FUNCTION}/invocations`;
+
+                // Sign request with AWS Signature V4
+                const signedRequest = await signAWSRequest(
+                    lambdaEndpoint,
+                    'POST',
+                    JSON.stringify({ type: 'start', payload: renderInput }),
+                    AWS_ACCESS_KEY,
+                    AWS_SECRET_KEY,
+                    AWS_REGION
+                );
+
+                const lambdaResponse = await fetch(lambdaEndpoint, {
+                    method: 'POST',
+                    headers: signedRequest.headers,
+                    body: signedRequest.body
+                });
+
+                if (!lambdaResponse.ok) {
+                    const errorText = await lambdaResponse.text();
+                    throw new Error(`Lambda invocation failed: ${errorText}`);
+                }
+
+                const lambdaResult = await lambdaResponse.json();
+                console.log('Lambda render started:', lambdaResult);
+
+                // Store Lambda render ID for tracking
+                await supabase
+                    .from('render_queue')
+                    .update({
+                        external_render_id: lambdaResult.renderId
+                    })
+                    .eq('id', renderJob.id);
 
             } catch (lambdaError) {
                 console.error('Lambda trigger failed:', lambdaError);
-                // Fall through to queued state
+
+                // Update status to failed
+                await supabase
+                    .from('render_queue')
+                    .update({
+                        status: 'failed',
+                        error_message: lambdaError instanceof Error ? lambdaError.message : 'Unknown error'
+                    })
+                    .eq('id', renderJob.id);
+
+                await supabase
+                    .from('video_projects')
+                    .update({ render_status: 'failed' })
+                    .eq('id', project_id);
             }
         }
 

@@ -1,0 +1,29 @@
+{
+    "name": "remotion-render",
+    "version": "1.0.0",
+    "description": "Remotion video rendering project for FlowAI Video Editor",
+    "main": "src/index.ts",
+    "scripts": {
+        "build": "remotion bundle",
+        "studio": "remotion studio",
+        "render": "remotion render VideoProject out/video.mp4",
+        "deploy-lambda": "remotion lambda sites create --site-name flowai-video",
+        "render-lambda": "remotion lambda render --site-name flowai-video VideoProject",
+        "validate": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@remotion/bundler": "^4.0.0",
+        "@remotion/cli": "^4.0.0",
+        "@remotion/lambda": "^4.0.0",
+        "@remotion/player": "^4.0.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "remotion": "^4.0.0",
+        "zod": "^3.25.0"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.0",
+        "@types/react-dom": "^18.3.0",
+        "typescript": "^5.0.0"
+    }
+}

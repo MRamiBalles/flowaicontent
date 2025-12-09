@@ -164,6 +164,8 @@ Content-Type: application/json
 - **LUT Support** (load .CUBE files for professional color grading)
 - **Auto-Reframe 9:16** (convert horizontal video to vertical with smooth pan)
 - **Viral Moment Finder** (identify high-energy segments for clips)
+- **TensorFlow.js ML Subject Detection** (real-time COCO-SSD subject tracking for auto-reframe)
+- **Remotion Lambda Export** (cloud-based video rendering with AWS Lambda)
 
 ## Planned Features
 
