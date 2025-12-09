@@ -2,7 +2,7 @@
 
 > **Project**: FlowAI Content Platform  
 > **Status**: 100% Complete  
-> **Last Updated**: 2025-12-08
+> **Last Updated**: 2025-12-09
 
 ---
 
@@ -21,7 +21,13 @@
 | **9. Token Staking** | [View Docs](./TOKEN_STAKING.md) | $FLOW governance and yield farming. |
 | **10. Mobile App** | [View Docs](./MOBILE_APP.md) | iOS/Android app connection and sync backend. |
 
----
+## 💰 Economic Infrastructure
+
+| Feature | Docs | Description |
+|---------|------|-------------|
+| **FlowCredits Billing** | [View Docs](./CREDITS_SYSTEM.md) | Unified credit system for all AI features. |
+| **Creator Analytics** | [View Docs](./CREATOR_ANALYTICS.md) | Pro dashboard with AI insights. |
+
 
 ## 🏗️ Architecture
 

@@ -10,10 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import {
-    Languages, Video, Upload, Play, Clock, CheckCircle2,
-    XCircle, Loader2, Sparkles, Globe
-} from 'lucide-react';
+import { Languages, Video, CheckCircle2, XCircle, Loader2, Sparkles, Globe, Coins } from 'lucide-react';
 
 interface Language {
     code: string;
@@ -32,14 +29,16 @@ interface DubJob {
     outputs: { language: string; video_url: string }[];
 }
 
+const CREDIT_COST_PER_LANGUAGE = 10; // Updated pricing
+
 const VideoDubbing = () => {
     const { user } = useAuth();
     const [languages, setLanguages] = useState<Language[]>([]);
     const [jobs, setJobs] = useState<DubJob[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [balance, setBalance] = useState<number | null>(null);
 
-    // Form state
     const [videoUrl, setVideoUrl] = useState('');
     const [sourceLanguage, setSourceLanguage] = useState('en');
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
@@ -47,8 +46,20 @@ const VideoDubbing = () => {
     useEffect(() => {
         if (user) {
             loadData();
+            fetchBalance();
         }
     }, [user]);
+
+    const fetchBalance = async () => {
+        try {
+            const { data, error } = await supabase.functions.invoke('billing-engine', {
+                body: { action: 'get_balance' }
+            });
+            if (!error && data) setBalance(data.balance);
+        } catch (e) {
+            console.error('Balance fetch error:', e);
+        }
+    };
 
     const loadData = async () => {
         setIsLoading(true);
@@ -56,25 +67,17 @@ const VideoDubbing = () => {
             const session = await supabase.auth.getSession();
             const token = session.data.session?.access_token;
 
-            // Load languages
             const langResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-dubbing`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ action: 'get_languages' }),
             });
             const langData = await langResponse.json();
             if (langData.languages) setLanguages(langData.languages);
 
-            // Load jobs
             const jobsResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-dubbing`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ action: 'get_my_jobs' }),
             });
             const jobsData = await jobsResponse.json();
@@ -89,9 +92,7 @@ const VideoDubbing = () => {
 
     const handleLanguageToggle = (code: string) => {
         setSelectedLanguages(prev =>
-            prev.includes(code)
-                ? prev.filter(c => c !== code)
-                : [...prev, code]
+            prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
         );
     };
 
@@ -101,42 +102,26 @@ const VideoDubbing = () => {
             return;
         }
 
+        const cost = selectedLanguages.length * CREDIT_COST_PER_LANGUAGE;
+
         setIsCreating(true);
         try {
-            const cost = selectedLanguages.length * 5; // 5 credits per language
-
             // 1. Deduct Credits
-            const { data: billingData, error: billingError } = await supabase.functions.invoke('billing-engine', {
-                body: {
-                    action: 'deduct_credits',
-                    amount: cost,
-                    service: 'video_dubbing',
-                    metadata: { url: videoUrl, languages: selectedLanguages }
-                }
+            const { error: billingError } = await supabase.functions.invoke('billing-engine', {
+                body: { action: 'deduct_credits', amount: cost, service: 'video_dubbing', metadata: { url: videoUrl, languages: selectedLanguages } }
             });
 
             if (billingError) {
-                if (billingError.context?.response?.status === 402) {
-                    toast.error(`Insufficient credits. You need ${cost} credits.`);
-                    return;
-                }
-                throw billingError;
+                toast.error('Insufficient credits. Please purchase more.');
+                return;
             }
 
             // 2. Create Job
             const session = await supabase.auth.getSession();
             const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-dubbing`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.data.session?.access_token}`,
-                },
-                body: JSON.stringify({
-                    action: 'create_job',
-                    sourceVideoUrl: videoUrl,
-                    sourceLanguage,
-                    targetLanguages: selectedLanguages,
-                }),
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.data.session?.access_token}` },
+                body: JSON.stringify({ action: 'create_job', sourceVideoUrl: videoUrl, sourceLanguage, targetLanguages: selectedLanguages }),
             });
 
             const data = await response.json();
@@ -145,6 +130,7 @@ const VideoDubbing = () => {
                 setVideoUrl('');
                 setSelectedLanguages([]);
                 loadData();
+                fetchBalance();
             } else {
                 throw new Error(data.error);
             }
@@ -164,96 +150,110 @@ const VideoDubbing = () => {
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'completed': return 'default';
-            case 'failed': return 'destructive';
-            default: return 'secondary';
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    const estimatedCost = selectedLanguages.length * CREDIT_COST_PER_LANGUAGE;
+
+    return (
+        <div className="container mx-auto px-4 py-8 max-w-6xl">
+            {/* Header */}
+            <div className="text-center mb-10">
+                <div className="flex justify-end mb-4">
+                    <Badge variant="secondary" className="px-3 py-1 text-sm">
+                        <Coins className="w-4 h-4 mr-2" />
+                        {balance !== null ? balance.toLocaleString() : '...'} Credits
+                    </Badge>
+                </div>
+                <h1 className="text-4xl font-bold flex items-center justify-center gap-3 mb-4">
+                    <Languages className="h-10 w-10 text-primary" />
+                    AI Video Dubbing
+                </h1>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                    Automatically translate and dub your videos into 29 languages
+                </p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+                {/* Create Job Form */}
+                <Card>
+                    <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Sparkles className="h-5 w-5 text-primary" />
                             Create New Dubbing Job
                         </CardTitle>
-                        <CardDescription>
-                            Upload a video and select target languages
-                        </CardDescription>
-                    </CardHeader >
-    <CardContent className="space-y-6">
-        <div className="space-y-2">
-            <Label htmlFor="video-url">Video URL</Label>
-            <div className="flex gap-2">
-                <Input
-                    id="video-url"
-                    placeholder="https://example.com/video.mp4"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                />
-            </div>
-        </div>
+                        <CardDescription>Upload a video and select target languages</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="video-url">Video URL</Label>
+                            <Input
+                                id="video-url"
+                                placeholder="https://example.com/video.mp4"
+                                value={videoUrl}
+                                onChange={(e) => setVideoUrl(e.target.value)}
+                            />
+                        </div>
 
-        <div className="space-y-2">
-            <Label>Source Language</Label>
-            <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
-                <SelectTrigger>
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    {languages.map((lang) => (
-                        <SelectItem key={lang.code} value={lang.code}>
-                            {lang.name} ({lang.native_name})
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
+                        <div className="space-y-2">
+                            <Label>Source Language</Label>
+                            <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {languages.map((lang) => (
+                                        <SelectItem key={lang.code} value={lang.code}>
+                                            {lang.name} ({lang.native_name})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-        <div className="space-y-3">
-            <Label>Target Languages ({selectedLanguages.length} selected)</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto p-2 border rounded-lg">
-                {languages.filter(l => l.code !== sourceLanguage).map((lang) => (
-                    <div
-                        key={lang.code}
-                        className="flex items-center space-x-2 p-2 rounded hover:bg-muted cursor-pointer"
-                        onClick={() => handleLanguageToggle(lang.code)}
-                    >
-                        <Checkbox
-                            checked={selectedLanguages.includes(lang.code)}
-                            onCheckedChange={() => handleLanguageToggle(lang.code)}
-                        />
-                        <span className="text-sm">{lang.name}</span>
-                        <span className="text-xs text-muted-foreground">({lang.native_name})</span>
-                    </div>
-                ))}
-            </div>
-        </div>
+                        <div className="space-y-3">
+                            <Label>Target Languages ({selectedLanguages.length} selected)</Label>
+                            <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto p-2 border rounded-lg">
+                                {languages.filter(l => l.code !== sourceLanguage).map((lang) => (
+                                    <div
+                                        key={lang.code}
+                                        className="flex items-center space-x-2 p-2 rounded hover:bg-muted cursor-pointer"
+                                        onClick={() => handleLanguageToggle(lang.code)}
+                                    >
+                                        <Checkbox checked={selectedLanguages.includes(lang.code)} />
+                                        <span className="text-sm">{lang.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-        <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-            <p className="text-sm text-muted-foreground flex justify-between">
-                <strong>Translation Cost:</strong>
-                <span>{selectedLanguages.length * 5} credits</span>
-            </p>
-            <p className="text-xs text-muted-foreground">
-                (5 credits per language)
-            </p>
-        </div>
+                        <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                            <p className="text-sm font-medium flex justify-between">
+                                <span>Estimated Cost:</span>
+                                <span className="text-primary font-bold">{estimatedCost} credits</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {CREDIT_COST_PER_LANGUAGE} credits per language
+                            </p>
+                        </div>
 
-        <Button
-            className="w-full"
-            size="lg"
-            onClick={handleCreateJob}
-            disabled={isCreating || !videoUrl || selectedLanguages.length === 0}
-        >
-            {isCreating ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-                <Globe className="h-4 w-4 mr-2" />
-            )}
-            Start Dubbing ({selectedLanguages.length * 5} Credits)
-        </Button>
-    </CardContent>
-                </Card >
+                        <Button
+                            className="w-full"
+                            size="lg"
+                            onClick={handleCreateJob}
+                            disabled={isCreating || !videoUrl || selectedLanguages.length === 0}
+                        >
+                            {isCreating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Globe className="h-4 w-4 mr-2" />}
+                            Start Dubbing ({estimatedCost} Credits)
+                        </Button>
+                    </CardContent>
+                </Card>
 
-    {/* Jobs List */ }
-    < Card >
+                {/* Jobs List */}
+                <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Video className="h-5 w-5 text-primary" />
@@ -277,37 +277,22 @@ const VideoDubbing = () => {
                                                     {job.target_languages.length} languages • {new Date(job.created_at).toLocaleDateString()}
                                                 </p>
                                             </div>
-                                            <Badge variant={getStatusColor(job.status) as never}>
+                                            <Badge variant="outline" className="flex items-center gap-1">
                                                 {getStatusIcon(job.status)}
-                                                <span className="ml-1">{job.status}</span>
+                                                <span>{job.status}</span>
                                             </Badge>
                                         </div>
-
                                         {job.status !== 'completed' && job.status !== 'failed' && (
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between text-xs">
-                                                    <span>{job.status}</span>
-                                                    <span>{job.progress_percentage}%</span>
-                                                </div>
-                                                <Progress value={job.progress_percentage} />
-                                            </div>
+                                            <Progress value={job.progress_percentage} />
                                         )}
-
-                                        <div className="flex flex-wrap gap-1">
-                                            {job.target_languages.map((lang) => (
-                                                <Badge key={lang} variant="outline" className="text-xs">
-                                                    {lang.toUpperCase()}
-                                                </Badge>
-                                            ))}
-                                        </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </CardContent>
-                </Card >
-            </div >
-        </div >
+                </Card>
+            </div>
+        </div>
     );
 };
 
