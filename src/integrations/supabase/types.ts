@@ -862,6 +862,83 @@ export type Database = {
           },
         ]
       }
+      governance_proposals: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          end_time: string
+          id: string
+          status: string | null
+          title: string
+          updated_at: string | null
+          votes_against: number | null
+          votes_for: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          end_time: string
+          id?: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          votes_against?: number | null
+          votes_for?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          votes_against?: number | null
+          votes_for?: number | null
+        }
+        Relationships: []
+      }
+      governance_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          proposal_id: string
+          user_id: string
+          vote_type: string
+          voting_power: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          proposal_id: string
+          user_id: string
+          vote_type: string
+          voting_power?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          proposal_id?: string
+          user_id?: string
+          vote_type?: string
+          voting_power?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "governance_votes_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "governance_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interactive_stories: {
         Row: {
           created_at: string | null
@@ -947,6 +1024,80 @@ export type Database = {
             columns: ["license_id"]
             isOneToOne: false
             referencedRelation: "content_licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobile_devices: {
+        Row: {
+          created_at: string | null
+          device_name: string
+          device_token: string | null
+          device_type: string
+          id: string
+          is_active: boolean | null
+          last_active_at: string | null
+          platform: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_name: string
+          device_token?: string | null
+          device_type?: string
+          id?: string
+          is_active?: boolean | null
+          last_active_at?: string | null
+          platform?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_name?: string
+          device_token?: string | null
+          device_type?: string
+          id?: string
+          is_active?: boolean | null
+          last_active_at?: string | null
+          platform?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mobile_sync_events: {
+        Row: {
+          created_at: string | null
+          device_id: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          synced_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_id?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          synced_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          synced_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_sync_events_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_devices"
             referencedColumns: ["id"]
           },
         ]
@@ -1188,6 +1339,45 @@ export type Database = {
           },
         ]
       }
+      staking_pools: {
+        Row: {
+          apy_percentage: number
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          lock_period_days: number
+          min_stake_amount: number
+          name: string
+          total_staked: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          apy_percentage?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lock_period_days?: number
+          min_stake_amount?: number
+          name: string
+          total_staked?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          apy_percentage?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lock_period_days?: number
+          min_stake_amount?: number
+          name?: string
+          total_staked?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       story_scenes: {
         Row: {
           choice_appears_at_seconds: number | null
@@ -1290,6 +1480,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_stakes: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          pool_id: string
+          rewards_earned: number | null
+          staked_at: string | null
+          status: string | null
+          unlocks_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          pool_id: string
+          rewards_earned?: number | null
+          staked_at?: string | null
+          status?: string | null
+          unlocks_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          pool_id?: string
+          rewards_earned?: number | null
+          staked_at?: string | null
+          status?: string | null
+          unlocks_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stakes_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "staking_pools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_style_packs: {
         Row: {

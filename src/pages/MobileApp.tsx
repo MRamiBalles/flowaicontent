@@ -3,16 +3,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
     Smartphone,
     Download,
-    QrCode,
     Wifi,
-    Bell,
     Check,
     Apple,
     Cpu,
@@ -35,12 +31,14 @@ const MobileApp = () => {
     useEffect(() => {
         if (user) {
             loadDevices();
+        } else {
+            setIsLoading(false);
         }
     }, [user]);
 
     const loadDevices = async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await (supabase as any)
                 .from('mobile_devices')
                 .select('*')
                 .eq('user_id', user?.id)
