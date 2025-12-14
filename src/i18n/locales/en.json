@@ -1,0 +1,255 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "viewAll": "View All",
+    "learnMore": "Learn More",
+    "getStarted": "Get Started",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "profile": "Profile",
+    "help": "Help",
+    "support": "Support",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "contact": "Contact"
+  },
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "docs": "Docs",
+    "blog": "Blog",
+    "enterprise": "Enterprise"
+  },
+  "landing": {
+    "hero": {
+      "badge": "AI-Powered Content Creation",
+      "title": "Create Content That",
+      "titleHighlight": "Goes Viral",
+      "subtitle": "The all-in-one platform for creators. Generate, optimize, and monetize your content with AI that understands what makes content spread.",
+      "cta": "Start Creating Free",
+      "watchDemo": "Watch Demo"
+    },
+    "stats": {
+      "creators": "Active Creators",
+      "content": "Content Generated",
+      "earnings": "Creator Earnings",
+      "uptime": "Uptime"
+    },
+    "features": {
+      "title": "Everything You Need to Succeed",
+      "subtitle": "Powerful tools designed to help you create better content, grow faster, and monetize your creativity.",
+      "aiContent": {
+        "title": "AI Content Generation",
+        "description": "Transform any idea into optimized content for Twitter, LinkedIn, and Instagram in seconds."
+      },
+      "videoStudio": {
+        "title": "Video Studio",
+        "description": "Create stunning AI-generated videos with custom styles and voice cloning capabilities."
+      },
+      "analytics": {
+        "title": "Growth Analytics",
+        "description": "Track performance, predict virality, and optimize your content strategy with AI insights."
+      },
+      "economy": {
+        "title": "Creator Economy",
+        "description": "Monetize your content with NFTs, fractional ownership, and a thriving marketplace."
+      },
+      "collaboration": {
+        "title": "Collaboration",
+        "description": "Co-create with other creators, share styles, and grow together in our community."
+      },
+      "enterprise": {
+        "title": "Enterprise Ready",
+        "description": "SOC 2 compliant, white-label solutions, and dedicated support for teams."
+      }
+    },
+    "cta": {
+      "title": "Ready to Create Amazing Content?",
+      "subtitle": "Join thousands of creators who are already using FlowAI to grow their audience.",
+      "button": "Get Started for Free"
+    },
+    "footer": {
+      "copyright": "© 2025 FlowAI. All rights reserved."
+    }
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Start free and scale as you grow. No hidden fees.",
+    "chooseYourPlan": "Choose Your Creative Power",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "perMonth": "/month",
+    "forever": "forever",
+    "currentPlan": "Current Plan",
+    "mostPopular": "Most Popular",
+    "contactSales": "Contact Sales",
+    "startTrial": "Start Free Trial",
+    "upgrade": "Upgrade",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "description": "Perfect for trying out FlowAI",
+        "features": [
+          "20 generations per day",
+          "720p resolution",
+          "Watermarked exports",
+          "Community support",
+          "Basic templates"
+        ]
+      },
+      "creator": {
+        "name": "Creator",
+        "price": "$9.99",
+        "description": "For hobbyists and content creators",
+        "features": [
+          "500 generations per month",
+          "1080p resolution",
+          "No watermarks",
+          "Priority queue",
+          "Advanced style packs",
+          "Basic scheduling"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$99.99",
+        "description": "For professional creators and agencies",
+        "features": [
+          "Unlimited generations",
+          "4K resolution",
+          "Voice Cloning (ElevenLabs)",
+          "Advanced Analytics Dashboard",
+          "Full API Access",
+          "Commercial License",
+          "Priority Support"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Custom",
+        "description": "For large organizations",
+        "features": [
+          "Everything in Pro",
+          "White-label solution",
+          "Custom LoRA model training",
+          "SSO & Audit logs",
+          "Dedicated account manager",
+          "SLA (99.9% uptime)",
+          "Team seats (unlimited)"
+        ]
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "cancel": {
+        "q": "Can I cancel anytime?",
+        "a": "Yes! Cancel anytime from your account settings. You'll keep access until the end of your billing period."
+      },
+      "payment": {
+        "q": "What payment methods do you accept?",
+        "a": "We accept all major credit cards (Visa, Mastercard, Amex) and crypto payments via $FLOW tokens."
+      },
+      "upgrade": {
+        "q": "Can I upgrade or downgrade my plan?",
+        "a": "Absolutely! Upgrade instantly or downgrade at the end of your billing cycle."
+      },
+      "refund": {
+        "q": "Do you offer refunds?",
+        "a": "We offer a 7-day money-back guarantee if you're not satisfied with our service."
+      }
+    },
+    "enterprise": {
+      "title": "Need a custom enterprise solution?",
+      "subtitle": "We offer tailored infrastructure and dedicated support for large organizations.",
+      "cta": "Contact Enterprise Sales"
+    }
+  },
+  "staking": {
+    "title": "$FLOW Token Staking",
+    "subtitle": "Stake your tokens to earn rewards and participate in governance",
+    "yourStake": "Your Stake",
+    "totalStaked": "Total Staked",
+    "rewardsEarned": "Rewards Earned",
+    "apy": "APY",
+    "lockPeriod": "Lock Period",
+    "minStake": "Minimum Stake",
+    "stake": "Stake",
+    "unstake": "Unstake",
+    "claim": "Claim Rewards",
+    "days": "days",
+    "noLock": "No lock",
+    "pools": {
+      "flexible": {
+        "name": "Flexible Pool",
+        "description": "No lock period - withdraw anytime. Lower APY but maximum flexibility."
+      },
+      "thirtyDay": {
+        "name": "30-Day Lock",
+        "description": "Lock your FLOW tokens for 30 days and earn higher rewards."
+      },
+      "ninetyDay": {
+        "name": "90-Day Lock",
+        "description": "Premium staking pool with high APY. 90-day commitment required."
+      },
+      "diamond": {
+        "name": "Diamond Pool",
+        "description": "Exclusive pool for large stakers. Maximum rewards for maximum commitment."
+      }
+    },
+    "governance": {
+      "title": "Governance",
+      "subtitle": "Vote on proposals with your staked tokens",
+      "votingPower": "Voting Power",
+      "activeProposals": "Active Proposals",
+      "vote": "Vote",
+      "for": "For",
+      "against": "Against"
+    }
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember me",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "orContinueWith": "Or continue with",
+    "google": "Google",
+    "github": "GitHub",
+    "termsAgreement": "By signing up, you agree to our Terms of Service and Privacy Policy."
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "recentProjects": "Recent Projects",
+    "quickActions": "Quick Actions",
+    "createVideo": "Create Video",
+    "generateContent": "Generate Content",
+    "viewAnalytics": "View Analytics",
+    "manageAssets": "Manage Assets"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "notFound": "Page not found",
+    "unauthorized": "You are not authorized to view this page.",
+    "networkError": "Network error. Please check your connection."
+  }
+}

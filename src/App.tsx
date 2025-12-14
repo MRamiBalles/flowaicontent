@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Web3Provider } from "@/components/web3/Web3Provider";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { LanguageProvider } from "@/i18n/LanguageProvider";
 
 // Lazy load all route components for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -48,58 +49,62 @@ import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <Web3Provider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <OnboardingTutorial />
-        <BrowserRouter>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/onboarding" element={<Onboarding />} />
+  <LanguageProvider>
+    <Web3Provider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <OnboardingTutorial />
+          <BrowserRouter>
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
 
-              {/* Protected Routes requiring Onboarding */}
-              <Route element={<RequireOnboarding />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/video-studio" element={<VideoStudio />} />
-                <Route path="/co-stream" element={<CoStream />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/editor" element={<VideoEditor />} />
-                <Route path="/mint-nft" element={<MintNFT />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/streamer-mode" element={<StreamerStudio />} />
-                <Route path="/music-video" element={<MusicVideo />} />
-                <Route path="/feed" element={<Feed />} />
-                <Route path="/profile/:id" element={<ProfilePage />} />
-                <Route path="/roulette" element={<FlowRoulette />} />
-                <Route path="/watch/:videoId" element={<Watch />} />
-                <Route path="/voice-studio" element={<VoiceStudio />} />
-                <Route path="/licensing" element={<LicensingMarketplace />} />
-                <Route path="/video-editor-pro" element={<VideoEditorPro />} />
-                <Route path="/enterprise" element={<EnterpriseAdmin />} />
-                <Route path="/brand-deals" element={<BrandDealsMarketplace />} />
-                <Route path="/developers" element={<DeveloperPortal />} />
-                <Route path="/interactive" element={<InteractivePlayer />} />
-                <Route path="/staking" element={<TokenStaking />} />
-                <Route path="/mobile" element={<MobileApp />} />
-                <Route path="/analytics" element={<CreatorAnalytics />} />
-                <Route path="/dubbing" element={<VideoDubbing />} />
-                <Route path="/thumbnails" element={<ThumbnailGenerator />} />
-                <Route path="/syndication" element={<Syndication />} />
-              </Route>
+                {/* Protected Routes requiring Onboarding */}
+                <Route element={<RequireOnboarding />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/video-studio" element={<VideoStudio />} />
+                  <Route path="/co-stream" element={<CoStream />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/editor" element={<VideoEditor />} />
+                  <Route path="/mint-nft" element={<MintNFT />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/streamer-mode" element={<StreamerStudio />} />
+                  <Route path="/music-video" element={<MusicVideo />} />
+                  <Route path="/feed" element={<Feed />} />
+                  <Route path="/profile/:id" element={<ProfilePage />} />
+                  <Route path="/roulette" element={<FlowRoulette />} />
+                  <Route path="/watch/:videoId" element={<Watch />} />
+                  <Route path="/voice-studio" element={<VoiceStudio />} />
+                  <Route path="/licensing" element={<LicensingMarketplace />} />
+                  <Route path="/video-editor-pro" element={<VideoEditorPro />} />
+                  <Route path="/enterprise" element={<EnterpriseAdmin />} />
+                  <Route path="/brand-deals" element={<BrandDealsMarketplace />} />
+                  <Route path="/developers" element={<DeveloperPortal />} />
+                  <Route path="/interactive" element={<InteractivePlayer />} />
+                  <Route path="/staking" element={<TokenStaking />} />
+                  <Route path="/mobile" element={<MobileApp />} />
+                  <Route path="/analytics" element={<CreatorAnalytics />} />
+                  <Route path="/dubbing" element={<VideoDubbing />} />
+                  <Route path="/thumbnails" element={<ThumbnailGenerator />} />
+                  <Route path="/syndication" element={<Syndication />} />
+                </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </Web3Provider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </Web3Provider>
+  </LanguageProvider>
 );
 
 export default App;
