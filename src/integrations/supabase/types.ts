@@ -1623,6 +1623,44 @@ export type Database = {
           },
         ]
       }
+      video_keyframes: {
+        Row: {
+          clip_id: string
+          created_at: string | null
+          easing: string | null
+          frame: number
+          id: string
+          property: string
+          value: number
+        }
+        Insert: {
+          clip_id: string
+          created_at?: string | null
+          easing?: string | null
+          frame: number
+          id?: string
+          property: string
+          value: number
+        }
+        Update: {
+          clip_id?: string
+          created_at?: string | null
+          easing?: string | null
+          frame?: number
+          id?: string
+          property?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_keyframes_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "video_clips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_projects: {
         Row: {
           composition_data: Json | null
@@ -1714,6 +1752,61 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_transitions: {
+        Row: {
+          created_at: string | null
+          duration_frames: number
+          easing: string | null
+          from_clip_id: string | null
+          id: string
+          project_id: string
+          to_clip_id: string | null
+          transition_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration_frames?: number
+          easing?: string | null
+          from_clip_id?: string | null
+          id?: string
+          project_id: string
+          to_clip_id?: string | null
+          transition_type?: string
+        }
+        Update: {
+          created_at?: string | null
+          duration_frames?: number
+          easing?: string | null
+          from_clip_id?: string | null
+          id?: string
+          project_id?: string
+          to_clip_id?: string | null
+          transition_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_transitions_from_clip_id_fkey"
+            columns: ["from_clip_id"]
+            isOneToOne: false
+            referencedRelation: "video_clips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_transitions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_transitions_to_clip_id_fkey"
+            columns: ["to_clip_id"]
+            isOneToOne: false
+            referencedRelation: "video_clips"
             referencedColumns: ["id"]
           },
         ]
