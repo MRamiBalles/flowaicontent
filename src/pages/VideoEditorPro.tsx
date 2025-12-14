@@ -134,6 +134,12 @@ interface Clip {
     text_content?: string;
     /** Media source URL */
     source_url?: string;
+    /** Font size for text clips */
+    font_size?: number;
+    /** Font family for text clips */
+    font_family?: string;
+    /** Font color for text clips */
+    font_color?: string;
 }
 
 /** Transition effect between adjacent clips */
@@ -142,9 +148,11 @@ interface Transition {
     project_id: string;
     from_clip_id: string | null;
     to_clip_id: string | null;
-    transition_type: 'fade' | 'dissolve' | 'wipe' | 'slide' | 'zoom';
+    transition_type: string;
     /** Duration in frames (default: 15 = 0.5s at 30fps) */
     duration_frames: number;
+    easing?: string;
+    created_at?: string;
 }
 
 // ============================================================

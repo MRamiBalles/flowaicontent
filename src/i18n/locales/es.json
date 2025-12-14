@@ -1,0 +1,255 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "submit": "Enviar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "viewAll": "Ver Todo",
+    "learnMore": "Saber Más",
+    "getStarted": "Comenzar",
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "signOut": "Cerrar Sesión",
+    "dashboard": "Panel",
+    "settings": "Configuración",
+    "profile": "Perfil",
+    "help": "Ayuda",
+    "support": "Soporte",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "contact": "Contacto"
+  },
+  "nav": {
+    "features": "Características",
+    "pricing": "Precios",
+    "docs": "Documentación",
+    "blog": "Blog",
+    "enterprise": "Empresas"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Creación de Contenido con IA",
+      "title": "Crea Contenido Que",
+      "titleHighlight": "Se Vuelve Viral",
+      "subtitle": "La plataforma todo-en-uno para creadores. Genera, optimiza y monetiza tu contenido con IA que entiende qué hace que el contenido se propague.",
+      "cta": "Comienza Gratis",
+      "watchDemo": "Ver Demo"
+    },
+    "stats": {
+      "creators": "Creadores Activos",
+      "content": "Contenido Generado",
+      "earnings": "Ganancias de Creadores",
+      "uptime": "Tiempo Activo"
+    },
+    "features": {
+      "title": "Todo Lo Que Necesitas Para Triunfar",
+      "subtitle": "Herramientas potentes diseñadas para ayudarte a crear mejor contenido, crecer más rápido y monetizar tu creatividad.",
+      "aiContent": {
+        "title": "Generación de Contenido con IA",
+        "description": "Transforma cualquier idea en contenido optimizado para Twitter, LinkedIn e Instagram en segundos."
+      },
+      "videoStudio": {
+        "title": "Estudio de Video",
+        "description": "Crea videos impresionantes generados por IA con estilos personalizados y clonación de voz."
+      },
+      "analytics": {
+        "title": "Analíticas de Crecimiento",
+        "description": "Rastrea el rendimiento, predice viralidad y optimiza tu estrategia de contenido con insights de IA."
+      },
+      "economy": {
+        "title": "Economía de Creadores",
+        "description": "Monetiza tu contenido con NFTs, propiedad fraccionada y un marketplace próspero."
+      },
+      "collaboration": {
+        "title": "Colaboración",
+        "description": "Co-crea con otros creadores, comparte estilos y crece junto a nuestra comunidad."
+      },
+      "enterprise": {
+        "title": "Listo Para Empresas",
+        "description": "Compatible con SOC 2, soluciones white-label y soporte dedicado para equipos."
+      }
+    },
+    "cta": {
+      "title": "¿Listo Para Crear Contenido Increíble?",
+      "subtitle": "Únete a miles de creadores que ya usan FlowAI para hacer crecer su audiencia.",
+      "button": "Comenzar Gratis"
+    },
+    "footer": {
+      "copyright": "© 2025 FlowAI. Todos los derechos reservados."
+    }
+  },
+  "pricing": {
+    "title": "Precios Simples y Transparentes",
+    "subtitle": "Comienza gratis y escala mientras creces. Sin costos ocultos.",
+    "chooseYourPlan": "Elige Tu Poder Creativo",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "perMonth": "/mes",
+    "forever": "siempre",
+    "currentPlan": "Plan Actual",
+    "mostPopular": "Más Popular",
+    "contactSales": "Contactar Ventas",
+    "startTrial": "Iniciar Prueba Gratis",
+    "upgrade": "Mejorar Plan",
+    "tiers": {
+      "free": {
+        "name": "Gratis",
+        "price": "$0",
+        "description": "Perfecto para probar FlowAI",
+        "features": [
+          "20 generaciones por día",
+          "Resolución 720p",
+          "Exportaciones con marca de agua",
+          "Soporte comunitario",
+          "Plantillas básicas"
+        ]
+      },
+      "creator": {
+        "name": "Creador",
+        "price": "$9.99",
+        "description": "Para aficionados y creadores de contenido",
+        "features": [
+          "500 generaciones por mes",
+          "Resolución 1080p",
+          "Sin marcas de agua",
+          "Cola prioritaria",
+          "Packs de estilos avanzados",
+          "Programación básica"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$99.99",
+        "description": "Para creadores profesionales y agencias",
+        "features": [
+          "Generaciones ilimitadas",
+          "Resolución 4K",
+          "Clonación de Voz (ElevenLabs)",
+          "Panel de Analíticas Avanzadas",
+          "Acceso completo a API",
+          "Licencia Comercial",
+          "Soporte Prioritario"
+        ]
+      },
+      "enterprise": {
+        "name": "Empresa",
+        "price": "Personalizado",
+        "description": "Para grandes organizaciones",
+        "features": [
+          "Todo lo incluido en Pro",
+          "Solución white-label",
+          "Entrenamiento de modelos LoRA personalizados",
+          "SSO y logs de auditoría",
+          "Gerente de cuenta dedicado",
+          "SLA (99.9% uptime)",
+          "Asientos de equipo (ilimitados)"
+        ]
+      }
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes",
+      "cancel": {
+        "q": "¿Puedo cancelar en cualquier momento?",
+        "a": "¡Sí! Cancela cuando quieras desde la configuración de tu cuenta. Mantendrás el acceso hasta el final de tu período de facturación."
+      },
+      "payment": {
+        "q": "¿Qué métodos de pago aceptan?",
+        "a": "Aceptamos todas las tarjetas principales (Visa, Mastercard, Amex) y pagos crypto con tokens $FLOW."
+      },
+      "upgrade": {
+        "q": "¿Puedo mejorar o reducir mi plan?",
+        "a": "¡Por supuesto! Mejora instantáneamente o reduce al final de tu ciclo de facturación."
+      },
+      "refund": {
+        "q": "¿Ofrecen reembolsos?",
+        "a": "Ofrecemos una garantía de devolución de 7 días si no estás satisfecho con nuestro servicio."
+      }
+    },
+    "enterprise": {
+      "title": "¿Necesitas una solución empresarial personalizada?",
+      "subtitle": "Ofrecemos infraestructura a medida y soporte dedicado para grandes organizaciones.",
+      "cta": "Contactar Ventas Empresariales"
+    }
+  },
+  "staking": {
+    "title": "Staking de Token $FLOW",
+    "subtitle": "Haz staking de tus tokens para ganar recompensas y participar en la gobernanza",
+    "yourStake": "Tu Stake",
+    "totalStaked": "Total en Stake",
+    "rewardsEarned": "Recompensas Ganadas",
+    "apy": "APY",
+    "lockPeriod": "Período de Bloqueo",
+    "minStake": "Stake Mínimo",
+    "stake": "Hacer Stake",
+    "unstake": "Retirar Stake",
+    "claim": "Reclamar Recompensas",
+    "days": "días",
+    "noLock": "Sin bloqueo",
+    "pools": {
+      "flexible": {
+        "name": "Pool Flexible",
+        "description": "Sin periodo de bloqueo - retira en cualquier momento. Menor APY pero máxima flexibilidad."
+      },
+      "thirtyDay": {
+        "name": "Bloqueo 30 Días",
+        "description": "Bloquea tus tokens FLOW por 30 días y gana mayores recompensas."
+      },
+      "ninetyDay": {
+        "name": "Bloqueo 90 Días",
+        "description": "Pool premium con alto APY. Requiere compromiso de 90 días."
+      },
+      "diamond": {
+        "name": "Pool Diamante",
+        "description": "Pool exclusivo para grandes stakers. Máximas recompensas por máximo compromiso."
+      }
+    },
+    "governance": {
+      "title": "Gobernanza",
+      "subtitle": "Vota en propuestas con tus tokens en stake",
+      "votingPower": "Poder de Voto",
+      "activeProposals": "Propuestas Activas",
+      "vote": "Votar",
+      "for": "A Favor",
+      "against": "En Contra"
+    }
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "forgotPassword": "¿Olvidaste tu Contraseña?",
+    "rememberMe": "Recuérdame",
+    "noAccount": "¿No tienes una cuenta?",
+    "hasAccount": "¿Ya tienes una cuenta?",
+    "orContinueWith": "O continúa con",
+    "google": "Google",
+    "github": "GitHub",
+    "termsAgreement": "Al registrarte, aceptas nuestros Términos de Servicio y Política de Privacidad."
+  },
+  "dashboard": {
+    "welcome": "Bienvenido de nuevo",
+    "recentProjects": "Proyectos Recientes",
+    "quickActions": "Acciones Rápidas",
+    "createVideo": "Crear Video",
+    "generateContent": "Generar Contenido",
+    "viewAnalytics": "Ver Analíticas",
+    "manageAssets": "Gestionar Activos"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Por favor, intenta de nuevo.",
+    "notFound": "Página no encontrada",
+    "unauthorized": "No estás autorizado para ver esta página.",
+    "networkError": "Error de red. Por favor, verifica tu conexión."
+  }
+}
