@@ -7,7 +7,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '@/i18n/LanguageProvider';
 
 /**
  * Dashboard - Main content creation interface

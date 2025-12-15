@@ -5,9 +5,8 @@ import {
     CommandGroup,
     CommandInput,
     CommandItem,
-    CommandInput,
     CommandSeparator
-} from '@/components/ui/command'; // Assuming shadcn/ui command exists or we mock it
+} from '@/components/ui/command';
 import {
     Calculator,
     Calendar,
