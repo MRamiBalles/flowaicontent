@@ -1,8 +1,8 @@
 # 💰 FlowAI - Tokenomics
 
 > **$FLOW Token Economic Model & Distribution Strategy**  
-> **Version**: 1.1  
-> **Last Updated**: 2025-12-08  
+> **Version**: 1.2  
+> **Last Updated**: 2025-12-15  
 > **Target Audience**: Investors, Token Holders, Community
 
 ---
@@ -61,18 +61,20 @@ Creator → Spend FLO → Boost video visibility
 #### 3. 🔥 **Staking for Rewards**
 ```
 Token Holder → Stake FLO → Earn Yield
-• Base APY: 15% (paid in FLO)
-• Max APY: 31% (with 12-month lock)
+• Base APY: 8% (paid in FLO)
+• Max APY: 20% (with 12-month lock)
 • Rewards source: Platform revenue (30% allocated)
 ```
 
 **Staking Tiers**:
 | Lock Period | APY | Early Withdrawal Penalty |
 |-------------|-----|--------------------------|
-| **No Lock** | 15% | None |
-| **3 Months** | 20% | 10% fee |
-| **6 Months** | 25% | 15% fee |
-| **12 Months** | 31% | 20% fee |
+| **No Lock** | 8% | None |
+| **30 Days** | 12% | 5% fee |
+| **90 Days** | 16% | 10% fee |
+| **180 Days** | 20% | 15% fee |
+
+> **Rationale**: Conservative APY rates ensure long-term sustainability and reduce token inflation pressure.
 
 **Staking Pool Cap**: 300M FLO (30% of total supply)
 

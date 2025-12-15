@@ -1,8 +1,8 @@
 # 💰 FlowAI Monetization Strategy
 
-> **Version**: 1.1
+> **Version**: 2.0
 > **Status**: Active
-> **Last Updated**: 2025-12-08
+> **Last Updated**: 2025-12-15
 
 ---
 
@@ -24,10 +24,10 @@ Recurring revenue from creator tools.
 
 | Tier | Price | Target Audience | Key Features |
 |------|-------|-----------------|--------------|
-| **FREE** | $0/mo | Hobbyists | • 10 AI video generations/day<br>• Standard definition (720p)<br>• Watermarked exports<br>• View-only access to marketplace |
-| **PRO** | $20/mo | Serious Creators | • **Unlimited** generations<br>• High definition (1080p)<br>• No watermarks<br>• Priority rendering queue<br>• Access to advanced Style Packs |
-| **BUSINESS** | $50/mo | Agencies/SMBs | • Team collaboration (3 seats)<br>• 4K export support<br>• API access (500 calls/mo)<br>• Analytics dashboard<br>• Commercial license |
-| **ENTERPRISE** | Custom | Brands | • White-label solution<br>• Custom LoRA model training<br>• Dedicated account manager<br>• SLA (99.9% uptime)<br>• SSO & Audit logs |
+| **FREE** | $0/mo | Hobbyists | • 20 AI video generations/day<br>• Standard definition (720p)<br>• Watermarked exports<br>• Community support<br>• Basic templates |
+| **CREATOR** | $9.99/mo | Hobbyists & Content Creators | • 500 generations/month<br>• High definition (1080p)<br>• No watermarks<br>• Priority queue<br>• Advanced Style Packs<br>• Basic scheduling |
+| **PRO** | $99.99/mo | Professional Creators & Agencies | • **Unlimited** generations<br>• 4K resolution<br>• Voice Cloning (ElevenLabs)<br>• Advanced Analytics Dashboard<br>• Full API access<br>• Commercial License<br>• Priority Support |
+| **ENTERPRISE** | Custom | Large Organizations | • Everything in Pro<br>• White-label solution<br>• Custom LoRA model training<br>• SSO & Audit logs<br>• Dedicated account manager<br>• SLA (99.9% uptime)<br>• Unlimited team seats |
 
 ### B. Marketplace Commissions (20% of Revenue)
 Transaction fees from the digital asset economy.
@@ -88,13 +88,15 @@ Viewers use earned $FLOW to:
 
 ### The "Creator Ladder"
 We design our pricing to move users up the ladder:
-1.  **Hook**: Free tier allows experimentation.
-2.  **Convert**: Watermarks and daily limits push serious users to PRO ($20 is an impulse buy price point).
-3.  **Scale**: As creators grow teams, BUSINESS tier becomes essential.
+1.  **Hook**: Free tier allows experimentation (20 generations/day).
+2.  **Convert**: Watermarks and daily limits push serious users to CREATOR ($9.99 is an impulse buy price point).
+3.  **Scale**: Professional creators need unlimited generations → PRO ($99.99) becomes essential.
+4.  **Expand**: Large organizations need white-label → ENTERPRISE (custom pricing).
 
 ### Anchor Pricing
-- We position the **PRO ($20)** tier as the "Best Value" anchor.
-- Compared to Adobe Premiere ($20.99/mo) + Stock Footage ($30/mo) + AI Tools ($20/mo), FlowAI at $20/mo is a "no-brainer".
+- We position the **PRO ($99.99)** tier as the "Best Value" for professionals.
+- Compared to Adobe Premiere ($54.99/mo) + Stock Footage ($30/mo) + AI Tools ($20/mo) + Voice Cloning ($22/mo), FlowAI at $99.99/mo is a significant savings (~$127/mo value).
+- The CREATOR ($9.99) tier targets the impulse-buy sweet spot for hobbyists.
 
 ---
 

@@ -38,14 +38,16 @@ Credit-based pricing. Users purchase credits consumed by AI features.
 | 1-minute dubbing | 10 |
 | Voice clone | 100 |
 
-### Subscription Tiers
+### Subscription Tiers (Updated December 2025)
 
-| Tier | Monthly | Credits | Target |
-|------|---------|---------|--------|
-| Free | $0 | 50 | Trial |
-| Starter | $9.99 | 200 | Hobbyists |
-| Creator | $29.99 | 1,000 | Full-time creators |
-| Pro | $99.99 | 5,000 | Agencies |
+| Tier | Monthly | Generations | Target |
+|------|---------|-------------|--------|
+| Free | $0 | 20/day (~600/mo) | Trial |
+| Creator | $9.99 | 500/month | Hobbyists |
+| Pro | $99.99 | Unlimited | Agencies |
+| Enterprise | Custom | Unlimited | Large organizations |
+
+*Note: Migrated from credit-based to generation-based pricing in December 2025 for simplicity.*
 
 ## Comparable Companies
 

@@ -1,3 +1,4 @@
+```
 import { ContentInput } from "@/components/ContentInput";
 import { ContentResults } from "@/components/ContentResults";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from 'react-i18next';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const {
     user,
     isAdmin,
@@ -40,9 +43,9 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">Content Studio</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{t('dashboard.contentStudio')}</h1>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Transform your ideas into viral content across all platforms
+                  {t('dashboard.subtitle')}
                 </p>
               </div>
               
@@ -50,23 +53,23 @@ const Dashboard = () => {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
                   <Flame className="w-4 h-4 text-orange-400 fill-orange-400" />
-                  <span className="text-sm font-medium text-orange-300">{gamification.streak} day streak</span>
+                  <span className="text-sm font-medium text-orange-300">{t('dashboard.streak', { count: gamification.streak })}</span>
                 </div>
                 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
                   <Trophy className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-primary">Level {gamification.level}</span>
+                  <span className="text-sm font-medium text-primary">{t('dashboard.level', { level: gamification.level })}</span>
                   <div className="w-12 h-1.5 bg-primary/20 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-primary transition-all duration-500" 
-                      style={{ width: `${xpProgress}%` }} 
+                      style={{ width: `${ xpProgress }% ` }} 
                     />
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                   <Sparkles className="w-4 h-4 text-emerald-400" />
-                  <span className="text-sm font-medium text-emerald-300">{remainingGenerations} credits</span>
+                  <span className="text-sm font-medium text-emerald-300">{t('dashboard.credits', { count: remainingGenerations })}</span>
                 </div>
               </div>
             </div>
@@ -81,7 +84,7 @@ const Dashboard = () => {
               {/* Quick Actions */}
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Quick Actions</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('dashboard.quickActions')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button 
@@ -90,7 +93,7 @@ const Dashboard = () => {
                     variant="default"
                   >
                     <Plus className="w-4 h-4" />
-                    New Project
+                    {t('dashboard.newProject')}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -98,7 +101,7 @@ const Dashboard = () => {
                     onClick={() => window.location.href = "/video-studio"}
                   >
                     <Sparkles className="w-4 h-4" />
-                    AI Video Studio
+                    {t('dashboard.aiVideoStudio')}
                   </Button>
                 </CardContent>
               </Card>
@@ -106,17 +109,17 @@ const Dashboard = () => {
               {/* Usage Stats */}
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Usage This Hour</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{t('dashboard.usageThisHour')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Generations</span>
+                    <span className="text-muted-foreground">{t('dashboard.generations')}</span>
                     <span className="font-medium">{generationCount}/10</span>
                   </div>
                   <Progress value={rateLimitProgress} className="h-2" />
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="w-3 h-3" />
-                    Resets every hour
+                    {t('dashboard.resetsEveryHour')}
                   </div>
                 </CardContent>
               </Card>
@@ -126,12 +129,12 @@ const Dashboard = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <FolderOpen className="w-4 h-4" />
-                    Recent Projects
+                    {t('dashboard.recentProjects')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-xs text-muted-foreground">
-                    Your recent projects will appear here
+                    {t('dashboard.yourRecentProjects')}
                   </p>
                 </CardContent>
               </Card>
@@ -148,14 +151,14 @@ const Dashboard = () => {
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                           <Sparkles className="w-4 h-4 text-primary" />
                         </div>
-                        Create Content
+                        {t('dashboard.createContent')}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Enter your content idea and let AI optimize it for each platform
+                        {t('dashboard.createContentSubtitle')}
                       </p>
                     </div>
                     <Badge variant="secondary" className="hidden sm:flex">
-                      AI Powered
+                      {t('dashboard.aiPowered')}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -168,10 +171,10 @@ const Dashboard = () => {
               <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
                 <CardHeader className="border-b border-border/50">
                   <div className="flex items-center justify-between">
-                    <CardTitle>Generated Results</CardTitle>
+                    <CardTitle>{t('dashboard.generatedResults')}</CardTitle>
                     {generatedContent && (
                       <Badge variant="outline" className="text-emerald-400 border-emerald-400/30">
-                        Ready to use
+                        {t('dashboard.readyToUse')}
                       </Badge>
                     )}
                   </div>

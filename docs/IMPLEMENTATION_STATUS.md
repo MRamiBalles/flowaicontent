@@ -89,7 +89,7 @@ FlowAI es una plataforma de generación de contenido con IA que combina creació
 #### 1. **AI Voice Cloning** 🗣️
 - **Descripción**: Permite a creadores clonar su voz para narraciones
 - **Implementación**: ElevenLabs API Integration
-- **Monetización**: $9.99/mes addon o incluido en tier Pro+
+- **Monetización**: Incluido en tier Pro ($99.99/mes)
 - **Esfuerzo**: 1 semana
 - **ROI Estimado**: Alto (diferenciador de mercado)
 
@@ -161,21 +161,21 @@ FlowAI es una plataforma de generación de contenido con IA que combina creació
 
 | Plan | Precio | Generaciones | Features |
 |------|--------|--------------|----------|
-| **Free** | $0/mes | 50/mes | Básico, marca de agua |
-| **Creator** | $9/mes | 200/mes | Sin marca, scheduling básico |
-| **Pro** | $29/mes | 1000/mes | Voice cloning, analytics, API |
-| **Studio** | $79/mes | 5000/mes | Brand voice, video gen, priority |
-| **Business** | $199/mes | Unlimited | White-label, team seats, SLA |
+| **Free** | $0/mes | 20/día | Básico, marca de agua |
+| **Creator** | $9.99/mes | 500/mes | Sin marca, scheduling básico |
+| **Pro** | $99.99/mes | Unlimited | Voice cloning, analytics, API |
+| **Enterprise** | Custom | Unlimited | White-label, team seats, SLA |
 
 ### Revenue Streams Adicionales
 
 | Stream | Precio | Estimación Mensual |
 |--------|--------|-------------------|
 | Credits adicionales | $0.10/gen | Variable |
-| Voice cloning addon | $9.99/mes | $2,000 |
 | Video generation | $0.50/video | $5,000 |
 | Marketplace comisión | 15% | $3,000 |
 | Enterprise contracts | Custom | $10,000 |
+
+*Note: Voice cloning incluido en tier Pro, no como addon separado.*
 
 ### Proyección Financiera (12 meses)
 

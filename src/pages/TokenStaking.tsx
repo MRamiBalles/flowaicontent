@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -49,6 +50,7 @@ interface Proposal {
 }
 
 const TokenStaking = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [pools, setPools] = useState<StakingPool[]>([]);
     const [myStakes, setMyStakes] = useState<UserStake[]>([]);
@@ -131,7 +133,7 @@ const TokenStaking = () => {
             });
 
             if (result.success) {
-                toast.success(`Successfully staked ${stakeAmount} FLOW!`);
+                toast.success(t('tokenStaking.successfullyStaked', { amount: stakeAmount }));
                 setStakeAmount('');
                 setSelectedPool(null);
                 loadData();
@@ -139,7 +141,7 @@ const TokenStaking = () => {
                 throw new Error(result.error);
             }
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Staking failed');
+            toast.error(error instanceof Error ? error.message : t('tokenStaking.stakingFailed'));
         }
     };
 
@@ -147,11 +149,11 @@ const TokenStaking = () => {
         try {
             const result = await callApi('claim_rewards', { stake_id: stakeId });
             if (result.success) {
-                toast.success(`Claimed ${result.claimed} FLOW!`);
+                toast.success(t('tokenStaking.claimed', { amount: result.claimed }));
                 loadData();
             }
         } catch (error) {
-            toast.error('Failed to claim rewards');
+            toast.error(t('tokenStaking.claimFailed'));
         }
     };
 
@@ -162,13 +164,13 @@ const TokenStaking = () => {
                 vote_type: voteType
             });
             if (result.success) {
-                toast.success('Vote cast successfully!');
+                toast.success(t('tokenStaking.voteCastSuccess'));
                 loadData();
             } else {
                 throw new Error(result.error);
             }
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Voting failed');
+            toast.error(error instanceof Error ? error.message : t('tokenStaking.votingFailed'));
         }
     };
 
@@ -186,21 +188,21 @@ const TokenStaking = () => {
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-2">
                         <Coins className="h-8 w-8 text-primary" />
-                        $FLOW Staking & Governance
+                        {t('tokenStaking.title')}
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Stake your tokens to earn rewards and vote on platform decisions
+                        {t('tokenStaking.subtitle')}
                     </p>
                 </div>
 
                 <Card className="bg-primary/5 border-primary/20">
                     <CardContent className="p-4 flex gap-8">
                         <div>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Total Staked</p>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">{t('tokenStaking.totalStaked')}</p>
                             <p className="text-2xl font-bold font-mono">{stats.totalStaked.toLocaleString()} FLOW</p>
                         </div>
                         <div>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Rewards Earned</p>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">{t('tokenStaking.rewardsEarned')}</p>
                             <p className="text-2xl font-bold font-mono text-green-500">+{stats.totalRewards.toFixed(2)} FLOW</p>
                         </div>
                     </CardContent>
@@ -209,8 +211,8 @@ const TokenStaking = () => {
 
             <Tabs defaultValue="staking" className="space-y-6">
                 <TabsList>
-                    <TabsTrigger value="staking">Staking Pools</TabsTrigger>
-                    <TabsTrigger value="governance">Governance DAO</TabsTrigger>
+                    <TabsTrigger value="staking">{t('tokenStaking.stakingPools')}</TabsTrigger>
+                    <TabsTrigger value="governance">{t('tokenStaking.governanceDAO')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="staking" className="space-y-8">
@@ -219,14 +221,14 @@ const TokenStaking = () => {
                         {pools.length === 0 ? (
                             <div className="col-span-3 text-center py-12 text-muted-foreground">
                                 <Coins className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                <p>No staking pools available yet.</p>
-                                <p className="text-sm">Check back soon!</p>
+                                <p>{t('tokenStaking.noPoolsAvailable')}</p>
+                                <p className="text-sm">{t('tokenStaking.checkBackSoon')}</p>
                             </div>
                         ) : pools.map((pool) => (
                             <Card key={pool.id} className="relative overflow-hidden hover:border-primary/50 transition-colors">
                                 <div className="absolute top-0 right-0 p-3">
                                     <Badge variant="outline" className="bg-background">
-                                        {pool.lock_period_days} Day Lock
+                                        {t('tokenStaking.dayLock', { days: pool.lock_period_days })}
                                     </Badge>
                                 </div>
                                 <CardHeader>
@@ -236,16 +238,16 @@ const TokenStaking = () => {
                                 <CardContent className="space-y-6">
                                     <div>
                                         <span className="text-4xl font-bold text-primary">{pool.apy_percentage}%</span>
-                                        <span className="text-muted-foreground ml-2">APY</span>
+                                        <span className="text-muted-foreground ml-2">{t('tokenStaking.apy')}</span>
                                     </div>
 
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Min Stake</span>
+                                            <span className="text-muted-foreground">{t('tokenStaking.minStake')}</span>
                                             <span>{pool.min_stake_amount} FLOW</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Total Staked</span>
+                                            <span className="text-muted-foreground">{t('tokenStaking.totalStaked')}</span>
                                             <span>{Number(pool.total_staked).toLocaleString()}</span>
                                         </div>
                                     </div>
@@ -253,16 +255,16 @@ const TokenStaking = () => {
                                     <Dialog>
                                         <DialogTrigger asChild>
                                             <Button className="w-full" onClick={() => setSelectedPool(pool)}>
-                                                Stake Now
+                                                {t('tokenStaking.stakeNow')}
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent>
                                             <DialogHeader>
-                                                <DialogTitle>Stake in {pool.name}</DialogTitle>
+                                                <DialogTitle>{t('tokenStaking.stakeIn', { pool: pool.name })}</DialogTitle>
                                             </DialogHeader>
                                             <div className="space-y-4 py-4">
                                                 <div className="space-y-2">
-                                                    <label className="text-sm font-medium">Amount to Stake (FLOW)</label>
+                                                    <label className="text-sm font-medium">{t('tokenStaking.amountToStake')}</label>
                                                     <div className="relative">
                                                         <Input
                                                             type="number"
@@ -276,18 +278,18 @@ const TokenStaking = () => {
                                                             className="absolute right-1 top-1 h-7 text-xs"
                                                             onClick={() => setStakeAmount('1000')}
                                                         >
-                                                            MAX
+                                                            {t('tokenStaking.max')}
                                                         </Button>
                                                     </div>
                                                 </div>
 
                                                 <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
                                                     <div className="flex justify-between">
-                                                        <span>Lock Period</span>
-                                                        <span className="font-mono">{pool.lock_period_days} Days</span>
+                                                        <span>{t('tokenStaking.lockPeriod')}</span>
+                                                        <span className="font-mono">{pool.lock_period_days} {t('tokenStaking.days')}</span>
                                                     </div>
                                                     <div className="flex justify-between">
-                                                        <span>Est. Daily Rewards</span>
+                                                        <span>{t('tokenStaking.estDailyRewards')}</span>
                                                         <span className="font-mono text-green-500">
                                                             +{stakeAmount ? ((Number(stakeAmount) * (pool.apy_percentage / 100)) / 365).toFixed(4) : '0.00'} FLOW
                                                         </span>
@@ -295,7 +297,7 @@ const TokenStaking = () => {
                                                 </div>
 
                                                 <Button className="w-full" onClick={handleStake}>
-                                                    Confirm Stake
+                                                    {t('tokenStaking.confirmStake')}
                                                 </Button>
                                             </div>
                                         </DialogContent>
@@ -310,7 +312,7 @@ const TokenStaking = () => {
                         <div>
                             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                                 <Wallet className="h-5 w-5" />
-                                Active Stakes
+                                {t('tokenStaking.activeStakes')}
                             </h2>
                             <div className="space-y-4">
                                 {myStakes.map((stake) => (
@@ -319,25 +321,25 @@ const TokenStaking = () => {
                                             <div>
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <h3 className="font-semibold">{stake.pool?.name || 'Pool'}</h3>
-                                                    <Badge variant="outline">{stake.pool?.apy_percentage || 0}% APY</Badge>
+                                                    <Badge variant="outline">{stake.pool?.apy_percentage || 0}% {t('tokenStaking.apy')}</Badge>
                                                 </div>
                                                 <div className="flex gap-4 text-sm text-muted-foreground">
-                                                    <span>Staked: {Number(stake.amount).toLocaleString()} FLOW</span>
+                                                    <span>{t('tokenStaking.staked')}: {Number(stake.amount).toLocaleString()} FLOW</span>
                                                     {stake.unlocks_at && (
-                                                        <span>Unlocks: {new Date(stake.unlocks_at).toLocaleDateString()}</span>
+                                                        <span>{t('tokenStaking.unlocks')}: {new Date(stake.unlocks_at).toLocaleDateString()}</span>
                                                     )}
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <p className="text-xs text-muted-foreground uppercase font-bold">Unclaimed Rewards</p>
+                                                    <p className="text-xs text-muted-foreground uppercase font-bold">{t('tokenStaking.unclaimedRewards')}</p>
                                                     <p className="font-mono font-medium text-green-500">
                                                         +{Number(stake.rewards_earned || 0).toFixed(4)} FLOW
                                                     </p>
                                                 </div>
                                                 <Button size="sm" onClick={() => handleClaim(stake.id)}>
-                                                    Claim
+                                                    {t('tokenStaking.claim')}
                                                 </Button>
                                             </div>
                                         </CardContent>
@@ -351,13 +353,13 @@ const TokenStaking = () => {
                 <TabsContent value="governance" className="space-y-6">
                     <div className="flex justify-between items-center bg-muted/30 p-6 rounded-xl border">
                         <div>
-                            <h2 className="text-xl font-bold mb-2">FlowAI DAO</h2>
+                            <h2 className="text-xl font-bold mb-2">{t('tokenStaking.flowaiDAO')}</h2>
                             <p className="text-muted-foreground max-w-xl">
-                                Vote on platform upgrades, fee structures, and feature rollouts. Your voting power is determined by your staked $FLOW amount.
+                                {t('tokenStaking.daoDescription')}
                             </p>
                         </div>
                         <div className="text-right">
-                            <Badge variant="secondary" className="mb-2">Your Voting Power</Badge>
+                            <Badge variant="secondary" className="mb-2">{t('tokenStaking.yourVotingPower')}</Badge>
                             <p className="text-2xl font-bold font-mono">{stats.totalStaked.toLocaleString()}</p>
                         </div>
                     </div>
@@ -366,8 +368,8 @@ const TokenStaking = () => {
                         {proposals.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                <p>No active proposals at the moment.</p>
-                                <p className="text-sm">Check back soon for governance votes!</p>
+                                <p>{t('tokenStaking.noActiveProposals')}</p>
+                                <p className="text-sm">{t('tokenStaking.checkBackForVotes')}</p>
                             </div>
                         ) : proposals.map((proposal) => {
                             const totalVotes = Number(proposal.votes_for) + Number(proposal.votes_against);
@@ -380,7 +382,7 @@ const TokenStaking = () => {
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <Badge variant="outline" className="capitalize">{proposal.category}</Badge>
-                                                    <span className="text-xs text-muted-foreground">Ends {new Date(proposal.end_time).toLocaleDateString()}</span>
+                                                    <span className="text-xs text-muted-foreground">{t('tokenStaking.ends')} {new Date(proposal.end_time).toLocaleDateString()}</span>
                                                 </div>
                                                 <CardTitle>{proposal.title}</CardTitle>
                                             </div>
@@ -393,8 +395,8 @@ const TokenStaking = () => {
                                     <CardContent className="space-y-4">
                                         <div className="space-y-2">
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-green-500">For: {Number(proposal.votes_for).toLocaleString()}</span>
-                                                <span className="text-red-500">Against: {Number(proposal.votes_against).toLocaleString()}</span>
+                                                <span className="text-green-500">{t('tokenStaking.for')}: {Number(proposal.votes_for).toLocaleString()}</span>
+                                                <span className="text-red-500">{t('tokenStaking.against')}: {Number(proposal.votes_against).toLocaleString()}</span>
                                             </div>
                                             <Progress value={forPercentage} className="h-2" />
                                         </div>
@@ -406,7 +408,7 @@ const TokenStaking = () => {
                                                 onClick={() => handleVote(proposal.id, 'for')}
                                             >
                                                 <Check className="h-4 w-4 mr-2 text-green-500" />
-                                                Vote For
+                                                {t('tokenStaking.voteFor')}
                                             </Button>
                                             <Button
                                                 variant="outline"
@@ -414,7 +416,7 @@ const TokenStaking = () => {
                                                 onClick={() => handleVote(proposal.id, 'against')}
                                             >
                                                 <X className="h-4 w-4 mr-2 text-red-500" />
-                                                Vote Against
+                                                {t('tokenStaking.voteAgainst')}
                                             </Button>
                                         </div>
                                     </CardContent>
@@ -424,7 +426,7 @@ const TokenStaking = () => {
                     </div>
                 </TabsContent>
             </Tabs>
-        </div>
+        </div >
     );
 };
 

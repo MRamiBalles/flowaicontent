@@ -13,12 +13,14 @@ Credit-based billing for AI features.
 
 ### Subscription Tiers
 
-| Tier | Credits | Price |
-|------|---------|-------|
-| Free | 50 | $0 (signup bonus) |
-| Starter | 200 | $9.99/mo |
-| Creator | 1,000 | $29.99/mo |
-| Pro | 5,000 | $99.99/mo |
+| Tier | Credits | Price | Generation Limit |
+|------|---------|-------|------------------|
+| Free | 60 | $0 (signup bonus) | 20/day |
+| Creator | 1,500 | $9.99/mo | 500/month |
+| Pro | Unlimited | $99.99/mo | Unlimited |
+| Enterprise | Unlimited | Custom | Unlimited |
+
+> **Note**: Credits are calculated as 3 credits = 1 generation on average. Pro/Enterprise have unlimited credits for platform features.
 
 ## Database Schema
 
