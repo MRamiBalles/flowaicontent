@@ -1,7 +1,41 @@
-// Voice Clone Edge Function
-// Clones a user's voice using ElevenLabs API
-// Requires PRO subscription or higher
-
+/**
+ * Edge Function: voice-clone
+ * 
+ * Clones a user's voice using ElevenLabs API.
+ * 
+ * Legal Requirements:
+ * - User MUST provide explicit consent
+ * - Consent audit trail saved (timestamp, IP address)
+ * - Only allowed for user's own voice or with permission
+ * - Enforced at API level (400 if not confirmed)
+ * 
+ * Subscription Requirements:
+ * - PRO or higher required
+ * - Voice limits by tier:
+ *   - pro: 3 voices
+ *   - business: 10 voices
+ *   - enterprise: 50 voices
+ * 
+ * Technical Flow:
+ * 1. Validate subscription tier (PRO+)
+ * 2. Check voice clone limit
+ * 3. Validate audio file (MP3/WAV/WebM/OGG, max 10MB, 30s min)
+ * 4. Upload to ElevenLabs API
+ * 5. Store voice_id in database
+ * 6. Backup sample to Supabase Storage
+ * 7. Initialize voice credits
+ * 
+ * ElevenLabs Integration:
+ * - API endpoint: /v1/voices/add
+ * - Returns voice_id for text-to-speech usage
+ * - Requires minimum 30 seconds of clear speech
+ * - Processes in ~60 seconds
+ * 
+ * Voice Credits (seconds/month):
+ * - pro: 30 minutes (1800s)
+ * - business: 2 hours (7200s)
+ * - enterprise: 8+ hours (28800s)
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -15,8 +49,8 @@ const corsHeaders = {
 
 interface VoiceCloneResponse {
     success: boolean;
-    voice_id?: string;
-    elevenlabs_voice_id?: string;
+    voice_id?: string;              // Internal DB ID
+    elevenlabs_voice_id?: string;   // ElevenLabs API voice ID
     error?: string;
 }
 
@@ -71,7 +105,8 @@ serve(async (req) => {
             });
         }
 
-        // Check subscription tier (voice cloning requires PRO or higher)
+        // Check subscription tier
+        // Voice cloning is a premium feature requiring PRO or higher
         const { data: subscription } = await supabase
             .from('subscriptions')
             .select('plan_id, status')
@@ -90,11 +125,11 @@ serve(async (req) => {
             });
         }
 
-        // Check voice clone limit based on plan
+        // Check voice clone limit based on subscription plan
         const voiceLimits: Record<string, number> = {
-            'pro': 3,
-            'business': 10,
-            'enterprise': 50
+            'pro': 3,        // 3 custom voices
+            'business': 10,  // 10 custom voices
+            'enterprise': 50 // 50 custom voices
         };
         const maxVoices = voiceLimits[subscription.plan_id] || 3;
 

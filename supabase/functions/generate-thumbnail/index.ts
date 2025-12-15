@@ -1,3 +1,36 @@
+/**
+ * Edge Function: generate-thumbnail
+ * 
+ * Generates YouTube thumbnails using OpenAI DALL-E 3.
+ * 
+ * Actions:
+ * - get_templates: Fetch available thumbnail templates
+ * - generate: Create custom thumbnail from prompt
+ * - get_my_generations: Get user's generation history
+ * 
+ * Template System:
+ * - Predefined style prompts (vibrant, minimal, dramatic, etc.)
+ * - Usage tracking for popularity metrics
+ * - Can combine template + custom prompt
+ * 
+ * Style Presets:
+ * - vibrant: High contrast, eye-catching
+ * - minimal: Clean, whitespace-heavy
+ * - dramatic: Cinematic lighting
+ * - retro: 80s aesthetic, neon
+ * - neon: Cyberpunk, dark background
+ * - professional: Corporate, trustworthy
+ * 
+ * DALL-E 3 Settings:
+ * - Size: 1792x1024 (closest to 16:9)
+ * - Quality: HD
+ * - Model: dall-e-3
+ * 
+ * Output:
+ * - Generates thumbnail without text overlay
+ * - User adds text in separate editor
+ * - Optimized for YouTube click-through rate
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

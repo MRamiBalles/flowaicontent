@@ -1,4 +1,25 @@
-
+/**
+ * Edge Function: admin-change-role
+ * 
+ * Changes a user's role (admin-only).
+ * 
+ * Roles:
+ * - user: Default role (can use platform)
+ * - moderator: Can moderate content
+ * - admin: Full platform access
+ * 
+ * Security:
+ * - Prevent self-demotion (admins can't remove their own admin role)
+ * - Atomic operation: delete old role, insert new role
+ * - Audit log records all role changes
+ * 
+ * Process:
+ * 1. Verify admin authentication
+ * 2. Check for self-demotion
+ * 3. Delete existing role from user_roles
+ * 4. Insert new role
+ * 5. Log action to admin_audit_logs
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 

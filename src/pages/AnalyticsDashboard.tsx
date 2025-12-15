@@ -12,21 +12,46 @@ import {
 } from 'lucide-react';
 
 interface Metrics {
-    mrr: number;
-    arr: number;
+    mrr: number;                           // Monthly Recurring Revenue
+    arr: number;                           // Annual Recurring Revenue (MRR * 12)
     active_subscribers: number;
     new_subscribers_this_month: number;
     churned_subscribers_this_month: number;
-    churn_rate: number;
-    cac: number;
-    ltv: number;
-    ltv_cac_ratio: number;
-    conversion_rate: number;
-    arpu: number;
+    churn_rate: number;                    // % monthly churn
+    cac: number;                           // Customer Acquisition Cost
+    ltv: number;                           // Lifetime Value
+    ltv_cac_ratio: number;                 // Target: 3x+
+    conversion_rate: number;               // % free to paid
+    arpu: number;                          // Average Revenue Per User
     total_users: number;
     paying_users: number;
 }
 
+/**
+ * AnalyticsDashboard Component
+ * 
+ * Real-time SaaS business metrics dashboard.
+ * 
+ * Key Metrics Displayed:
+ * - MRR/ARR: Monthly and annual recurring revenue
+ * - Active Subscribers: Current paying customer count
+ * - Churn Rate: % customers canceling monthly (target: <5%)
+ * - Conversion Rate: Free to paid conversion %
+ * - ARPU: Average revenue per user per month
+ * - LTV/CAC Ratio: Customer lifetime value vs acquisition cost (target: 3x+)
+ * 
+ * API Integration:
+ * - Fetches from local analytics API (port 8000)
+ * - Uses Supabase auth token for authentication
+ * - Updates in real-time
+ * 
+ * Health Indicators:
+ * - Green: MRR growing, churn <5%, LTV/CAC >3x
+ * - Orange/Red: Metrics below target
+ * 
+ * Note: Currently uses hardcoded API URL (localhost:8000)
+ * In production, should use environment variable
+ */
 export const AnalyticsDashboard = () => {
     const [metrics, setMetrics] = useState<Metrics | null>(null);
     const [loading, setLoading] = useState(true);

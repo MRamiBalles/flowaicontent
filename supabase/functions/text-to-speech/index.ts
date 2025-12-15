@@ -1,6 +1,32 @@
-// Text-to-Speech Edge Function
-// Generates audio from text using a cloned voice via ElevenLabs API
-
+/**
+ * Edge Function: text-to-speech
+ * 
+ * Generates audio from text using a cloned voice via ElevenLabs API.
+ * 
+ * Credit System:
+ * - Charged per character (~1 credit/character)
+ * - Monthly limits by tier:
+ *   - pro: 30 minutes (1800 seconds)
+ *   - business: 2 hours (7200 seconds)
+ *   - enterprise: 8+ hours (28800+ seconds)
+ * 
+ * Workflow:
+ * 1. Validate user owns voice_id
+ * 2. Check monthly credit limit
+ * 3. Call ElevenLabs TTS API
+ * 4. Upload generated audio to Supabase Storage
+ * 5. Record generation in voice_generations table
+ * 6. Deduct credits from monthly balance
+ * 
+ * Models Available:
+ * - eleven_multilingual_v2: 29 languages (default)
+ * - eleven_turbo_v2: Faster, lower latency
+ * - eleven_monolingual_v1: English only, higher quality
+ * 
+ * Voice Settings:
+ * - stability: 0.0-1.0 (consistency vs expressiveness)
+ * - similarity_boost: 0.0-1.0 (how close to original voice)
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -17,15 +43,15 @@ interface TTSRequest {
     text: string;
     model?: 'eleven_multilingual_v2' | 'eleven_turbo_v2' | 'eleven_monolingual_v1';
     output_format?: 'mp3_44100_128' | 'mp3_22050_32' | 'pcm_16000' | 'pcm_22050';
-    stability?: number;
-    similarity_boost?: number;
+    stability?: number;         // 0.0-1.0
+    similarity_boost?: number;  // 0.0-1.0
 }
 
 interface TTSResponse {
     success: boolean;
-    audio_url?: string;
-    duration_seconds?: number;
-    credits_consumed?: number;
+    audio_url?: string;         // Supabase Storage URL
+    duration_seconds?: number;   // Estimated duration
+    credits_consumed?: number;   // Characters charged
     error?: string;
 }
 

@@ -17,10 +17,32 @@ interface Profile {
     username?: string | null;
     avatar_url?: string | null;
     bio?: string | null;
-    flow_points?: number;
-    total_minutes_watched?: number;
+    flow_points?: number;            // Gamification points
+    total_minutes_watched?: number;  // Engagement metric
 }
 
+/**
+ * ProfilePage Component
+ * 
+ * User profile page with social features.
+ * 
+ * Features:
+ * - Profile info display (avatar, username, badges)
+ * - Follow/Unfollow system
+ * - Stats cards (Flow Points, Followers, Watch Time)
+ * - Content tabs (Videos, Playlists, Community, About)
+ * - Direct messaging button
+ * 
+ * Social System:
+ * - followers table tracks follower_id → following_id relationships
+ * - Optimistic UI updates for follow/unfollow
+ * - Toast notifications for user feedback
+ * 
+ * Stats Displayed:
+ * - Flow Points: Gamification currency earned from engagement
+ * - Followers: Not yet implemented (hardcoded to 128)
+ * - Minutes Watched: Total watch time on user's content
+ */
 export default function ProfilePage() {
     const { id } = useParams<{ id: string }>();
     const { user, isAdmin } = useUser();

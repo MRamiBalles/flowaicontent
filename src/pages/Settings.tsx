@@ -22,6 +22,24 @@ interface GenerationHistory {
     } | null;
 }
 
+/**
+ * Settings Page
+ * 
+ * User account management and usage statistics.
+ * 
+ * Features:
+ * - Profile editing (display name)
+ * - Email verification status
+ * - Account creation date
+ * - Usage limits (10 generations/hour)
+ * - Generation history (last 20)
+ * - Analytics dashboard integration
+ * 
+ * Rate Limiting Display:
+ * - Shows X/10 generations used this hour
+ * - Progress bar visualization
+ * - Resets hourly automatically
+ */
 const Settings = () => {
     const navigate = useNavigate();
     const { user, isAdmin, loading: authLoading } = useUser();
@@ -40,10 +58,18 @@ const Settings = () => {
         }
     }, [user, authLoading, navigate]);
 
+    /**
+     * Fetch user data: profile, usage stats, and history
+     * 
+     * Fetches:
+     * - Profile (full_name from profiles table)
+     * - Generation count in last hour
+     * - Last 20 generation attempts
+     */
     const fetchData = async (userId: string) => {
         setLoading(true);
         try {
-            // Fetch profile
+            // Fetch user profile
             const { data: profileData } = await supabase
                 .from("profiles")
                 .select("*")
@@ -55,7 +81,7 @@ const Settings = () => {
                 setDisplayName(profileData.full_name || "");
             }
 
-            // Fetch generation count (last hour)
+            // Count generations in last hour for rate limit display
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
             const { count } = await supabase
                 .from("generation_attempts")
@@ -67,7 +93,7 @@ const Settings = () => {
                 setGenerationCount(count);
             }
 
-            // Fetch history
+            // Fetch recent generation history
             const { data } = await supabase
                 .from("generation_attempts")
                 .select(`
@@ -89,6 +115,9 @@ const Settings = () => {
         }
     };
 
+    /**
+     * Update user's display name in profiles table
+     */
     const handleUpdateProfile = async () => {
         if (!user) return;
         setIsUpdatingProfile(true);
@@ -109,6 +138,7 @@ const Settings = () => {
 
     if (authLoading || !user) return null;
 
+    // Calculate rate limit metrics for UI
     const remainingGenerations = Math.max(0, 10 - generationCount);
     const rateLimitStatus = Math.min(100, (generationCount / 10) * 100);
 

@@ -1,3 +1,27 @@
+/**
+ * Edge Function: analytics-insights
+ * 
+ * AI-powered creator analytics and insights.
+ * 
+ * Actions:
+ * - get_dashboard: Fetch 30-day analytics summary
+ * - generate_insights: AI-generated growth recommendations
+ * - dismiss_insight: Mark insight as read
+ * 
+ * Data Sources:
+ * - creator_analytics: Daily views, revenue, followers
+ * - content_performance: Top performing content
+ * - platform_metrics: Platform comparison (Twitter, LinkedIn, etc.)
+ * - ai_analytics_insights: AI-generated recommendations
+ * 
+ * Insights Generated:
+ * - Best posting times (based on audience activity)
+ * - Trending topics (cross-platform analysis)
+ * - Growth opportunities (content gaps)
+ * - Engagement optimization tips
+ * 
+ * Currently uses mock insights. TODO: Integrate real AI model.
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

@@ -7,11 +7,30 @@ import { useUser } from "@/hooks/useUser";
 import { useTranslation } from "@/i18n/LanguageProvider";
 import { toast } from "sonner";
 
+/**
+ * Pricing Page
+ * 
+ * Displays subscription tiers with features and pricing.
+ * 
+ * Unified Pricing (coherent across all docs):
+ * - Free: $0 (20 gen/day, 720p, watermarked)
+ * - Creator: $9.99/mo (500 gen/month, 1080p, no watermark)
+ * - Pro: $99.99/mo (unlimited, 4K, voice cloning, API)
+ * - Enterprise: Custom (white-label, custom models, SSO)
+ * 
+ * Features:
+ * - i18n support (EN/ES via useTranslation)
+ * - Popular badge for recommended tier (Pro)
+ * - Icon per tier for visual distinction
+ * - Responsive grid layout (1-4 columns)
+ * 
+ * TODO: Integrate with Stripe for actual subscriptions
+ */
 export default function Pricing() {
     const { user, isAdmin } = useUser();
     const { t } = useTranslation();
 
-    // Unified pricing tiers matching documentation ($0 / $9.99 / $99.99 / Custom)
+    // Pricing tiers matching MONETIZATION.md documentation
     const PLANS = [
         {
             name: t("pricing.tiers.free.name"),

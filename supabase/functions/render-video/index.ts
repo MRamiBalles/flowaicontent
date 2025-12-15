@@ -1,6 +1,32 @@
-// Render Video Edge Function
-// Triggers video rendering via Remotion Lambda or local fallback
-
+/**
+ * Edge Function: render-video
+ * 
+ * Triggers video rendering via Remotion Lambda (AWS) or local fallback.
+ * 
+ * Architecture:
+ * 1. Validate auth and subscription tier
+ * 2. Create render_queue entry (status: pending)
+ * 3. Trigger AWS Lambda with Remotion composition
+ * 4. Lambda renders video in parallel chunks
+ * 5. Webhook notified on completion
+ * 6. Update render_queue with result URL
+ * 
+ * Quality Tiers (subscription-based):
+ * - free: draft (CRF 28, low quality)
+ * - pro: draft, medium (CRF 23), high (CRF 18)
+ * - business/enterprise: all + ultra (CRF 15, highest quality)
+ * 
+ * AWS Integration:
+ * - Uses AWS Signature V4 for request signing
+ * - Invokes Remotion Lambda function
+ * - Remotion parallelizes rendering (20 frames/lambda)
+ * 
+ * Environment Variables:
+ * - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
+ * - REMOTION_SERVE_URL: S3 bucket with Remotion bundle
+ * - REMOTION_LAMBDA_FUNCTION: Lambda function name
+ * - RENDER_WEBHOOK_SECRET: For webhook verification
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -9,11 +35,11 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// AWS Lambda configuration (optional)
+// AWS Lambda configuration (optional for local testing)
 const AWS_ACCESS_KEY = Deno.env.get('AWS_ACCESS_KEY_ID');
 const AWS_SECRET_KEY = Deno.env.get('AWS_SECRET_ACCESS_KEY');
 const AWS_REGION = Deno.env.get('AWS_REGION') || 'us-east-1';
-const REMOTION_SERVE_URL = Deno.env.get('REMOTION_SERVE_URL');
+const REMOTION_SERVE_URL = Deno.env.get('REMOTION_SERVE_URL'); // S3 bucket URL
 const REMOTION_LAMBDA_FUNCTION = Deno.env.get('REMOTION_LAMBDA_FUNCTION') || 'remotion-render';
 
 /**

@@ -1,3 +1,32 @@
+/**
+ * Edge Function: admin-audit-logs
+ * 
+ * Retrieves paginated audit logs with user email enrichment (admin-only).
+ * 
+ * Features:
+ * - Pagination support (page, pageSize)
+ * - Filtering by action, admin, date range
+ * - Search across emails, names, actions
+ * - User email enrichment (from auth.users)
+ * 
+ * Process:
+ * 1. Verify admin authentication
+ * 2. Build filtered query
+ * 3. Fetch logs from admin_audit_logs table
+ * 4. Enrich with user emails from auth.users
+ * 5. Enrich with display names from profiles
+ * 6. Apply search filter post-enrichment
+ * 7. Return paginated results
+ * 
+ * Search Implementation:
+ * - Pre-fetches more records (1000) for search
+ * - Filters after enrichment (email/name not in DB)
+ * - Searches: action, admin_email, admin_name, target_email, target_name, details
+ * 
+ * Performance Note:
+ * - Search queries fetch 1000 records maximum
+ * - For large datasets, consider DB-level full-text search
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 

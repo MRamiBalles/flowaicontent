@@ -5,11 +5,32 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 interface VideoPlayerProps {
-    videoResult: any | null;
-    onRemix?: () => void;
-    onClip?: (timestamp: number) => void;
+    videoResult: any | null;    // Generated video metadata
+    onRemix?: () => void;       // Remix callback (opens editor with this video)
+    onClip?: (timestamp: number) => void;  // Clip callback (saves timestamp)
 }
 
+/**
+ * VideoPlayer Component
+ * 
+ * Advanced video player with token rewards and social features.
+ * 
+ * Features:
+ * - Custom video controls (play/pause, mute, fullscreen)
+ * - Proof-of-Attention (PoA) rewards system
+ * - Clip creation at timestamps
+ * - Remix functionality
+ * - Loading state with neural decoding animation
+ * 
+ * Proof-of-Attention (PoA):
+ * - Rewards users for watching content
+ * - Heartbeat every 5 seconds while playing
+ * - POST to /api/v1/economy/poa
+ * - Displays earned tokens in real-time (+X.XX TKN)
+ * 
+ * NOTE: Currently uses localhost:8000 for PoA API.
+ * In production, should use environment variable.
+ */
 export const VideoPlayer = ({ videoResult, onRemix, onClip }: VideoPlayerProps) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [loading, setLoading] = useState(true);
