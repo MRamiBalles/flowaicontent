@@ -1,4 +1,3 @@
-```
 import { ContentInput } from "@/components/ContentInput";
 import { ContentResults } from "@/components/ContentResults";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,21 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Dashboard - Main content creation interface
+ * 
+ * This is the primary workspace where users generate AI content.
+ * Features:
+ * - Gamification stats (XP, streak, level)
+ * - Rate limiting display (10 generations per hour)
+ * - Quick actions (new project, video studio access)
+ * - Content generation form with real-time results
+ * 
+ * Rate Limit Logic:
+ * - Free tier: 10 generations per hour (enforced by RLS)
+ * - Resets every hour via cron job in supabase/functions
+ * - Count stored in user_profiles.generation_count_hourly
+ */
 const Dashboard = () => {
   const { t } = useTranslation();
   const {
@@ -27,12 +41,23 @@ const Dashboard = () => {
     handleSelectProject,
   } = useDashboardLogic();
 
+  // Redirect to login if not authenticated
   if (!user) {
     return null;
   }
 
+  // Calculate remaining generations for current hour
+  // Free tier limit: 10 per hour (paid tiers have higher limits)
+  // Using Math.max to prevent negative values during edge cases
   const remainingGenerations = Math.max(0, 10 - generationCount);
+
+  // Progress bar percentage for rate limit display
+  // Shows user how close they are to hitting hourly cap
   const rateLimitProgress = (generationCount / 10) * 100;
+
+  // XP progress percentage for level-up UI
+  // Visual feedback showing how close user is to next level
+  // Example: 450 XP out of 1000 needed = 45% filled bar
   const xpProgress = (gamification.xp / gamification.xpToNextLevel) * 100;
 
   return (
@@ -48,21 +73,21 @@ const Dashboard = () => {
                   {t('dashboard.subtitle')}
                 </p>
               </div>
-              
+
               {/* Stats Pills */}
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
                   <Flame className="w-4 h-4 text-orange-400 fill-orange-400" />
                   <span className="text-sm font-medium text-orange-300">{t('dashboard.streak', { count: gamification.streak })}</span>
                 </div>
-                
+
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
                   <Trophy className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium text-primary">{t('dashboard.level', { level: gamification.level })}</span>
                   <div className="w-12 h-1.5 bg-primary/20 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary transition-all duration-500" 
-                      style={{ width: `${ xpProgress }% ` }} 
+                    <div
+                      className="h-full bg-primary transition-all duration-500"
+                      style={{ width: `${xpProgress}% ` }}
                     />
                   </div>
                 </div>
@@ -87,16 +112,16 @@ const Dashboard = () => {
                   <CardTitle className="text-sm font-medium text-muted-foreground">{t('dashboard.quickActions')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button 
-                    onClick={handleNewProject} 
+                  <Button
+                    onClick={handleNewProject}
                     className="w-full justify-start gap-2"
                     variant="default"
                   >
                     <Plus className="w-4 h-4" />
                     {t('dashboard.newProject')}
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start gap-2"
                     onClick={() => window.location.href = "/video-studio"}
                   >

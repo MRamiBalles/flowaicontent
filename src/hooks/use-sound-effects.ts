@@ -1,9 +1,26 @@
 import { useCallback } from 'react';
 
+/**
+ * useSoundEffects - UI sound effects via Web Audio API
+ * 
+ * Generates procedural sound effects without audio files:
+ * - hover: High-pitched blip (UI feedback)
+ * - click: Mechanical click (button presses)
+ * - success: Coin/powerup (achievements)
+ * - typing: Soft click (keyboard feedback)
+ * - error: Low buzz (validation errors)
+ * 
+ * Uses Web Audio API oscillators + gain envelopes.
+ * Silently fails on browsers without Web Audio support.
+ * 
+ * Performance: Sound generation is very lightweight (~1ms)
+ * 
+ * @returns playSound function
+ */
 export const useSoundEffects = () => {
     const playSound = useCallback((type: 'hover' | 'click' | 'success' | 'typing' | 'error') => {
         const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-        if (!AudioContext) return;
+        if (!AudioContext) return; // Graceful degradation
 
         const ctx = new AudioContext();
         const osc = ctx.createOscillator();
@@ -16,7 +33,7 @@ export const useSoundEffects = () => {
 
         switch (type) {
             case 'hover':
-                // High pitched, short blip
+                // High pitched blip: Quick frequency rise
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(800, now);
                 osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
@@ -27,7 +44,7 @@ export const useSoundEffects = () => {
                 break;
 
             case 'click':
-                // Mechanical click
+                // Mechanical click: Square wave descent
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(200, now);
                 osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
@@ -38,7 +55,7 @@ export const useSoundEffects = () => {
                 break;
 
             case 'success':
-                // Coin / Powerup sound
+                // Coin/powerup: Octave jump (A4 -> A5)
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(440, now);
                 osc.frequency.setValueAtTime(880, now + 0.1);
@@ -50,7 +67,7 @@ export const useSoundEffects = () => {
                 break;
 
             case 'typing':
-                // Soft click
+                // Soft keyboard click: Very short triangle
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(800, now);
                 gain.gain.setValueAtTime(0.01, now);
@@ -60,7 +77,7 @@ export const useSoundEffects = () => {
                 break;
 
             case 'error':
-                // Low buzz
+                // Low buzz: Descending sawtooth (harsh tone)
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(150, now);
                 osc.frequency.linearRampToValueAtTime(100, now + 0.2);

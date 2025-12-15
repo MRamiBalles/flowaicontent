@@ -1,3 +1,29 @@
+/**
+ * Edge Function: stripe-webhooks  
+ * 
+ * Handles Stripe webhook events for payment processing.
+ * 
+ * Supported Events:
+ * - checkout.session.completed: User completes subscription checkout
+ * - invoice.payment_succeeded: Recurring payment successful
+ * - invoice.payment_failed: Payment failed (mark as past_due)
+ * - customer.subscription.updated: Subscription changed (upgrade/downgrade)
+ * - customer.subscription.deleted: User canceled subscription
+ * 
+ * Security:
+ * - PRODUCTION: Verifies webhook signature using STRIPE_WEBHOOK_SECRET
+ * - DEV MODE: Skips verification (ONLY for local testing)
+ * - Uses Service Role key for database writes
+ * 
+ * Flow:
+ * 1. Verify Stripe signature
+ * 2. Parse event type
+ * 3. Update subscriptions table accordingly
+ * 4. Return 200 OK to confirm receipt
+ * 
+ * Critical: Always return 200 even on DB errors to prevent
+ * Stripe from retrying indefinitely.
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.21.0";
@@ -14,15 +40,16 @@ serve(async (req) => {
 
     try {
         const signature = req.headers.get("stripe-signature");
-        const body = await req.text();
+        const body = await req.text(); // Raw body needed for signature verification
 
-        // Get Stripe configuration
+        // Environment variables
         const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
         const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
 
         let event: Stripe.Event;
 
-        // Production mode: Verify signature
+        // PRODUCTION: Verify webhook came from Stripe
+        // This prevents malicious actors from spoofing webhook events
         if (webhookSecret && stripeSecretKey && signature) {
             const stripe = new Stripe(stripeSecretKey, {
                 apiVersion: '2023-10-16',
@@ -30,7 +57,8 @@ serve(async (req) => {
             });
 
             try {
-                // Verify the webhook signature for security
+                // Verify signature using webhook secret
+                // Throws error if signature invalid or timestamp too old
                 event = await stripe.webhooks.constructEventAsync(
                     body,
                     signature,
@@ -49,7 +77,8 @@ serve(async (req) => {
                 );
             }
         } else {
-            // Development mode: Parse without verification (ONLY for local testing)
+            // DEVELOPMENT MODE: Parse without verification
+            // WARNING: Never use in production - allows anyone to send fake events
             console.warn('⚠️ DEVELOPMENT MODE: Webhook signature verification skipped');
             console.warn('Set STRIPE_WEBHOOK_SECRET for production security');
 
@@ -68,21 +97,23 @@ serve(async (req) => {
 
         const supabaseClient = createClient(
             Deno.env.get("SUPABASE_URL") ?? "",
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "" // Service role for webhook writes
         );
 
         console.log(`Received verified event: ${event.type}`);
 
-        // Handle different event types
+        // Handle different webhook events
         switch (event.type) {
+            // User completed checkout and subscribed
             case 'checkout.session.completed': {
                 const session = event.data.object as Stripe.Checkout.Session;
-                const userId = session.metadata?.user_id;
+                const userId = session.metadata?.user_id; // Set during checkout creation
                 const subscriptionId = session.subscription as string;
                 const customerId = session.customer as string;
 
                 if (userId && subscriptionId) {
-                    // Update user subscription in database
+                    // Create or update subscription record
+                    // upsert ensures idempotency if webhook fires multiple times
                     const { error: subError } = await supabaseClient
                         .from('subscriptions')
                         .upsert({
@@ -93,7 +124,7 @@ serve(async (req) => {
                             current_period_start: new Date().toISOString(),
                             updated_at: new Date().toISOString()
                         }, {
-                            onConflict: 'user_id'
+                            onConflict: 'user_id' // Update if subscription exists
                         });
 
                     if (subError) {

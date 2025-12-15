@@ -19,9 +19,33 @@ interface ContentResultsProps {
   onRemix?: (platform: string, content: string) => void;
 }
 
+/**
+ * ContentResults - Display and manage generated content
+ * 
+ * Features:
+ * - Tabbed interface for 3 platforms (Twitter, LinkedIn, Instagram)
+ * - Copy to clipboard with visual feedback
+ * - Download individual platform content as .txt
+ * - Bulk export as JSON or CSV
+ * - Remix button to regenerate specific platform
+ * - Rate limit progress bar
+ * 
+ * Export Formats:
+ * - JSON: Pretty-printed with 2-space indent
+ * - CSV: Escaped quotes, platform + content columns
+ * 
+ * @param content - Generated content for all platforms
+ * @param remainingGenerations - Number of generations left (0-10)
+ * @param rateLimitStatus - Percentage used (0-100)
+ * @param onRemix - Callback to regenerate specific platform
+ */
 export const ContentResults = ({ content, remainingGenerations, rateLimitStatus, onRemix }: ContentResultsProps) => {
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
 
+  /**
+   * Copy content to clipboard and show success feedback
+   * Resets copy icon after 2 seconds
+   */
   const copyToClipboard = async (text: string, platform: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedPlatform(platform);
@@ -29,6 +53,10 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
     setTimeout(() => setCopiedPlatform(null), 2000);
   };
 
+  /**
+   * Download single platform content as text file
+   * Creates blob, triggers download, then cleanup
+   */
   const downloadContent = (text: string, platform: string, extension: string = 'txt') => {
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -42,6 +70,12 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
     toast.success(`Downloaded ${platform} content`);
   };
 
+  /**
+   * Export all content in JSON or CSV format
+   * 
+   * JSON: Pretty-printed for readability
+   * CSV: Escaped quotes for Excel compatibility
+   */
   const downloadAll = (format: 'json' | 'csv') => {
     if (!content) return;
 
@@ -54,10 +88,10 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
       mimeType = 'application/json';
       extension = 'json';
     } else {
-      // Dynamic CSV format
+      // CSV format with proper escaping
       const headers = ['Platform', 'Content'];
       const rows = Object.entries(content).map(([platform, text]) => {
-        // Escape quotes and wrap in quotes
+        // Excel-compatible quote escaping (double quotes)
         const safePlatform = platform.replace(/"/g, '""');
         const safeText = (text as string).replace(/"/g, '""');
         return `"${safePlatform}","${safeText}"`;
@@ -80,6 +114,7 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
     toast.success(`Downloaded all content as ${format.toUpperCase()}`);
   };
 
+  // Empty state: Show placeholder with rate limit
   if (!content) {
     return (
       <div className="flex flex-col h-full">
@@ -107,8 +142,10 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
     );
   }
 
+  // Content display: Tabbed interface with actions
   return (
     <div className="flex flex-col h-full">
+      {/* Rate limit indicator */}
       {typeof remainingGenerations !== 'undefined' && (
         <div className="px-6 pt-6 pb-2">
           <div className="flex justify-between text-sm mb-2">
@@ -119,6 +156,7 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
         </div>
       )}
 
+      {/* Bulk export buttons */}
       <div className="px-6 pt-4 flex gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={() => downloadAll('json')}>
           <FileJson className="w-4 h-4 mr-2" />
@@ -130,6 +168,7 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
         </Button>
       </div>
 
+      {/* Platform tabs */}
       <Tabs defaultValue="twitter" className="flex-1 flex flex-col">
         <div className="border-b border-border px-6 pt-2">
           <TabsList className="grid w-full grid-cols-3">
@@ -149,6 +188,7 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
         </div>
 
         <div className="flex-1 overflow-auto p-6">
+          {/* Twitter tab - Thread format */}
           <TabsContent value="twitter" className="mt-0">
             <Card className="border-border/50">
               <CardHeader>
@@ -192,6 +232,7 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
             </Card>
           </TabsContent>
 
+          {/* LinkedIn tab - Professional post */}
           <TabsContent value="linkedin" className="mt-0">
             <Card className="border-border/50">
               <CardHeader>
@@ -235,6 +276,7 @@ export const ContentResults = ({ content, remainingGenerations, rateLimitStatus,
             </Card>
           </TabsContent>
 
+          {/* Instagram tab - Reel script */}
           <TabsContent value="instagram" className="mt-0">
             <Card className="border-border/50">
               <CardHeader>

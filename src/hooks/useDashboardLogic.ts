@@ -6,24 +6,52 @@ import { projectSchema } from "@/lib/validations";
 import { detectPromptInjection } from "@/lib/ai-sanitization";
 import { useGamification } from "@/hooks/useGamification";
 
+// Generated content format returned by AI
+// Each platform gets optimized content based on platform limits/style
 export interface GeneratedContent {
-    twitter: string;
-    linkedin: string;
-    instagram: string;
+    twitter: string;      // Max 280 chars, concise, hashtags
+    linkedin: string;    // Professional tone, 1-2 paragraphs
+    instagram: string;   // Casual, emoji-friendly, hashtags
 }
 
+/**
+ * useDashboardLogic - Main dashboard state and business logic
+ * 
+ * Manages:
+ * - User authentication and session
+ * - Content generation workflow (create project → call AI → poll status)
+ * - Rate limiting (10 generations/hour for free tier)
+ * - Gamification (XP, streaks)
+ * - Admin role checking
+ * 
+ * Content Generation Flow:
+ * 1. User submits title + content
+ * 2. Creates project record in DB
+ * 3. Calls Edge Function (generate-content) which queues async job
+ * 4. Polls generation_jobs table every 2s for completion
+ * 5. Edge Function saves results to generated_content table
+ * 6. Returns results to UI and increments rate limit counter
+ * 
+ * Rate Limiting:
+ * - Free tier: 10/hour (enforced by RLS on generation_attempts)
+ * - Counts are queried from last 60 minutes
+ * - Cron job resets counters hourly
+ */
 export const useDashboardLogic = () => {
     const navigate = useNavigate();
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
     const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<any>(null);
-    const [generationCount, setGenerationCount] = useState(0);
+    const [generationCount, setGenerationCount] = useState(0); // Current hour's generation count
     const [isAdmin, setIsAdmin] = useState(false);
 
-    // Gamification Hook
+    // Gamification: Awards XP for actions like generating content
+    // See useGamification.ts for level-up logic
     const { streak, level, xp, xpToNextLevel, performAction } = useGamification();
 
+    // Auth state management
+    // Redirects to /auth if no session, otherwise fetches user data
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (!session) {
@@ -35,6 +63,7 @@ export const useDashboardLogic = () => {
             }
         });
 
+        // Listen for auth changes (login/logout) and update UI
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (!session) {
                 navigate("/auth");
@@ -48,6 +77,12 @@ export const useDashboardLogic = () => {
         return () => subscription.unsubscribe();
     }, [navigate]);
 
+    /**
+     * Check if user has admin role
+     * 
+     * Admin users see additional UI elements (admin dashboard link, etc.)
+     * Role is stored in user_roles table with RLS policies
+     */
     const checkAdmin = async (userId: string) => {
         const { data } = await supabase
             .from("user_roles")
@@ -64,6 +99,15 @@ export const useDashboardLogic = () => {
         navigate("/auth");
     };
 
+    /**
+     * Fetch generation count for current hour
+     * 
+     * Rate limiting: Free tier allows 10 generations per hour
+     * Counter is based on generation_attempts table filtered by timestamp
+     * Hourly reset handled by backend cron job
+     * 
+     * @param userId - Current user's ID
+     */
     const fetchGenerationCount = async (userId: string) => {
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 

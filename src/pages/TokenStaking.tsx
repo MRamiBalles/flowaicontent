@@ -19,36 +19,64 @@ import {
     X
 } from 'lucide-react';
 
+// Database interface for staking pool configuration
+// Pools are configured in the staking_pools table with different APY rates
 interface StakingPool {
     id: string;
     name: string;
     description: string;
-    apy_percentage: number;
-    lock_period_days: number;
-    min_stake_amount: number;
-    total_staked: number;
+    apy_percentage: number;      // Annual Percentage Yield (8-20% range)
+    lock_period_days: number;    // How long tokens are locked (0, 30, 90, 180 days)
+    min_stake_amount: number;    // Minimum FLOW tokens to stake
+    total_staked: number;        // Aggregate staked by all users in this pool
 }
 
+// User's active stake information
+// Linked to staking_pools via pool_id foreign key
 interface UserStake {
     id: string;
-    amount: number;
-    rewards_earned: number;
-    staked_at: string;
-    unlocks_at: string | null;
-    pool: StakingPool;
+    amount: number;              // FLOW tokens staked by this user
+    rewards_earned: number;      // Accumulated rewards not yet claimed
+    staked_at: string;          // ISO timestamp of stake creation
+    unlocks_at: string | null;  // When stake can be withdrawn (null = flexible pool)
+    pool: StakingPool;          // Joined pool data for display
 }
 
+// Governance DAO proposal for platform decisions
+// Users vote with weight proportional to their staked FLOW
 interface Proposal {
     id: string;
     title: string;
     description: string;
-    category: string;
-    end_time: string;
-    votes_for: number;
-    votes_against: number;
-    status: string;
+    category: string;            // 'platform', 'tokenomics', 'feature', etc.
+    end_time: string;           // Voting deadline (ISO timestamp)
+    votes_for: number;          // Weighted votes in favor
+    votes_against: number;      // Weighted votes against
+    status: string;             // 'active', 'passed', 'rejected'
 }
 
+/**
+ * TokenStaking - $FLOW staking and governance interface
+ * 
+ * Allows users to:
+ * 1. Stake FLOW tokens in various pools (8-20% APY)
+ * 2. Earn rewards based on APY and lock period
+ * 3. Vote on governance proposals with staked tokens
+ * 
+ * APY Calculation:
+ * Daily rewards = (staked_amount * APY) / 365
+ * 
+ * Staking Pools:
+ * - Flexible (8% APY, no lock)
+ * - 30-Day Lock (12% APY)
+ * - 90-Day Lock (16% APY)
+ * - Diamond (20% APY, 180-day lock, 10k min)
+ * 
+ * Security:
+ * - All operations go through Edge Functions
+ * - RLS enforces user can only manage own stakes
+ * - Voting weight = total staked amount
+ */
 const TokenStaking = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
@@ -68,10 +96,22 @@ const TokenStaking = () => {
         }
     }, [user]);
 
+    /**
+     * Load all staking data from database
+     * 
+     * Fetches:
+     * 1. Active staking pools (sorted by APY desc)
+     * 2. User's active stakes with joined pool data
+     * 3. Active governance proposals
+     * 4. Calculates total staked amount and rewards
+     * 
+     * Called on mount and after stake/claim/vote actions
+     */
     const loadData = async () => {
         setIsLoading(true);
         try {
-            // Load pools using any to bypass type checking until types are regenerated
+            // Fetch active staking pools, sorted by APY for better UX
+            // Only shows pools with is_active=true
             const { data: poolsData } = await (supabase as any)
                 .from('staking_pools')
                 .select('*')
@@ -79,7 +119,8 @@ const TokenStaking = () => {
                 .order('apy_percentage', { ascending: false });
             setPools(poolsData || []);
 
-            // Load user stakes
+            // Fetch user's active stakes with joined pool information
+            // Status='active' excludes withdrawn/expired stakes
             const { data: stakesData } = await (supabase as any)
                 .from('user_stakes')
                 .select('*, pool:pool_id(*)')
@@ -87,7 +128,8 @@ const TokenStaking = () => {
                 .eq('status', 'active');
             setMyStakes(stakesData || []);
 
-            // Load proposals
+            // Fetch active governance proposals sorted by deadline
+            // Users can vote on these with weight = staked amount
             const { data: proposalsData } = await (supabase as any)
                 .from('governance_proposals')
                 .select('*')
@@ -95,7 +137,8 @@ const TokenStaking = () => {
                 .order('end_time', { ascending: true });
             setProposals(proposalsData || []);
 
-            // Calculate stats from stakes
+            // Aggregate statistics from user stakes
+            // Used for displaying total staked and earnings
             const totalStaked = (stakesData || []).reduce((acc: number, s: any) => acc + Number(s.amount || 0), 0);
             const totalRewards = (stakesData || []).reduce((acc: number, s: any) => acc + Number(s.rewards_earned || 0), 0);
             setStats({ totalStaked, totalRewards });
@@ -107,6 +150,21 @@ const TokenStaking = () => {
         }
     };
 
+    /**
+     * Call Edge Function for staking/governance operations
+     * 
+     * All staking operations go through this secure backend endpoint:
+     * - stake: Lock tokens in a pool
+     * - claim_rewards: Withdraw accumulated rewards
+     * - vote: Vote on governance proposal
+     * 
+     * Security: JWT token attached in Authorization header
+     * RLS policies on backend ensure user can only modify own data
+     * 
+     * @param action - Operation to perform
+     * @param data - Operation-specific parameters
+     * @returns API response with success/error status
+     */
     const callApi = async (action: string, data?: Record<string, unknown>) => {
         const { data: { session } } = await supabase.auth.getSession();
         const response = await fetch(
@@ -123,6 +181,18 @@ const TokenStaking = () => {
         return response.json();
     };
 
+    /**
+     * Stake FLOW tokens in selected pool
+     * 
+     * Process:
+     * 1. Validates amount is entered and pool selected
+     * 2. Calls Edge Function to create stake record
+     * 3. Backend calculates unlock_date based on lock period
+     * 4. Starts accumulating rewards immediately
+     * 
+     * Security: Edge Function validates user has sufficient balance
+     * Rewards Calculation: (amount * APY) / 365 per day
+     */
     const handleStake = async () => {
         if (!selectedPool || !stakeAmount) return;
 
@@ -136,7 +206,7 @@ const TokenStaking = () => {
                 toast.success(t('tokenStaking.successfullyStaked', { amount: stakeAmount }));
                 setStakeAmount('');
                 setSelectedPool(null);
-                loadData();
+                loadData(); // Refresh to show new stake
             } else {
                 throw new Error(result.error);
             }

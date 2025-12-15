@@ -1,15 +1,29 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
+// Gamification state persisted in localStorage
+// Tracks user progress across sessions
 interface GamificationState {
-    streak: number;
-    lastActionDate: string | null;
-    level: number;
-    xp: number;
-    xpToNextLevel: number;
+    streak: number;              // Consecutive days of activity
+    lastActionDate: string | null; // ISO timestamp of last action
+    level: number;              // Current level (starts at 1)
+    xp: number;                 // Current XP in this level
+    xpToNextLevel: number;      // XP needed to reach next level
 }
 
-// Simple sound effect player
+/**
+ * Generate procedural sound effects using Web Audio API
+ * 
+ * Creates simple retro-style sound effects without audio files:
+ * - success: Coin pickup sound (triangle wave)
+ * - levelup: Victory fanfare (3-note progression)
+ * - streak: Fire whoosh (frequency sweep)
+ * 
+ * Uses oscillators and gain envelopes for basic synthesis
+ * Fallback: Silently fails on browsers without Web Audio support
+ * 
+ * @param type - Sound effect type to play
+ */
 const playSound = (type: 'success' | 'levelup' | 'streak') => {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
@@ -25,10 +39,11 @@ const playSound = (type: 'success' | 'levelup' | 'streak') => {
 
     switch (type) {
         case 'success':
-            // Coin / Powerup sound
+            // Coin / Powerup sound: Quick pitch rise
+            // Triangle wave for softer tone
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.setValueAtTime(880, now + 0.1);
+            osc.frequency.setValueAtTime(440, now);      // A4
+            osc.frequency.setValueAtTime(880, now + 0.1); // A5 (octave jump)
             gain.gain.setValueAtTime(0.05, now);
             gain.gain.linearRampToValueAtTime(0.1, now + 0.1);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
@@ -37,11 +52,11 @@ const playSound = (type: 'success' | 'levelup' | 'streak') => {
             break;
 
         case 'levelup':
-            // Victory fanfare
+            // Victory fanfare: Three ascending notes (C-E-G major triad)
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(523, now); // C5
+            osc.frequency.setValueAtTime(523, now);      // C5
             osc.frequency.setValueAtTime(659, now + 0.15); // E5
-            osc.frequency.setValueAtTime(784, now + 0.3); // G5
+            osc.frequency.setValueAtTime(784, now + 0.3);  // G5
             gain.gain.setValueAtTime(0.08, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
             osc.start(now);
@@ -49,7 +64,8 @@ const playSound = (type: 'success' | 'levelup' | 'streak') => {
             break;
 
         case 'streak':
-            // Fire whoosh
+            // Fire whoosh: Frequency sweep upward
+            // Sawtooth wave for harsher, energetic tone
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(200, now);
             osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
@@ -61,7 +77,40 @@ const playSound = (type: 'success' | 'levelup' | 'streak') => {
     }
 };
 
+/**
+ * useGamification - XP and streak tracking system
+ * 
+ * Implements gamification mechanics to encourage daily usage:
+ * - XP system with level progression
+ * - Daily streak counter
+ * - Sound feedback for achievements
+ * 
+ * XP Rewards:
+ * - generate: 10 XP (creating content)
+ * - remix: 15 XP (iterating on content)
+ * - share: 20 XP (publishing/sharing)
+ * 
+ * Level Formula:
+ * - XP needed for next level = previous_requirement * 1.5
+ * - Level 1→2: 100 XP
+ * - Level 2→3: 150 XP
+ * - Level 3→4: 225 XP
+ * - Growth is exponential to maintain long-term challenge
+ * 
+ * Streak Logic:
+ * - Increments if action on consecutive day
+ * - Resets to 1 if gap > 1 day
+ * - Multiple actions in same day don't increment
+ * 
+ * Persistence:
+ * - State saved to localStorage
+ * - Syncs across tabs automatically
+ * 
+ * @returns {Object} Gamification state and actions
+ */
 export const useGamification = () => {
+    // Initialize from localStorage or use defaults
+    // Allows gamification progress to persist across sessions
     const [state, setState] = useState<GamificationState>(() => {
         const saved = localStorage.getItem('flowai_gamification');
         return saved ? JSON.parse(saved) : {
@@ -69,14 +118,27 @@ export const useGamification = () => {
             lastActionDate: null,
             level: 1,
             xp: 0,
-            xpToNextLevel: 100
+            xpToNextLevel: 100  // Initial XP requirement
         };
     });
 
+    // Persist state to localStorage on every change
+    // Enables progress tracking across browser sessions
     useEffect(() => {
         localStorage.setItem('flowai_gamification', JSON.stringify(state));
     }, [state]);
 
+    /**
+     * Award XP and update streak for user actions
+     * 
+     * Handles:
+     * 1. Streak calculation (consecutive days)
+     * 2. XP award based on action type
+     * 3. Level-up detection and celebration
+     * 4. Sound feedback
+     * 
+     * @param actionType - Type of action performed
+     */
     const performAction = (actionType: 'generate' | 'remix' | 'share') => {
         const today = new Date().toDateString();
         const lastDate = state.lastActionDate ? new Date(state.lastActionDate).toDateString() : null;
@@ -84,32 +146,33 @@ export const useGamification = () => {
         let newStreak = state.streak;
         let xpGain = 0;
 
-        // Streak Logic
+        // Streak Logic: Only increment on NEW days
         if (lastDate !== today) {
-            if (lastDate === new Date(Date.now() - 86400000).toDateString()) {
-                // Consecutive day
+            // Check if yesterday (consecutive)
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+            if (lastDate === yesterday) {
+                // Consecutive day action - increment streak!
                 newStreak += 1;
                 playSound('streak');
                 toast.success(`🔥 Streak increased! ${newStreak} days on fire!`);
             } else if (lastDate && lastDate !== today) {
-                // Broken streak (unless it's the first action ever)
-                if (state.lastActionDate) {
-                    newStreak = 1;
-                    toast.info("Streak reset. Let's build it back up!");
-                } else {
-                    newStreak = 1;
-                }
+                // Streak broken (gap > 1 day)
+                newStreak = 1;
+                toast.info("Streak reset. Let's build it back up!");
             } else {
-                // First action ever or same day (logic handled above, this is fallback)
+                // First action ever
                 if (!state.lastActionDate) newStreak = 1;
             }
         }
+        // If same day, streak stays the same (no double-counting)
 
-        // XP Logic
+        // XP rewards by action type
+        // More complex actions award more points
         switch (actionType) {
-            case 'generate': xpGain = 10; break;
-            case 'remix': xpGain = 15; break;
-            case 'share': xpGain = 20; break;
+            case 'generate': xpGain = 10; break;  // Base content creation
+            case 'remix': xpGain = 15; break;     // Iterating on content
+            case 'share': xpGain = 20; break;     // Publishing/distribution
         }
 
         playSound('success');

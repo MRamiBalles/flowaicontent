@@ -3,21 +3,49 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { corsHeaders } from '../_shared/cors.ts'
 
-// Sanitization utilities (copied from client-side for edge function use)
+/**
+ * Sanitize user input before sending to AI
+ * 
+ * Security measures:
+ * - Remove control characters (potential injection vectors)
+ * - Remove zero-width spaces (hidden prompts)
+ * - Remove curly braces, brackets, angle brackets (code/markup)
+ * - Normalize whitespace
+ * - Enforce max length (prevent DoS)
+ * 
+ * @param text - Raw user input
+ * @param maxLength - Maximum allowed length (default 10,000)
+ * @returns Sanitized text safe for AI processing
+ */
 const sanitizeForAI = (text: string, maxLength: number = 10000): string => {
   return text
     .trim()
-    .replace(/[\x00-\x1F\x7F]/g, '')
-    .replace(/[\u200B-\u200D\uFEFF]/g, '')
-    .replace(/[{}]/g, '')
-    .replace(/[\[\]]/g, '')
-    .replace(/[<>]/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/[\x00-\x1F\x7F]/g, '')       // Control chars
+    .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width spaces
+    .replace(/[{}]/g, '')                 // Curly braces
+    .replace(/[\[\]]/g, '')               // Brackets
+    .replace(/[<>]/g, '')                 // Angle brackets
+    .replace(/\s+/g, ' ')                 // Normalize whitespace
     .substring(0, maxLength)
     .trim();
 };
 
+/**
+ * Detect prompt injection attempts
+ * 
+ * Common attack patterns:
+ * - "Ignore previous instructions"
+ * - "Forget all rules"
+ * - "Act as jailbreak/DAN"
+ * - "System: you are..."
+ * 
+ * Used to prevent users from hijacking AI behavior
+ * 
+ * @param text - User input to check
+ * @returns Detection result with matched patterns
+ */
 const detectPromptInjection = (text: string): { isInjection: boolean; patterns: string[] } => {
+  // Regex patterns for common injection attempts
   const INJECTION_PATTERNS = [
     /ignore\s+(previous|above|all)\s+(instructions|prompts|rules)/i,
     /disregard\s+(previous|above|all)\s+(instructions|prompts|rules)/i,
@@ -40,7 +68,33 @@ const detectPromptInjection = (text: string): { isInjection: boolean; patterns: 
   };
 };
 
+/**
+ * Edge Function: generate-content
+ * 
+ * Async content generation with job queue pattern:
+ * 1. Validate auth and rate limits (10/hour)
+ * 2. Create pending job in generation_jobs table
+ * 3. Return job ID immediately (202 Accepted)
+ * 4. Process in background using EdgeRuntime.waitUntil
+ * 5. Frontend polls job status every 2 seconds
+ * 
+ * Rate Limiting:
+ * - Free tier: 10 generations per hour
+ * - Checked via generation_attempts table
+ * - Resets hourly via cron job
+ * 
+ * Security:
+ * - Prompt injection detection
+ * - Content sanitization
+ * - RLS policies on all DB operations
+ * 
+ * AI Integration:
+ * - Uses Lovable AI Gateway
+ * - Model: google/gemini-2.5-flash
+ * - Returns platform-specific content (Twitter, LinkedIn, Instagram)
+ */
 serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

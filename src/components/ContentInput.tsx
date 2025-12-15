@@ -23,16 +23,47 @@ interface ContentInputProps {
   loading: boolean;
 }
 
+/**
+ * ContentInput - Main content generation form
+ * 
+ * Left panel: Input form (title, content, style selector)
+ * Right panel: LRM visualizer, video player, social features
+ * 
+ * Features:
+ * - Input validation using Zod schema
+ * - Style selection (cinematic, cartoon, etc.)
+ * - Developer tools for testing LRM ingestion
+ * - Social layer (comments, chat, DMs) for generated content
+ * 
+ * Validation:
+ * - Title: 1-200 characters
+ * - Content: 10-10000 characters
+ * - Real-time error display
+ * 
+ * @param onGenerate - Callback when user submits form
+ * @param loading - Loading state passed from parent
+ */
 export const ContentInput = ({ onGenerate, loading }: ContentInputProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [selectedStyle, setSelectedStyle] = useState("cinematic");
+  const [selectedStyle, setSelectedStyle] = useState("cinematic"); // Default video style
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [lrmProcessing, setLrmProcessing] = useState(false);
-  const [lrmData, setLrmData] = useState<any>(null);
+  const [lrmProcessing, setLrmProcessing] = useState(false); // LRM = Large Reasoning Model
+  const [lrmData, setLrmData] = useState<any>(null); // Ingestion result from LRM
 
   const { playSound } = useSoundEffects();
 
+  /**
+   * Validate inputs and trigger content generation
+   * 
+   * Validation:
+   * - Uses Zod schema from @/lib/validations
+   * - Title: 1-200 chars
+   * - Content: 10-10000 chars
+   * 
+   * On success: Calls parent's onGenerate callback
+   * On error: Displays field-specific validation errors
+   */
   const handleGenerate = () => {
     playSound('click');
     setErrors({});

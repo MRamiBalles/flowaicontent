@@ -6,14 +6,19 @@
 
 ---
 
-## 1. Executive Summary: The Dual Monetization Model
+## 1. Executive Summary
 
-FlowAI disrupts the traditional "extraction-based" social media model (where platforms keep 100% of ad revenue) by implementing a **Dual Monetization Model**. This system aligns incentives between the platform, creators, and viewers.
+Our monetization model combines SaaS subscriptions with marketplace fees and token economy revenue. This creates multiple income streams while aligning incentives between the platform, creators, and the broader community.
 
-### Core Philosophy
-- **Creators** are paid for quality content, not just views.
-- **Viewers** are compensated for their attention (Proof of Attention).
-- **Platform** takes a fair cut (SaaS + Marketplace fees) to sustain growth.
+### Revenue Split
+- **70%** - SaaS subscriptions (predictable recurring revenue)
+- **20%** - Marketplace commissions (scales with creator success)
+- **10%** - Token economy fees (crypto-native monetization)
+
+### Key Principles
+1. **Creators earn from quality content** - Not just views or engagement
+2. **Transparent pricing** - No hidden fees or surprise charges
+3. **Fair value exchange** - Platform takes reasonable cut to sustain operations
 
 ---
 
@@ -84,23 +89,50 @@ Viewers use earned $FLOW to:
 
 ---
 
-## 5. Pricing Strategy & Psychology
+## 5. Pricing Strategy: Clear Tier Separation
 
-### The "Creator Ladder"
-We design our pricing to move users up the ladder:
-1.  **Hook**: Free tier allows experimentation (20 generations/day).
-2.  **Convert**: Watermarks and daily limits push serious users to CREATOR ($9.99 is an impulse buy price point).
-3.  **Scale**: Professional creators need unlimited generations → PRO ($99.99) becomes essential.
-4.  **Expand**: Large organizations need white-label → ENTERPRISE (custom pricing).
+We use a 4-tier model designed to:
+1. **Convert free users** - Watermarks and daily limits push hobbyists to $9.99
+2. **Maximize ARPU** - Big jump to $99.99 filters serious professionals
+3. **Capture enterprise** - Custom pricing for teams and agencies
 
-### Anchor Pricing
-- We position the **PRO ($99.99)** tier as the "Best Value" for professionals.
-- Compared to Adobe Premiere ($54.99/mo) + Stock Footage ($30/mo) + AI Tools ($20/mo) + Voice Cloning ($22/mo), FlowAI at $99.99/mo is a significant savings (~$127/mo value).
-- The CREATOR ($9.99) tier targets the impulse-buy sweet spot for hobbyists.
+**The $9.99 "Creator" Tier**:
+- Matches familiar pricing (Netflix, Spotify)
+- Low enough for impulse purchases
+- High enough to signal quality
+
+**The $99.99 "Pro" Tier**:
+- Competes with Adobe Creative Cloud ($54.99) + AI tools bundle (~$50)
+- Value proposition: Replace 3-4 subscriptions with one
+- Target: Professionals who generate revenue from content
+
+**Challenge**: If competitors (e.g., Runway, Synthesia) drop prices to $49.99, we may need to adjust. Current pricing assumes we maintain feature parity or lead on quality.
 
 ---
 
-## 6. Financial Projections
+## 6. Risks and Mitigation
+
+### Market Risks
+1. **AI pricing race to bottom**
+   - Mitigation: Focus on quality + speed, not just price
+   - Strategy: Lock users in with workflows and templates
+
+2. **Competitor features**
+   - Risk: OpenAI/Google release free video generation
+   - Mitigation: Differentiate on creator tools, not just AI
+
+3. **Crypto volatility**
+   - Risk: $FLOW token crashes, hurting token economy
+   - Mitigation: 70% revenue from stable SaaS subscriptions
+
+### Operational Challenges
+1. **AI cost increases** - Cloud GPU prices could spike
+2. **Payment processing** - Stripe fees eat into margins (2.9% + 30¢)
+3. **Churn** - Industry average is 5-7% monthly for creator tools
+
+**Bottom line**: Revenue projections assume 5% monthly churn and stable AI costs. If either worsens significantly, we'd need to adjust pricing or features.
+
+## 7. Financial Projections
 
 | Metric | Year 1 | Year 2 | Year 3 |
 |--------|--------|--------|--------|
