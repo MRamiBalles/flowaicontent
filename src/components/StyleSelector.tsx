@@ -7,9 +7,22 @@ export interface StyleOption {
     id: string;
     name: string;
     description: string;
-    previewColor: string; // Placeholder for image
+    previewColor: string; // Tailwind gradient class for preview
 }
 
+/**
+ * Available visual styles for AI content generation.
+ * 
+ * Each style has:
+ * - Unique ID for backend processing
+ * - Display name and description for UI
+ * - Preview gradient color (Tailwind classes)
+ * 
+ * In production, would include:
+ * - Actual preview images
+ * - LoRA model identifiers
+ * - Style pack pricing
+ */
 const STYLES: StyleOption[] = [
     {
         id: "cinematic",
@@ -38,10 +51,32 @@ const STYLES: StyleOption[] = [
 ];
 
 interface StyleSelectorProps {
-    selectedStyle: string;
-    onSelect: (styleId: string) => void;
+    selectedStyle: string;     // Currently selected style ID
+    onSelect: (styleId: string) => void;  // Callback when style is selected
 }
 
+/**
+ * StyleSelector Component
+ * 
+ * UI for selecting visual style for AI content generation.
+ * 
+ * Features:
+ * - Grid of 4 predefined styles
+ * - Gradient preview backgrounds
+ * - Selected state with checkmark
+ * - Sound effects on click
+ * - Hover animations
+ * 
+ * Styles Available:
+ * - Cinematic Realism: Movie-like, dramatic lighting
+ * - Cyberpunk Neon: Futuristic, high contrast
+ * - Anime Studio: Vibrant 2D animation
+ * - Watercolor Art: Soft, hand-painted
+ * 
+ * Integration:
+ * - Selected style ID passed to generate-content Edge Function
+ * - Backend maps ID to LoRA model or style parameters
+ */
 export const StyleSelector = ({ selectedStyle, onSelect }: StyleSelectorProps) => {
     const { playSound } = useSoundEffects();
 

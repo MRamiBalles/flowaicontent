@@ -15,6 +15,32 @@ interface WalletData {
     transactions: Transaction[];
 }
 
+/**
+ * WalletCard Component
+ * 
+ * Displays Proof-of-Attention (PoA) token wallet with real-time updates.
+ * 
+ * Features:
+ * - Real-time balance (fetches every 5s)
+ * - Animated balance increase notifications
+ * - Transaction history (last 5)
+ * - Visual chart of earnings
+ * - Glow effect when tokens are earned
+ * 
+ * PoA Integration:
+ * - Connects to localhost:8000/api/v1/economy/balance
+ * - Shows TKN balance earned from watching content
+ * - Displays transaction reasons (Watch Video, Complete Quest, etc.)
+ * 
+ * Animations:
+ * - Scale + rotate on new tokens
+ * - Glow effect pulse
+ * - Balance color change to yellow
+ * - Sparkles icon spin
+ * 
+ * NOTE: Currently uses localhost API.
+ * In production, should use environment variable.
+ */
 export const WalletCard = ({ userId }: { userId: string }) => {
     const [wallet, setWallet] = useState<WalletData | null>(null);
     const [isAnimating, setIsAnimating] = useState(false);

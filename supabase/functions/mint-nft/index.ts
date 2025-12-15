@@ -1,3 +1,31 @@
+/**
+ * Edge Function: mint-nft
+ * 
+ * Mints video NFTs on blockchain with fractional ownership.
+ * 
+ * Features:
+ * - NFT minting for videos (mock blockchain currently)
+ * - Fractional ownership (1,000,000 shares per NFT)
+ * - Rate limiting: 10 mints/hour per user
+ * - Zod validation for inputs
+ * - Transaction logging
+ * 
+ * Blockchain:
+ * - Network: Polygon Amoy (testnet)
+ * - Total shares: 1,000,000 per NFT
+ * - Contract: ERC-1155 fractional NFT standard
+ * 
+ * Mock Implementation:
+ * - Currently returns mock transaction hash
+ * - Stores in database (nfts, nft_transactions tables)
+ * - TODO: Deploy actual smart contracts for production
+ * 
+ * Production Requirements:
+ * - Deploy Python backend service for blockchain interaction
+ * - Configure Web3 signer with private key
+ * - Set POLYGON_RPC_URL environment variable
+ * - Deploy fractional NFT smart contracts
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";

@@ -15,10 +15,40 @@ interface PollOption {
 interface PollWidgetProps {
     question: string;
     options: PollOption[];
-    duration?: number; // seconds
-    onPollEnd?: (winnerId: string) => void;
+    duration?: number; // Poll duration in seconds
+    onPollEnd?: (winnerId: string) => void;  // Callback when poll closes
 }
 
+/**
+ * PollWidget Component
+ * 
+ * Real-time interactive poll with countdown timer.
+ * 
+ * Features:
+ * - Timed polls (default 30s)
+ * - Live vote counting
+ * - Visual percentage bars
+ * - Winner highlighting (most votes)
+ * - Auto-close on timer end
+ * - Toast notifications
+ * - One vote per user
+ * 
+ * Use Cases:
+ * - Audience engagement during streams
+ * - Content direction voting
+ * - Feature preferences
+ * - Community decisions
+ * 
+ * Visual States:
+ * - Active: Blue border, countdown timer
+ * - Closed: Green border, "CLOSED" label
+ * - Winning option: Blue highlight
+ * 
+ * Integration:
+ * - onPollEnd callback receives winner ID
+ * - Can trigger AI adaptation based on results
+ * - Toast shows winner when poll closes
+ */
 export const PollWidget = ({ question, options: initialOptions, duration = 30, onPollEnd }: PollWidgetProps) => {
     const [options, setOptions] = useState<PollOption[]>(initialOptions);
     const [hasVoted, setHasVoted] = useState(false);
@@ -112,8 +142,8 @@ export const PollWidget = ({ question, options: initialOptions, duration = 30, o
                             onClick={() => handleVote(option.id)}
                             disabled={hasVoted || !isActive}
                             className={`w-full p-3 rounded-lg border transition-all duration-300 relative overflow-hidden ${hasVoted || !isActive
-                                    ? 'cursor-default bg-black/40'
-                                    : 'cursor-pointer bg-black/20 hover:bg-black/40 hover:scale-[1.02]'
+                                ? 'cursor-default bg-black/40'
+                                : 'cursor-pointer bg-black/20 hover:bg-black/40 hover:scale-[1.02]'
                                 } ${isWinning
                                     ? 'border-blue-500/50 ring-1 ring-blue-500/20'
                                     : 'border-white/10'

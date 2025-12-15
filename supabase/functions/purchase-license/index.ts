@@ -1,6 +1,38 @@
-// Purchase License Edge Function
-// Handles license purchases with Stripe payment
-
+/**
+ * Edge Function: purchase-license
+ * 
+ * Handles content license purchases with Stripe payment processing.
+ * 
+ * License Types:
+ * - Exclusive: One-time purchase, only one buyer allowed
+ * - Non-exclusive: Multiple buyers can purchase
+ * - Free: No payment required
+ * 
+ * Revenue Split:
+ * - Creator: 70% of sale price
+ * - Platform: 30% fee
+ * 
+ * Features:
+ * - Stripe Checkout Session creation
+ * - Duplicate purchase prevention
+ * - Self-purchase prevention
+ * - Expiration handling (time-limited licenses)
+ * - Usage limits (impression-based)
+ * - Dev mode fallback (no Stripe key)
+ * 
+ * Payment Flow:
+ * 1. Validate license availability
+ * 2. Check for duplicate purchase
+ * 3. Create Stripe customer (if needed)
+ * 4. Create Checkout Session
+ * 5. Redirect to Stripe
+ * 6. Webhook processes completion (stripe-webhooks)
+ * 
+ * Free Licenses:
+ * - Skip Stripe entirely
+ * - Create license_purchase directly
+ * - Generate license key immediately
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";

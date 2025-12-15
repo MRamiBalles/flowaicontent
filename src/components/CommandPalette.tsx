@@ -5,7 +5,7 @@ import {
     CommandGroup,
     CommandInput,
     CommandItem,
-    CommandList,
+    CommandInput,
     CommandSeparator
 } from '@/components/ui/command'; // Assuming shadcn/ui command exists or we mock it
 import {
@@ -25,7 +25,32 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
-// Custom implementation if shadcn command is not fully set up
+/**
+ * CommandPalette Component
+ * 
+ * Keyboard-driven command palette for quick navigation (⌘K / Ctrl+K).
+ * 
+ * Features:
+ * - Global keyboard shortcut (Cmd/Ctrl + K)
+ * - Search functionality
+ * - Quick actions (Dashboard, New Project, Wallet)
+ * - System settings (Theme toggle, Settings)
+ * - Sound effects on interactions
+ * - Keyboard navigation (arrows, enter, escape)
+ * 
+ * Quick Actions:
+ * - Dashboard (G D)
+ * - Wallet (G W)
+ * - New Project
+ * - Cyberpunk Mode toggle
+ * - Settings
+ * 
+ * Implementation:
+ * - Dialog-based modal UI
+ * - Filtered command list based on search
+ * - Sound effects: hover, click, typing
+ * - Escape closes palette
+ */
 export const CommandPalette = () => {
     const [open, setOpen] = useState(false);
     const { playSound } = useSoundEffects();

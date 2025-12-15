@@ -7,9 +7,32 @@ import { toast } from "sonner";
 
 interface CreditsBalanceProps {
     className?: string;
-    autoRefresh?: boolean;
+    autoRefresh?: boolean;      // Auto-fetch balance on mount
 }
 
+/**
+ * CreditsBalance Component
+ * 
+ * Displays user's credit balance with manual refresh option.
+ * 
+ * Features:
+ * - Real-time balance display
+ * - Manual refresh button
+ * - Auto-refresh on mount (optional)
+ * - Spinner animation while loading
+ * - Integrates with billing-engine Edge Function
+ * 
+ * Credits are used for:
+ * - AI content generation (1-10 credits/generation)
+ * - Voice cloning (50 credits per voice)
+ * - Video rendering (varies by quality/duration)
+ * - Text-to-speech (1 credit/1000 chars)
+ * 
+ * Integration:
+ * - Calls billing-engine with action: 'get_balance'
+ * - Returns numeric balance
+ * - Errors silently to avoid spam (auto-refresh)
+ */
 export const CreditsBalance = ({ className = "", autoRefresh = true }: CreditsBalanceProps) => {
     const [balance, setBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);

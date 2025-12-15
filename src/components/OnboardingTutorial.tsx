@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Rocket, Video, Wand2, ShoppingBag, Users } from "lucide-react";
 
+// 5-step onboarding journey for new users
 const STEPS = [
   {
     title: "Welcome to FlowAI!",
@@ -38,6 +39,31 @@ const STEPS = [
   },
 ];
 
+/**
+ * OnboardingTutorial Component
+ * 
+ * Multi-step modal tutorial for first-time users.
+ * 
+ * Features:
+ * - 5 steps introducing core platform features
+ * - localStorage tracking (flowai_onboarding_completed)
+ * - Progress dots showing current step
+ * - Skip or complete options
+ * - Responsive design (mobile-first)
+ * 
+ * Flow:
+ * 1. Check localStorage on mount
+ * 2. If not completed, show modal
+ * 3. User navigates with Next button
+ * 4. Complete saves to localStorage
+ * 
+ * Steps:
+ * 1. Welcome
+ * 2. Video Studio intro
+ * 3. AI tools overview
+ * 4. Marketplace monetization
+ * 5. Community features
+ */
 export function OnboardingTutorial() {
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);

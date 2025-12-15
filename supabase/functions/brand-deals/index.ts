@@ -1,6 +1,29 @@
 // Brand Deals Edge Function
 // Manages brand partnerships and AI matching
 
+/**
+ * Edge Function: brand-deals
+ * 
+ * Marketplace for brand partnerships with creators.
+ * 
+ * Actions:
+ * - get_active_deals: List available brand deals
+ * - apply_to_deal: Creator applies to partnership
+ * - get_my_applications: Creator's deal applications
+ * - create_deal: Brand creates deal (brand-only)
+ * - accept_application: Brand accepts creator (brand-only)
+ * 
+ * Deal Structure:
+ * - Brand posts requirements (niche, followers, engagement)
+ * - Creators apply with portfolio
+ * - Brand reviews and accepts
+ * - Payment via escrow on completion
+ * 
+ * Revenue Model:
+ * - 10% platform fee on all deals
+ * - Payment held in escrow until delivery
+ * - Automatic release after approval
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
