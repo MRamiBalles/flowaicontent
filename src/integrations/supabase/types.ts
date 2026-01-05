@@ -1028,6 +1028,113 @@ export type Database = {
           },
         ]
       }
+      mcp_agent_sessions: {
+        Row: {
+          agent_type: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          last_activity_at: string | null
+          permissions: Json | null
+          session_token: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          last_activity_at?: string | null
+          permissions?: Json | null
+          session_token: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          last_activity_at?: string | null
+          permissions?: Json | null
+          session_token?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_agent_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprise_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_operation_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          input_data: Json | null
+          operation: string
+          output_data: Json | null
+          resource_id: string | null
+          resource_type: string
+          session_id: string | null
+          status: string
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          operation: string
+          output_data?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          session_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          operation?: string
+          output_data?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          session_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_operation_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_agent_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mcp_operation_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprise_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mobile_devices: {
         Row: {
           created_at: string | null
@@ -1674,6 +1781,7 @@ export type Database = {
           render_progress: number | null
           render_status: string | null
           rendered_video_url: string | null
+          tenant_id: string | null
           updated_at: string | null
           user_id: string
           width: number | null
@@ -1690,6 +1798,7 @@ export type Database = {
           render_progress?: number | null
           render_status?: string | null
           rendered_video_url?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
           user_id: string
           width?: number | null
@@ -1706,11 +1815,20 @@ export type Database = {
           render_progress?: number | null
           render_status?: string | null
           rendered_video_url?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
           user_id?: string
           width?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "video_projects_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "enterprise_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       video_tracks: {
         Row: {
@@ -1932,11 +2050,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_tenant: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_belongs_to_tenant: {
+        Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
       }
     }
