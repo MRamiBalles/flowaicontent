@@ -2,11 +2,13 @@
 Enterprise Tenant API Endpoints
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any
 from app.services.tenant_service import tenant_service
-from app.dependencies.auth import get_admin_user
+from app.services.portability_service import portability_service
+from app.dependencies.auth import get_admin_user, get_current_user
 
 router = APIRouter(prefix="/enterprise", tags=["enterprise"])
 
@@ -54,3 +56,45 @@ async def register_tenant(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.post("/export")
+async def request_data_export(
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    EU Data Act Portability Endpoint.
+    Triggers a bulk export of all tenant data in standardized format.
+    """
+    tenant_id = current_user.get("tenant_id")
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="User not associated with a tenant")
+    
+    # In a real app, generate a signed URL or send via email
+    background_tasks.add_task(portability_service.generate_bulk_export, tenant_id)
+    
+    return {"message": "Export initiated. You will receive a notification when it's ready."}
+
+@router.get("/generative-ui/preview")
+async def get_generative_ui_preview(intent: str, current_user: dict = Depends(get_current_user)):
+    """
+    Returns a JSON schema for the Generative UI based on user intent.
+    Example: 'Show my usage' -> returns chart component schema.
+    """
+    if "usage" in intent.lower():
+        return {
+            "type": "chart",
+            "props": {
+                "title": "AI Usage Overview",
+                "data": [
+                    {"name": "Jan", "value": 400},
+                    {"name": "Feb", "value": 300}
+                ]
+            }
+        }
+    
+    return {
+        "type": "alert",
+        "props": {
+            "message": f"I understood your intent: {intent}. Here is a dynamic response."
+        }
+    }
