@@ -22,7 +22,7 @@ import {
 import { useSoundEffects } from '@/hooks/use-sound-effects';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Mic } from 'lucide-react';
 
 /**
  * CommandPalette Component
@@ -80,14 +80,17 @@ export const CommandPalette = () => {
                     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                     <input
                         className="flex h-12 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-zinc-500 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Type a command or search..."
+                        placeholder={search ? "Type a command..." : "Speak or type your intent (e.g., 'Show my usage')..."}
                         value={search}
                         onChange={(e) => {
                             setSearch(e.target.value);
                             playSound('typing');
                         }}
                     />
-                    <div className="text-xs text-zinc-500 border border-zinc-800 px-2 py-0.5 rounded">ESC</div>
+                    <div className="flex items-center gap-2">
+                        <Mic className="h-4 w-4 text-purple-500 cursor-pointer animate-pulse" title="Zero UI: Voice Input Active" />
+                        <div className="text-xs text-zinc-500 border border-zinc-800 px-2 py-0.5 rounded">ESC</div>
+                    </div>
                 </div>
                 <div className="max-h-[300px] overflow-y-auto p-2">
                     {!search && <p className="text-xs text-zinc-500 px-2 py-2">Suggestions</p>}

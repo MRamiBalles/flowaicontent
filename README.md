@@ -199,6 +199,13 @@ POST /functions/v1/token-governance
 - **Payments**: Stripe (subscriptions, webhooks)
 - **Video**: AWS Lambda + Remotion (parallel rendering)
 
+### 🚀 2026 Standards Integration
+- **Architecture**: [Model Context Protocol (MCP)](file:///d:/flowaicontent/backend/mcp_server.py) for standardized AI agent interaction.
+- **Security**: Advanced RLS with `app.current_tenant` session isolation.
+- **AgentOps**: Shadow Deployment for AI decision monitoring and FinOps cost tracking.
+- **Compliance**: EU Data Act "Right to Switch" logic with logical portability exports.
+- **UI/UX**: Generative UI registry and Zero UI (Intent/Voice) command palette.
+
 ---
 
 ## 💰 Monetization

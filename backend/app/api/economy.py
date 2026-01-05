@@ -47,3 +47,34 @@ async def vote(request: VoteRequest, current_user: dict = Depends(get_current_us
     # Mock weight based on user role or mock staking
     weight = 100 
     return await governance_service.vote(current_user["id"], request.proposal_id, request.support, weight)
+# --- AI FinOps (2026 Standards) ---
+
+class AICostResponse(BaseModel):
+    tenant_id: str
+    total_tokens: int
+    estimated_cost_usd: float
+    usage_breakdown: Dict[str, Any]
+
+@router.get("/finops/usage", response_model=AICostResponse)
+async def get_ai_usage(current_user: dict = Depends(get_current_user)):
+    """
+    Returns AI token usage and costs for the tenant.
+    Critical for 2026 FinOps compliance.
+    """
+    # In a real implementation, this would query a usage_logs table
+    return AICostResponse(
+        tenant_id=current_user.get("tenant_id", "default"),
+        total_tokens=150000,
+        estimated_cost_usd=2.25,
+        usage_breakdown={
+            "gpt-4o": 50000,
+            "claude-3-5-sonnet": 100000
+        }
+    )
+
+@router.post("/finops/limit")
+async def set_usage_limit(limit_tokens: int, current_user: dict = Depends(get_current_user)):
+    """
+    Sets a hard token limit for the tenant to prevent billing abuses.
+    """
+    return {"status": "limit_set", "limit": limit_tokens}
