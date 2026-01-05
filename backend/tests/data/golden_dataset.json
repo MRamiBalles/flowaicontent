@@ -1,0 +1,27 @@
+[
+    {
+        "input": "Generate a 15-second vertical video for Instagram about our new token staking rewards with a futuristic synthwave style.",
+        "expected_tool": "generate_video",
+        "expected_parameters": {
+            "prompt": "futuristic synthwave token staking rewards",
+            "ratio": "9:16",
+            "duration": 15
+        },
+        "ideal_response": "Starting your 15-second vertical synthwave video about token staking. I'll notify you when the render is complete."
+    },
+    {
+        "input": "Show me my token usage for last month and set a limit of 500k tokens.",
+        "expected_tool": "get_usage_and_set_limit",
+        "expected_parameters": {
+            "month": "2025-12",
+            "limit": 500000
+        },
+        "ideal_response": "Last month you used 150k tokens. I've successfully set your new hard limit to 500k tokens per month."
+    },
+    {
+        "input": "I need to talk to a person, this agent isn't understanding my request about the refund policy.",
+        "expected_action": "initiate_handoff",
+        "handoff_priority": "high",
+        "ideal_response": "I apologize for the frustration. I've prepared a summary of our conversation and I'm connecting you with a human support specialist immediately."
+    }
+]

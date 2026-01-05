@@ -17,7 +17,8 @@ import {
     Video,
     Zap,
     LayoutDashboard,
-    MessageSquare
+    MessageSquare,
+    Headphones
 } from 'lucide-react';
 import { useSoundEffects } from '@/hooks/use-sound-effects';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -135,6 +136,17 @@ export const CommandPalette = () => {
                         >
                             <Zap className="w-4 h-4 text-zinc-500 group-hover:text-yellow-400" />
                             <span>Toggle Cyberpunk Mode</span>
+                        </div>
+                        <div
+                            className="flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-zinc-900 cursor-pointer transition-colors group border border-purple-500/30"
+                            onClick={() => handleSelect(() => console.log("Request Human Handoff"))}
+                            onMouseEnter={() => playSound('hover')}
+                        >
+                            <Headphones className="w-4 h-4 text-purple-400 group-hover:text-purple-300" />
+                            <div className="flex flex-col">
+                                <span className="font-medium text-purple-100">Talk to a Human</span>
+                                <span className="text-[10px] text-purple-400/70 italic">Agent logic limit reached? Escalate here.</span>
+                            </div>
                         </div>
                         <div
                             className="flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-zinc-900 cursor-pointer transition-colors group"
