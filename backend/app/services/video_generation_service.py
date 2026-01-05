@@ -1,99 +1,54 @@
-"""
-Video Generation Service
-Handles interaction with Stable Video Diffusion model and LoRA adapters.
-"""
-
-import os
-import logging
 import asyncio
-from typing import Optional, List, Dict, Any
-import torch
-
-logger = logging.getLogger(__name__)
+import uuid
+from typing import Dict, Any, Optional
+from datetime import datetime
 
 class VideoGenerationService:
+    """
+    Handles generative video pipeline (Runway/Luma/Sora).
+    Implements 2026 Gold Standard: Shadow Mode & Cost Protection.
+    """
     def __init__(self):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.pipe = None
-        self.model_id = "stabilityai/stable-video-diffusion-img2vid-xt"
-        
-    def initialize_model(self):
-        """Initialize the SVD pipeline"""
-        if self.pipe:
-            return
+        self.pending_generations: Dict[str, Dict[str, Any]] = {}
 
-        logger.info(f"Loading SVD model on {self.device}...")
-        
-        try:
-            # TODO: Uncomment when running on GPU environment
-            # from diffusers import StableVideoDiffusionPipeline
-            # self.pipe = StableVideoDiffusionPipeline.from_pretrained(
-            #     self.model_id,
-            #     torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-            #     variant="fp16" if self.device == "cuda" else None
-            # )
-            
-            # if self.device == "cuda":
-            #     self.pipe.enable_model_cpu_offload()
-            #     self.pipe.enable_vae_slicing()
-            
-            logger.info("Model loaded successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to load model: {str(e)}")
-            raise e
-
-    async def generate(
-        self, 
-        prompt: str, 
-        user_id: str,
-        task_id: str,
-        style_id: Optional[str] = None,
-        duration: int = 4
-    ) -> Dict[str, Any]:
+    async def propose_generation(self, tenant_id: str, prompt: str, provider: str = "runway-gen3") -> str:
         """
-        Generate video from text prompt
+        SHADOW MODE: Records the intent to generate without spending credits.
+        Returns a proposal_id for human approval.
         """
-        logger.info(f"Generating video for prompt: {prompt} (Task: {task_id})")
-        
-        # Mock generation for development without GPU
-        if not self.pipe and os.getenv("ENVIRONMENT") != "production":
-            return await self._mock_generation(prompt)
-            
-        if not self.pipe:
-            self.initialize_model()
-
-        # TODO: Implement actual SVD generation logic
-        raise NotImplementedError("SVD generation not fully implemented yet")
-
-    async def _mock_generation(self, prompt: str) -> Dict[str, Any]:
-        """Simulate generation for testing"""
-        await asyncio.sleep(5)  # Simulate processing
-        return {
-            "video_url": "https://flowai-assets.s3.amazonaws.com/demo/sample_generation.mp4",
-            "thumbnail_url": "https://flowai-assets.s3.amazonaws.com/demo/sample_thumb.jpg",
-            "duration": 4
+        proposal_id = f"prop_{uuid.uuid4().hex[:8]}"
+        self.pending_generations[proposal_id] = {
+            "tenant_id": tenant_id,
+            "prompt": prompt,
+            "provider": provider,
+            "estimated_cost": 5.0, # Mock cost in credits/USD
+            "status": "pending_approval",
+            "created_at": datetime.utcnow().isoformat()
         }
+        print(f"[SHADOW MODE] Generation proposed: {prompt} via {provider}")
+        return proposal_id
 
-# Standalone function for Celery task
-def generate_video(user_id: str, prompt: str, style_pack_id: Optional[str] = None, task_id: str = None) -> Dict[str, Any]:
-    """
-    Wrapper function to run async generation synchronously for Celery
-    """
-    service = VideoGenerationService()
-    
-    # Run async method in new event loop
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        result = loop.run_until_complete(
-            service.generate(
-                prompt=prompt,
-                user_id=user_id,
-                task_id=task_id,
-                style_id=style_pack_id
-            )
-        )
+    async def execute_generation(self, proposal_id: str) -> Dict[str, Any]:
+        """
+        Actual execution after human-in-the-loop approval.
+        """
+        if proposal_id not in self.pending_generations:
+            raise Exception("Proposal not found")
+        
+        proposal = self.pending_generations[proposal_id]
+        proposal["status"] = "executing"
+        
+        # Simulate API call to Runway/Luma
+        await asyncio.sleep(2) 
+        
+        result = {
+            "url": f"https://cdn.flowai.com/gen/{proposal_id}.mp4",
+            "provider": proposal["provider"],
+            "duration": 5.0,
+            "status": "completed"
+        }
+        
+        print(f"[GEN] Video generated successfully for proposal {proposal_id}")
         return result
-    finally:
-        loop.close()
+
+video_generation_service = VideoGenerationService()

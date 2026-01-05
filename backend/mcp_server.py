@@ -5,6 +5,11 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from app.services.handoff_service import handoff_service
+from app.services.collaboration_service import collaboration_service
+from app.services.video_generation_service import video_generation_service
+from app.services.streaming_service import streaming_service
+from app.services.client_ai_service import client_ai_service
+from app.services.finops_service import finops_service
 
 # MCP Specification Constants
 MCP_VERSION = "0.1.0"
@@ -160,6 +165,84 @@ class MCPServer:
                 # Simulated audit log query
                 result_data = {"logs": [{"operation": "create_project", "timestamp": "2026-01-05"}]}
 
+            elif name == "edit_timeline":
+                # 2026 Gold Standard: Direct agent-to-timeline editing
+                project_id = arguments.get("project_id")
+                action = arguments.get("action")
+                
+                await collaboration_service.handle_agent_action(project_id, action)
+                result_data = {"status": "applied", "action": action["type"]}
+
+            elif name == "generate_clip":
+                # 2026 Gold Standard: Shadow Mode Generation
+                prompt = arguments.get("prompt")
+                provider = arguments.get("provider", "runway-gen3")
+                
+                # Check if this is an approval call or a new proposal
+                proposal_id = arguments.get("proposal_id")
+                if not proposal_id:
+                    # Step 1: Propose (Shadow Mode)
+                    pid = await video_generation_service.propose_generation(tenant_id, prompt, provider)
+                    return {
+                        "status": "pending_approval",
+                        "proposal_id": pid,
+                        "message": f"Generation of '{prompt}' requires approval. Estimated cost: $5.00"
+                    }
+                else:
+                    # Step 2: Execute (After approval)
+                    result_data = await video_generation_service.execute_generation(proposal_id)
+                    # Automatically add to timeline once generated? 
+                    # Yes, for the Steel Thread "Text-to-Edit" workflow.
+                    project_id = arguments.get("project_id", "default_proj")
+                    await collaboration_service.handle_agent_action(project_id, {
+                        "type": "add_clip",
+                        "name": f"AI Gen: {prompt[:20]}",
+                        "url": result_data["url"],
+                        "start": 0,
+                        "duration": result_data["duration"]
+                    })
+
+            elif name == "manage_stream":
+                # 2026 Gold Standard: Agent-led streaming ops
+                action = arguments.get("action")
+                if action == "start":
+                    result_data = await streaming_service.create_stream(tenant_id, arguments.get("title", "Live Edit Session"))
+                elif action == "status":
+                    result_data = await streaming_service.get_stream_health(arguments.get("stream_id"))
+                elif action == "stop":
+                    await streaming_service.stop_stream(arguments.get("stream_id"))
+                    result_data = {"status": "offline"}
+
+            elif name == "local_process":
+                # 2026 Gold Standard: Instructing client to run local AI
+                task = arguments.get("task")
+                model_desc = await client_ai_service.get_model_descriptor(task)
+                
+                # We return an instruction for the frontend to follow
+                result_data = {
+                    "instruction": "execute_on_client",
+                    "model_descriptor": model_desc,
+                    "arguments": arguments.get("payload", {})
+                }
+
+            elif name == "cost_aware_task":
+                # 2026 Gold Standard: Model Routing based on FinOps
+                complexity = arguments.get("complexity", "low")
+                model = await finops_service.route_model(complexity)
+                
+                # Check budget before proceeding
+                if not await finops_service.check_budget_gate(tenant_id, estimated_cost=0.05):
+                    return {"status": "blocked", "reason": "Budget exceeded"}
+                
+                # Record initial usage
+                await finops_service.record_usage(tenant_id, model, tokens=5000) # Mock
+                
+                result_data = {
+                    "routed_model": model,
+                    "status": "processing",
+                    "estimated_cost": "$0.00075" if complexity == "low" else "$0.075"
+                }
+
             # 4. Success Logging
             await self._log_operation(session_id, user_id, tenant_id, name, "tool", None, arguments, output_data=result_data)
             return {"content": [{"type": "text", "text": json.dumps(result_data)}]}
@@ -214,6 +297,85 @@ async def main():
         name="query_logs",
         description="Queries the agent operation logs for auditing",
         inputSchema={"type": "object", "properties": {"limit": {"type": "integer"}}}
+    ))
+
+    server.register_tool(Tool(
+        name="edit_timeline",
+        description="Performs an edit action on the live collaborative timeline",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "action": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["add_clip"]},
+                        "name": {"type": "string"},
+                        "url": {"type": "string"},
+                        "start": {"type": "number"},
+                        "duration": {"type": "number"}
+                    },
+                    "required": ["type", "name", "url", "start", "duration"]
+                }
+            },
+            "required": ["project_id", "action"]
+        }
+    ))
+
+    server.register_tool(Tool(
+        name="generate_clip",
+        description="Generates a new AI video clip (Runway/Luma) with Shadow Mode cost protection",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "prompt": {"type": "string"},
+                "provider": {"type": "string", "enum": ["runway-gen3", "luma-ray-2"]},
+                "proposal_id": {"type": "string", "description": "Required only for final execution after approval"},
+                "project_id": {"type": "string"}
+            },
+            "required": ["prompt"]
+        },
+        requires_approval=True
+    ))
+
+    server.register_tool(Tool(
+        name="manage_stream",
+        description="Manages SRT/WebRTC live streams for real-time broadcasting",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["start", "status", "stop"]},
+                "title": {"type": "string"},
+                "stream_id": {"type": "string"}
+            },
+            "required": ["action"]
+        }
+    ))
+
+    server.register_tool(Tool(
+        name="local_process",
+        description="Instructs the client browser to process an AI task using local WebGPU/Transformers.js",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "task": {"type": "string", "enum": ["scene_detection", "smart_crop", "transcription"]},
+                "payload": {"type": "object", "description": "Resource identifiers or parameters for local processing"}
+            },
+            "required": ["task"]
+        }
+    ))
+
+    server.register_tool(Tool(
+        name="cost_aware_task",
+        description="Executes a task using dynamic model routing for optimal unit economics",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "complexity": {"type": "string", "enum": ["low", "medium", "high"]},
+                "task_description": {"type": "string"}
+            },
+            "required": ["complexity", "task_description"]
+        }
     ))
 
     print(f"FlowAI MCP Steel Thread Server started.")
