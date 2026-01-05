@@ -15,12 +15,18 @@ class TokenMeteringMiddleware(BaseHTTPMiddleware):
         tenant_id = request.headers.get("X-Tenant-ID", "default")
         
         # 1. Real-time Budget Check
-        if not await finops_service.check_budget_gate(tenant_id):
-            logger.warning(f"FINOPS: Tenant {tenant_id} exceeded daily budget. Blocking request.")
+        budget_status = await finops_service.check_budget_gate(tenant_id)
+        
+        if budget_status == "blocked":
+            logger.error(f"FINOPS: Tenant {tenant_id} hard-blocked (110% quota reached).")
             raise HTTPException(
                 status_code=429, 
-                detail="Daily AI budget exceeded. Please upgrade or wait until tomorrow."
+                detail="Critical budget limit reached. Service interrupted."
             )
+        elif budget_status == "degraded":
+            logger.warning(f"FINOPS: Tenant {tenant_id} in DEGRADED mode (100% quota reached).")
+            # In production, add a custom header to inform the frontend
+            # response.headers["X-FlowAI-Status"] = "degraded"
         
         # 2. Proceed with request
         response = await call_next(request)

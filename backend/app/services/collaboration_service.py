@@ -15,11 +15,17 @@ class CollaborativeTimeline:
         self.tracks = otio.schema.Stack()
         self.timeline.tracks = self.tracks
         self.active_users: Dict[str, Dict[str, Any]] = {} # user_id -> presence info
+        self.logical_clock = 0 # To simulate Yjs vector clocks
         
-    def add_clip(self, track_index: int, name: str, media_reference: str, start_time: float, duration: float):
+    def add_clip(self, track_index: int, name: str, media_reference: str, start_time: float, duration: float, client_clock: int = None):
         """
-        Adds a clip to the timeline. Standard OTIO operation.
+        Adds a clip to the timeline. Standard OTIO operation with collision check.
         """
+        if client_clock is not None and client_clock < self.logical_clock:
+            print(f"[COLLAB] STALE OPERATION REJECTED: Client clock {client_clock} < Master {self.logical_clock}")
+            return None
+            
+        self.logical_clock += 1
         video_track = None
         if len(self.tracks) <= track_index:
             video_track = otio.schema.Track(name=f"Track {track_index}", kind=otio.schema.TrackKind.Video)

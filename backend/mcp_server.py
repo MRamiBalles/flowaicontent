@@ -171,8 +171,14 @@ class MCPServer:
                 project_id = arguments.get("project_id")
                 action = arguments.get("action")
                 
-                await collaboration_service.handle_agent_action(project_id, action)
-                result_data = {"status": "applied", "action": action["type"]}
+                # Sanity Check 1: Logical Clock to prevent collisions
+                session = await collaboration_service.get_or_create_session(project_id)
+                result = await collaboration_service.handle_agent_action(project_id, action)
+                
+                if result is None:
+                    return {"status": "retry_stale", "message": "State changed before action. Syncing..."}
+                    
+                result_data = {"status": "applied", "action": action["type"], "clock": session.logical_clock}
 
             elif name == "generate_clip":
                 # 2026 Gold Standard: Shadow Mode Generation
@@ -229,11 +235,15 @@ class MCPServer:
             elif name == "cost_aware_task":
                 # 2026 Gold Standard: Model Routing based on FinOps
                 complexity = arguments.get("complexity", "low")
-                model = await finops_service.route_model(complexity)
                 
-                # Check budget before proceeding
-                if not await finops_service.check_budget_gate(tenant_id, estimated_cost=0.05):
-                    return {"status": "blocked", "reason": "Budget exceeded"}
+                # Sanity Check 2: Graceful Degradation
+                budget_status = await finops_service.check_budget_gate(tenant_id, estimated_cost=0.05)
+                
+                if budget_status == "blocked":
+                    return {"status": "blocked", "reason": "Hard budget limit reached"}
+                
+                # Auto-downgrade logic
+                model = await finops_service.route_model(complexity, is_degraded=(budget_status == "degraded"))
                 
                 # Record initial usage
                 await finops_service.record_usage(tenant_id, model, tokens=5000) # Mock

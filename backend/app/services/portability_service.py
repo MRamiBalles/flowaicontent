@@ -21,9 +21,19 @@ class PortabilityService:
         # 2. Fetch Audit Logs (MCP Operations)
         audit_logs = [] # In production, from public.mcp_operation_logs
         
-        # 3. Fetch Knowledge Base (Vectors)
+        # 3. Fetch Knowledge Base (Vectors) - REHYDRATION MAPPING
+        # 2026 Gold Standard: Vector ID <-> Original Text <-> Source Metadata
         vectors = [
-            {"fragment_id": "vec_1", "embedding_provider": "openai", "source_text": "..."},
+            {
+                "fragment_id": "vec_1", 
+                "embedding_provider": "openai", 
+                "source_text": "The quick brown fox...", 
+                "vector_binary": "[0.12, -0.45, ...]",
+                "rehydration_metadata": {
+                    "source_file": "script_v1.txt",
+                    "timestamp": "2026-01-01T12:00:00Z"
+                }
+            },
         ]
         
         # 4. Construct Package

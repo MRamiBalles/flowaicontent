@@ -21,22 +21,28 @@ class FinOpsService:
             "sora-v1": 50.0        # High-cost generation
         }
 
-    async def check_budget_gate(self, tenant_id: str, estimated_cost: float = 0.01) -> bool:
+    async def check_budget_gate(self, tenant_id: str, estimated_cost: float = 0.01) -> str:
         """
-        Hard Budget Gate: Blocks request if tenant exceeded daily quota.
+        Hard Budget Gate (Advanced): Returns status instead of bool.
+        'allowed', 'degraded', or 'blocked'.
         """
         quota = self.tenant_quotas.get(tenant_id, 50.0)
         current = self.daily_usage.get(tenant_id, 0.0)
         
-        if (current + estimated_cost) > quota:
-            logger.warning(f"[FINOPS] BUDGET EXCEEDED: Tenant {tenant_id} attempted operation ($ {estimated_cost})")
-            return False
-        return True
+        if (current + estimated_cost) > (quota * 1.1): # 10% safety buffer
+            return "blocked"
+        elif (current + estimated_cost) > quota:
+            return "degraded"
+        return "allowed"
 
-    async def route_model(self, task_complexity: str) -> str:
+    async def route_model(self, task_complexity: str, is_degraded: bool = False) -> str:
         """
-        Dynamic Model Routing: Selects the most cost-effective model for the task.
+        Dynamic Model Routing: If degraded, always force cheapest possible path.
         """
+        if is_degraded:
+            print("[FINOPS] BUDGET REACHED. Routing to local WebGPU/Mini model.")
+            return "gpt-4o-mini" # Or instruct client to use WebGPU
+            
         if task_complexity == "low":
             return "gpt-4o-mini" # 2026 Strategy: Mini models for 90% of tasks
         elif task_complexity == "medium":
