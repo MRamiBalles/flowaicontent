@@ -89,7 +89,7 @@ export const CommandPalette = () => {
                         }}
                     />
                     <div className="flex items-center gap-2">
-                        <Mic className="h-4 w-4 text-purple-500 cursor-pointer animate-pulse" title="Zero UI: Voice Input Active" />
+                        <Mic className="h-4 w-4 text-purple-500 cursor-pointer animate-pulse" aria-label="Zero UI: Voice Input Active" />
                         <div className="text-xs text-zinc-500 border border-zinc-800 px-2 py-0.5 rounded">ESC</div>
                     </div>
                 </div>
