@@ -1,19 +1,28 @@
+"""
+FlowAI Backend - Main FastAPI Application (2026 Standards)
+"""
 from fastapi import FastAPI
 import uvicorn
-import asyncio
+import json
+
+# Import routers
+from app.api import video_generation, co_streaming, emotes, safety, staking
+from app.api import marketplace, trading, economy, notifications
+from app.api import referrals_v2, social_export_v2, voice, enterprise
+
+# MCP Server for 2026 AI Agent Integration
 from mcp_server import MCPServer
+
+# Create FastAPI Application
+app = FastAPI(
+    title="FlowAI API",
+    description="Enterprise-grade AI content creation platform",
+    version="2026.1.0"
+)
+
+# --- Router Registration ---
+app.include_router(video_generation.router, prefix="/api/v1/video", tags=["Video Generation"])
 app.include_router(co_streaming.router, prefix="/api/v1/co-streaming", tags=["Co-Streaming"])
-import emotes
-import safety
-import staking
-import marketplace
-import trading
-import economy
-import notifications
-import referrals_v2
-import social_export_v2
-import voice
-import enterprise
 app.include_router(emotes.router, prefix="/api/v1/emotes", tags=["Emotes"])
 app.include_router(safety.router, prefix="/api/v1/safety", tags=["Safety"])
 app.include_router(staking.router, prefix="/api/v1/staking", tags=["Staking"])
@@ -29,8 +38,10 @@ app.include_router(enterprise.router, prefix="/api/v1/enterprise", tags=["Enterp
 # --- 2026 MCP Server Integration ---
 @app.on_event("startup")
 async def startup_event():
-    # Initialize and register MCP Server component
-    # This allows AI agents to discover tools/resources via standard protocol
+    """
+    Initialize MCP Server on application startup.
+    This allows AI agents to discover tools/resources via standard protocol.
+    """
     app.state.mcp_server = MCPServer("FlowAI Main Server", "1.0.0")
     print("FlowAI 2026: MCP Server integrated in state.")
 
@@ -38,5 +49,14 @@ async def startup_event():
 async def mcp_rpc_endpoint(request: dict):
     """
     Standard RPC entry point for MCP interactions.
+    Accepts JSON-RPC 2.0 formatted requests.
     """
     return await app.state.mcp_server.handle_request(json.dumps(request))
+
+# --- Health Check ---
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "version": "2026.1.0"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
