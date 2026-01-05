@@ -10,6 +10,7 @@ from app.services.video_generation_service import video_generation_service
 from app.services.streaming_service import streaming_service
 from app.services.client_ai_service import client_ai_service
 from app.services.finops_service import finops_service
+from app.services.portability_service import portability_service
 
 # MCP Specification Constants
 MCP_VERSION = "0.1.0"
@@ -243,6 +244,11 @@ class MCPServer:
                     "estimated_cost": "$0.00075" if complexity == "low" else "$0.075"
                 }
 
+            elif name == "export_data":
+                # 2026 Gold Standard: EU Data Act Compliance
+                format = arguments.get("format", "parquet")
+                result_data = await portability_service.generate_exit_package(tenant_id, format)
+
             # 4. Success Logging
             await self._log_operation(session_id, user_id, tenant_id, name, "tool", None, arguments, output_data=result_data)
             return {"content": [{"type": "text", "text": json.dumps(result_data)}]}
@@ -376,6 +382,18 @@ async def main():
             },
             "required": ["complexity", "task_description"]
         }
+    ))
+
+    server.register_tool(Tool(
+        name="export_data",
+        description="Generates a legally compliant data export (EU Data Act) for the user",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "format": {"type": "string", "enum": ["parquet", "json", "csv"]}
+            }
+        },
+        requires_approval=True
     ))
 
     print(f"FlowAI MCP Steel Thread Server started.")

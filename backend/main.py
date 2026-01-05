@@ -4,6 +4,7 @@ FlowAI Backend - Main FastAPI Application (2026 Standards)
 from fastapi import FastAPI, Request, HTTPException, WebSocket, WebSocketDisconnect
 import uvicorn
 import json
+from datetime import datetime
 from app.services.collaboration_service import collaboration_service
 
 # Import routers
