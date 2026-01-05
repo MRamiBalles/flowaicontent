@@ -19,6 +19,7 @@ class Tool:
     name: str
     description: str
     inputSchema: Dict[str, Any]
+    requires_approval: bool = False # 2026 Gold Standard Safety
 
 class MCPServer:
     def __init__(self, name: str, version: str):
@@ -83,10 +84,26 @@ class MCPServer:
     async def _handle_call_tool(self, params: Dict[str, Any]) -> Dict[str, Any]:
         name = params.get("name")
         arguments = params.get("arguments", {})
+        shadow_mode = params.get("shadow_mode", False) # 2026 Shadow Deployment flag
         
         if name not in self.tools:
             raise Exception(f"Tool not found: {name}")
             
+        tool = self.tools[name]
+
+        # 1. Safety Check: Human-in-the-Loop
+        if tool.requires_approval and not params.get("approved"):
+            return {
+                "status": "pending_approval",
+                "message": f"Action '{name}' requires human confirmation.",
+                "approval_token": "token_123"
+            }
+
+        # 2. Shadow Deployment Logic
+        if shadow_mode:
+            print(f"SHADOW_MODE: Recording decision for {name} without execution.")
+            return {"content": [{"type": "text", "text": f"[SHADOW] Would have executed {name} with {arguments}"}]}
+
         # Tool execution logic
         if name == "generate_video":
             return {"content": [{"type": "text", "text": "Video generation job started via MCP"}]}
@@ -144,7 +161,8 @@ async def main():
                 "ratio": {"type": "string", "enum": ["16:9", "9:16", "1:1"]}
             },
             "required": ["prompt"]
-        }
+        },
+        requires_approval=True # Require approval for GPU-heavy actions
     ))
 
     print(f"FlowAI MCP Server started. Protocol Version: {MCP_VERSION}")

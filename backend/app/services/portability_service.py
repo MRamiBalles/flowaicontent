@@ -22,6 +22,7 @@ class PortabilityService:
             "tenant_id": tenant_id,
             "assets": await self._fetch_assets(tenant_id),
             "users": await self._fetch_users(tenant_id),
+            "knowledge_base": await self._fetch_knowledge_base(tenant_id), # Vectors + Text
             "ai_history": await self._fetch_ai_interactions(tenant_id),
             "logical_schema": self._get_schema_definitions()
         }
@@ -63,6 +64,20 @@ class PortabilityService:
         # Mock fetch from AI logs
         return [
             {"prompt": "Generate intro", "model": "gpt-4o", "tokens": 150}
+        ]
+
+    async def _fetch_knowledge_base(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """
+        Exports the vector database content paired with original source text.
+        Essential for 'Right to Switch' 2026.
+        """
+        return [
+            {
+                "fragment_id": "frag_99",
+                "source_text": "FlowAI is a creator platform...",
+                "vector_id": "vec_99",
+                "metadata": {"category": "onboarding"}
+            }
         ]
 
     def _get_schema_definitions(self) -> Dict[str, Any]:

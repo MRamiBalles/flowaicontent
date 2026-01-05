@@ -26,6 +26,8 @@ class HandoffService:
             "timestamp": datetime.utcnow().isoformat(),
             "session_id": session_id,
             "handoff_reason": reason,
+            "reasoning_trace": agent_context.get("reasoning_trace", []), # New 2026 Gold Standard addition
+            "failed_tools": agent_context.get("failed_tools", []),
             "agent_memory": agent_context.get("memory", []),
             "last_intent": agent_context.get("last_intent"),
             "sentiment_score": agent_context.get("sentiment", 0.5), # 0 (negative) to 1 (positive)
