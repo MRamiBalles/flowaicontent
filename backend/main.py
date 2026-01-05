@@ -50,6 +50,7 @@ async def mcp_rpc_endpoint(request: dict):
     """
     Standard RPC entry point for MCP interactions.
     Accepts JSON-RPC 2.0 formatted requests.
+    Supports session_token for multi-tenant auth.
     """
     return await app.state.mcp_server.handle_request(json.dumps(request))
 
