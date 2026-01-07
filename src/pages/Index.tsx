@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Video, Coins, TrendingUp, Users, Zap, Shield, Sparkles, Play, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "@/i18n/LanguageProvider";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { CompetitiveAdvantages, RevenueCalculator, OwnershipBanner } from "@/components/competitive";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -212,6 +213,19 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Competitive Advantages Section - NEW */}
+      <CompetitiveAdvantages 
+        showCTA={true} 
+        onGetStarted={() => navigate("/auth")} 
+      />
+
+      {/* Revenue Calculator - NEW */}
+      <section className="py-16 px-6 bg-card/20">
+        <div className="max-w-xl mx-auto">
+          <RevenueCalculator />
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing" className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
@@ -266,6 +280,13 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Ownership Banner - NEW */}
+      <OwnershipBanner 
+        variant="full"
+        onExportClick={() => navigate("/settings")}
+        onLearnMore={() => navigate("/auth")}
+      />
 
       {/* CTA Section */}
       <section className="py-24 px-6 bg-gradient-to-b from-card/30 to-background">
