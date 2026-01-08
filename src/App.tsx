@@ -43,6 +43,8 @@ const CreatorAnalytics = lazy(() => import("./pages/CreatorAnalytics"));
 const VideoDubbing = lazy(() => import("./pages/VideoDubbing"));
 const ThumbnailGenerator = lazy(() => import("./pages/ThumbnailGenerator"));
 const Syndication = lazy(() => import("./pages/Syndication"));
+const ExtensionMarketplace = lazy(() => import("./pages/ExtensionMarketplace"));
+const MultiStreamHub = lazy(() => import("./pages/MultiStreamHub"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -95,6 +97,8 @@ const App = () => (
                   <Route path="/dubbing" element={<VideoDubbing />} />
                   <Route path="/thumbnails" element={<ThumbnailGenerator />} />
                   <Route path="/syndication" element={<Syndication />} />
+                  <Route path="/extensions" element={<ExtensionMarketplace />} />
+                  <Route path="/multistream" element={<MultiStreamHub />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
