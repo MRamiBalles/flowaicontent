@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Zap, Shield, TrendingUp, Cpu, Database, Activity, Eye } from "lucide-react";
+import { Brain, Zap, Shield, TrendingUp, Cpu, Database, Activity, Eye, BarChart3 } from "lucide-react";
+import EntropyScreen from "@/components/linear/EntropyScreen";
 
 const LinearVideoPlatform = () => {
   const [activeSequence, setActiveSequence] = useState<string | null>(null);
@@ -40,9 +41,10 @@ const LinearVideoPlatform = () => {
         </div>
 
         <Tabs defaultValue="backbone" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto">
+          <TabsList className="grid grid-cols-5 w-full max-w-3xl mx-auto">
             <TabsTrigger value="backbone"><Cpu className="w-4 h-4 mr-2" />Backbone</TabsTrigger>
             <TabsTrigger value="nabla"><Zap className="w-4 h-4 mr-2" />NABLA</TabsTrigger>
+            <TabsTrigger value="entropy"><BarChart3 className="w-4 h-4 mr-2" />Entropy</TabsTrigger>
             <TabsTrigger value="valsci"><Shield className="w-4 h-4 mr-2" />Valsci</TabsTrigger>
             <TabsTrigger value="metrics"><Activity className="w-4 h-4 mr-2" />Metrics</TabsTrigger>
           </TabsList>
@@ -161,6 +163,11 @@ const LinearVideoPlatform = () => {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Entropy Screen */}
+          <TabsContent value="entropy" className="space-y-6">
+            <EntropyScreen videoId="demo" totalFrames={120} fps={24} />
           </TabsContent>
 
           {/* Valsci Truth Layer */}

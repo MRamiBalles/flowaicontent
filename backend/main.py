@@ -11,6 +11,7 @@ from app.services.collaboration_service import collaboration_service
 from app.api import video_generation, co_streaming, emotes, safety, staking
 from app.api import marketplace, trading, economy, notifications
 from app.api import referrals_v2, social_export_v2, voice, enterprise
+from app.api import linear_platform
 
 # MCP Server for 2026 AI Agent Integration
 from mcp_server import MCPServer
@@ -36,6 +37,7 @@ app.include_router(referrals_v2.router, prefix="/api/v1/referrals-v2", tags=["Re
 app.include_router(social_export_v2.router, prefix="/api/v1/social-export", tags=["Social Export"])
 app.include_router(voice.router, prefix="/api/v1/voice", tags=["Voice Cloning"])
 app.include_router(enterprise.router, prefix="/api/v1/enterprise", tags=["Enterprise"])
+app.include_router(linear_platform.router, prefix="/api/v1", tags=["Linear Video Platform"])
 
 # --- 2026 MCP Server Integration ---
 @app.on_event("startup")
