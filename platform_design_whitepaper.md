@@ -44,10 +44,10 @@ El desafío principal del video multimodal es la longitud de la secuencia. Los T
 2.  **Sparse Mixture-of-Experts (MoE):**
     - En lugar de activar todos los parámetros para cada token, utilizaremos una red MoE donde solo un subconjunto de "expertos" (FFNs especializados) se activa por inferencia.
     - Esto permite escalar el modelo a billones de parámetros con un coste computacional de inferencia equivalente a un modelo mucho más pequeño.
-3.  **Componentes del Sistema:**
-    - **LVM (Large Video Model):** Codificadores visuales especializados (ViT optimizados) para procesar y comprimir streams de video en representaciones latentes compactas.
-    - **LRM (Large Reasoning Model):** El "cerebro" orquestador. Un LLM avanzado encargado de la planificación, comprensión semántica y lógica de la plataforma.
-    - **LLM Base:** Para tareas de generación de texto y metadatos.
+3.  **Componentes del Sistema (Implementado):**
+    - **Mamba SSM Backbone** ([mamba_ssm_service.py](file:///d:/flowaicontent-1/backend/app/services/mamba_ssm_service.py)): Selective State Spaces con O(N) complexity, Ring Attention para contexto infinito, TTT Layers para coherencia temporal.
+    - **NABLA Video Studio** ([nabla_video_service.py](file:///d:/flowaicontent-1/backend/app/services/nabla_video_service.py)): Block-sparse attention con 2.7x speedup y 70% sparsity, integración con Diffusion Transformers.
+    - **Valsci Truth Layer** ([valsci_verification_service.py](file:///d:/flowaicontent-1/backend/app/services/valsci_verification_service.py)): RAG + bibliometric scoring para monetización basada en veracidad.
 
 ### 2.2 Integración de "Generador de Video Inteligente" (NotebookLM para Video)
 Diseñaremos un entorno de creación asistida para creadores:

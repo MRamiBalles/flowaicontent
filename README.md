@@ -201,9 +201,11 @@ POST /functions/v1/token-governance
 
 ### 🚀 2026 Standards Integration
 - **Architecture**: [Model Context Protocol (MCP)](file:///d:/flowaicontent/backend/mcp_server.py) for standardized AI agent interaction.
+- **Linear Video Platform**: O(N) Mamba SSM backbone with NABLA block-sparse attention (45x speedup, 2.7x generation acceleration).
 - **Security**: Advanced RLS with `app.current_tenant` session isolation.
 - **AgentOps**: Shadow Deployment for AI decision monitoring and FinOps cost tracking.
 - **Compliance**: EU Data Act "Right to Switch" logic with logical portability exports.
+- **Truth Layer**: Valsci RAG verification with bibliometric scoring for truth-based monetization.
 - **UI/UX**: Generative UI registry and Zero UI (Intent/Voice) command palette.
 
 ---

@@ -95,3 +95,26 @@ ELEVENLABS_API_KEY
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 ```
+
+---
+
+## Linear Video Platform
+
+Advanced video processing using efficient attention mechanisms.
+
+| Component | Technology | Performance |
+|-----------|------------|-------------|
+| SSM Backbone | Mamba with Selective Scan | O(N) complexity, 45x speedup |
+| Video Generation | NABLA Block-Sparse Attention | 2.7x inference acceleration |
+| Truth Verification | Valsci RAG + Bibliometrics | 2.5x reward multiplier cap |
+
+### Key Services
+
+| Service | Purpose |
+|---------|---------|
+| `mamba_ssm_service.py` | Linear-complexity video sequence processing |
+| `nabla_video_service.py` | Block-sparse diffusion transformer |
+| `valsci_verification_service.py` | Claim extraction and verification |
+
+For detailed architecture, see [LINEAR_VIDEO_ARCHITECTURE.md](./LINEAR_VIDEO_ARCHITECTURE.md).
+

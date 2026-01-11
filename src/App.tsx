@@ -45,6 +45,7 @@ const ThumbnailGenerator = lazy(() => import("./pages/ThumbnailGenerator"));
 const Syndication = lazy(() => import("./pages/Syndication"));
 const ExtensionMarketplace = lazy(() => import("./pages/ExtensionMarketplace"));
 const MultiStreamHub = lazy(() => import("./pages/MultiStreamHub"));
+const LinearVideoPlatform = lazy(() => import("./pages/LinearVideoPlatform"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -99,6 +100,7 @@ const App = () => (
                   <Route path="/syndication" element={<Syndication />} />
                   <Route path="/extensions" element={<ExtensionMarketplace />} />
                   <Route path="/multistream" element={<MultiStreamHub />} />
+                  <Route path="/linear-platform" element={<LinearVideoPlatform />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

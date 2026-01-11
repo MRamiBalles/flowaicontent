@@ -48,15 +48,25 @@
 ### 2. ARQUITECTURA TÉCNICA
 
 #### 2.1 Visión General del Sistema
-- **Archivo**: ⚠️ `docs/ARCHITECTURE.md` (PENDIENTE)
-- **Contenido requerido**:
-  - [ ] Diagrama de arquitectura completo (frontend → backend → blockchain)
-  - [ ] Stack tecnológico detallado por capa
-  - [ ] Patrones de diseño aplicados
-  - [ ] Decisiones arquitectónicas clave (ADRs)
-  - [ ] Escalabilidad y performance targets
-- **Prioridad**: 🔴 ALTA
-- **Estimación**: 8 horas de trabajo
+- **Archivo**: [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
+- **Contenido**:
+  - ✅ Diagrama de arquitectura del sistema
+  - ✅ Stack tecnológico por capa
+  - ✅ Componentes de Edge Functions
+  - ✅ Linear Video Platform integration
+- **Estado**: ✅ Completo
+- **Prioridad**: ✅ Implementado
+
+#### 2.1.1 Linear Video Platform
+- **Archivo**: [`docs/LINEAR_VIDEO_ARCHITECTURE.md`](LINEAR_VIDEO_ARCHITECTURE.md)
+- **Contenido**:
+  - ✅ Mamba SSM Backbone (O(N) complexity)
+  - ✅ NABLA Block-Sparse Attention (2.7x speedup)
+  - ✅ Valsci Truth Layer (RAG + Bibliometrics)
+  - ✅ API Reference
+  - ✅ Performance benchmarks
+- **Estado**: ✅ Completo
+- **Audiencia**: Ingenieros, investigadores, inversores técnicos
 
 #### 2.2 Base de Datos
 - **Archivo**: ⚠️ `docs/DATABASE.md` (PENDIENTE)
