@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, User, AlertTriangle, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_URL } from '@/lib/api';
 
 interface DM {
     id: string;
@@ -24,7 +25,7 @@ export const DirectMessages = () => {
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:8000/api/v1/social/dm', {
+            const res = await fetch(`${API_URL}/social/dm`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

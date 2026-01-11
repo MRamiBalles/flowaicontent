@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, Award, Lock, TrendingUp, Medal } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_URL } from '@/lib/api';
 
 interface Achievement {
     id: string;
@@ -39,7 +40,7 @@ export const AchievementsPage = () => {
 
             if (token) {
                 // Get user achievements
-                const achRes = await fetch('http://localhost:8000/v1/achievements/my-achievements', {
+                const achRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/achievements/my-achievements`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -49,7 +50,7 @@ export const AchievementsPage = () => {
                 setStats(achData.stats);
 
                 // Get leaderboard
-                const lbRes = await fetch('http://localhost:8000/v1/achievements/leaderboard');
+                const lbRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/achievements/leaderboard`);
                 const lbData = await lbRes.json();
                 setLeaderboard(lbData.leaderboard);
             }

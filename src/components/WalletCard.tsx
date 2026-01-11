@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Coins, TrendingUp, History, Sparkles } from 'lucide-react';
 import { WalletChart } from '@/components/WalletChart';
-
+import { API_URL } from '@/lib/api';
 interface Transaction {
     timestamp: number;
     amount: number;
@@ -47,7 +47,7 @@ export const WalletCard = ({ userId }: { userId: string }) => {
 
     const fetchBalance = async () => {
         try {
-            const response = await fetch(`http://localhost:8000/api/v1/economy/balance/${userId}`);
+            const response = await fetch(`${API_URL}/economy/balance/${userId}`);
             if (response.ok) {
                 const data = await response.json();
                 setWallet(prev => {

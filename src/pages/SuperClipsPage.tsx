@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Rocket, Zap, Star, TrendingUp, Clock, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { supabase } from '@/integrations/supabase/client';
+import { API_URL } from '@/lib/api';
 
 interface BoostTier {
     cost: number;
@@ -38,12 +38,12 @@ export const SuperClipsPage = () => {
     const fetchData = async () => {
         try {
             // Get boost tiers
-            const tiersRes = await fetch('http://localhost:8000/v1/super-clips/tiers');
+            const tiersRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/super-clips/tiers`);
             const tiersData = await tiersRes.json();
             setTiers(tiersData.tiers);
 
             // Get trending clips
-            const trendingRes = await fetch('http://localhost:8000/v1/super-clips/trending');
+            const trendingRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/super-clips/trending`);
             const trendingData = await trendingRes.json();
             setTrendingClips(trendingData.clips);
 
@@ -52,7 +52,7 @@ export const SuperClipsPage = () => {
             const token = session?.access_token;
 
             if (token) {
-                const boostsRes = await fetch('http://localhost:8000/v1/super-clips/active', {
+                const boostsRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/super-clips/active`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -75,7 +75,7 @@ export const SuperClipsPage = () => {
                 return;
             }
 
-            const response = await fetch('http://localhost:8000/v1/super-clips/boost', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/super-clips/boost`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

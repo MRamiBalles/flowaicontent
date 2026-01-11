@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Coins, Send, Zap, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { API_URL } from '@/lib/api';
 
 interface ChatMessage {
     id: string;
@@ -22,7 +23,7 @@ export const LiveChat = ({ videoId }: { videoId: string }) => {
 
     const fetchChat = async () => {
         try {
-            const res = await fetch(`http://localhost:8000/api/v1/social/chat/${videoId}`);
+            const res = await fetch(`${API_URL}/social/chat/${videoId}`);
             if (res.ok) {
                 const data = await res.json();
                 setMessages(data);
@@ -72,7 +73,7 @@ export const LiveChat = ({ videoId }: { videoId: string }) => {
         }
 
         try {
-            const res = await fetch('http://localhost:8000/api/v1/social/chat', {
+            const res = await fetch(`${API_URL}/social/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

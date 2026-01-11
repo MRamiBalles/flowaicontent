@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Copy, Mail, TrendingUp, Award, Gift } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { supabase } from '@/integrations/supabase/client';
+import { API_URL } from '@/lib/api';
 
 interface ReferralStats {
     total_invites: number;
@@ -33,7 +33,7 @@ export const ReferralPage = () => {
 
             if (token) {
                 // Get referral code
-                const codeRes = await fetch('http://localhost:8000/v1/referrals/my-code', {
+                const codeRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/referrals/my-code`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -43,7 +43,7 @@ export const ReferralPage = () => {
                 setLink(codeData.link);
 
                 // Get stats
-                const statsRes = await fetch('http://localhost:8000/v1/referrals/stats', {
+                const statsRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/referrals/stats`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -80,7 +80,7 @@ export const ReferralPage = () => {
 
             const emailList = emails.split(',').map(e => e.trim()).filter(e => e);
 
-            const response = await fetch('http://localhost:8000/v1/referrals/invite', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/referrals/invite`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

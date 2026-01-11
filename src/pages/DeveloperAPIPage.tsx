@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Code, Key, BarChart3, Copy, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { supabase } from '@/integrations/supabase/client';
+import { API_URL } from '@/lib/api';
 
 interface APIKey {
     id: string;
@@ -36,14 +36,14 @@ export const DeveloperAPIPage = () => {
 
             if (token) {
                 // Get API keys
-                const keysRes = await fetch('http://localhost:8000/v1/api/keys', {
+                const keysRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/api/keys`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const keysData = await keysRes.json();
                 setApiKeys(keysData.keys || []);
 
                 // Get usage stats
-                const usageRes = await fetch('http://localhost:8000/v1/api/usage', {
+                const usageRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/api/usage`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const usageData = await usageRes.json();
@@ -71,7 +71,7 @@ export const DeveloperAPIPage = () => {
                 return;
             }
 
-            const response = await fetch('http://localhost:8000/v1/api/keys', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/api/keys`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

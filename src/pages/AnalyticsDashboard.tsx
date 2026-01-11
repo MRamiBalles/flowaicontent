@@ -10,6 +10,7 @@ import {
     PieChart,
     Activity
 } from 'lucide-react';
+import { API_URL } from '@/lib/api';
 
 interface Metrics {
     mrr: number;                           // Monthly Recurring Revenue
@@ -66,7 +67,7 @@ export const AnalyticsDashboard = () => {
             const token = session?.access_token;
 
             if (token) {
-                const response = await fetch('http://localhost:8000/v1/analytics/metrics', {
+                const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/analytics/metrics`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
