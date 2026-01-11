@@ -5,7 +5,10 @@
 
 import { supabase } from '@/integrations/supabase/client'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/v1'
+import { API_URL as BASE_API_URL } from '@/lib/api';
+
+// Re-use centralized API URL configuration
+const API_URL = BASE_API_URL.replace('/api/v1', '/v1');
 
 interface ApiCallOptions extends RequestInit {
     skipAuth?: boolean

@@ -7,6 +7,7 @@ import { Palette, Download, Check, ShoppingCart, Star, TrendingUp } from 'lucide
 import { toast } from 'sonner';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { supabase } from '@/integrations/supabase/client';
+import { API_URL } from '@/lib/api';
 
 interface StylePack {
     id: string;
@@ -33,7 +34,7 @@ export const StylePacksMarketplace = () => {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
 
-            const response = await fetch('http://localhost:8000/v1/style-packs', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/style-packs`, {
                 headers: {
                     'Authorization': token ? `Bearer ${token}` : ''
                 }
@@ -60,7 +61,7 @@ export const StylePacksMarketplace = () => {
                 return;
             }
 
-            const response = await fetch('http://localhost:8000/v1/style-packs/purchase', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/style-packs/purchase`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -96,7 +97,7 @@ export const StylePacksMarketplace = () => {
                 return;
             }
 
-            const response = await fetch(`http://localhost:8000/v1/style-packs/download/${packId}`, {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/style-packs/download/${packId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Coins, ArrowUpRight, ArrowDownLeft, Zap, Gift } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { supabase } from '@/integrations/supabase/client';
+import { API_URL } from '@/lib/api';
 
 interface TokenPricing {
     base_rate: number;
@@ -32,7 +32,7 @@ export const TokenPurchasePage = () => {
 
             if (!token) return;
 
-            const response = await fetch('http://localhost:8000/v1/tokens/balance', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/tokens/balance`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -46,7 +46,7 @@ export const TokenPurchasePage = () => {
 
     const fetchPricing = async () => {
         try {
-            const response = await fetch('http://localhost:8000/v1/tokens/pricing');
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/tokens/pricing`);
             const data = await response.json();
             setPricing(data);
         } catch (error) {
@@ -84,7 +84,7 @@ export const TokenPurchasePage = () => {
                 return;
             }
 
-            const response = await fetch('http://localhost:8000/v1/tokens/purchase', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/tokens/purchase`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

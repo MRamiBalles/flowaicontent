@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, Star, Lock, Zap, Target, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { supabase } from '@/integrations/supabase/client';
+import { API_URL } from '@/lib/api';
 
 interface Quest {
     id: string;
@@ -44,7 +44,7 @@ export const SeasonPassPage = () => {
             const token = session?.access_token;
 
             if (token) {
-                const passRes = await fetch('http://localhost:8000/v1/season-pass/current', {
+                const passRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/season-pass/current`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -54,7 +54,7 @@ export const SeasonPassPage = () => {
             }
 
             // Get tiers
-            const tiersRes = await fetch('http://localhost:8000/v1/season-pass/tiers');
+            const tiersRes = await fetch(`${API_URL.replace('/api/v1', '/v1')}/season-pass/tiers`);
             const tiersData = await tiersRes.json();
             setTiers(tiersData.tiers.slice(0, 20)); // Show first 20 tiers
             setPremiumPrice(tiersData.premium_price);
@@ -73,7 +73,7 @@ export const SeasonPassPage = () => {
                 return;
             }
 
-            const response = await fetch('http://localhost:8000/v1/season-pass/upgrade-premium', {
+            const response = await fetch(`${API_URL.replace('/api/v1', '/v1')}/season-pass/upgrade-premium`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

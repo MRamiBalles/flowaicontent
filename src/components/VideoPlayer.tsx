@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Play, Pause, Loader2, Film, Maximize2, Minimize2, Volume2, VolumeX, GitFork, Scissors } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
+import { API_URL } from '@/lib/api';
 interface VideoPlayerProps {
     videoResult: any | null;    // Generated video metadata
     onRemix?: () => void;       // Remix callback (opens editor with this video)
@@ -51,7 +51,7 @@ export const VideoPlayer = ({ videoResult, onRemix, onClip }: VideoPlayerProps) 
         let interval: NodeJS.Timeout;
         if (isPlaying && videoResult && !loading) {
             interval = setInterval(() => {
-                fetch('http://localhost:8000/api/v1/economy/poa', {
+                fetch(`${API_URL}/economy/poa`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
