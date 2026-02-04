@@ -47,6 +47,26 @@ async def query_project_status(project_id: str, tenant_context: Optional[str] = 
             "cost_to_date": "$12.50"
         }
     })
+@mcp.tool()
+@budget_gate(static_cost=0.50) # Professional generation is expensive
+async def generate_cloud_video(prompt: str, duration: int = 5, tenant_context: Optional[str] = None) -> str:
+    """
+    Generates a professional video clip using high-end cloud models (Runway/Sora).
+    Uses metadata from local vision analysis as the base prompt.
+    """
+    # Simulate API call to Runway/Luma/Sora
+    print(f"[CLOUD-AI] Generating video for tenant {tenant_context} with prompt: {prompt}")
+    
+    # Mock Response
+    video_id = str(uuid.uuid4())
+    return json.dumps({
+        "status": "processing",
+        "video_id": video_id,
+        "estimated_time": "30s",
+        "preview_url": f"https://cdn.flowai.com/clips/{video_id}.mp4",
+        "engine": "runway-gen3"
+    })
+
 
 
 if __name__ == "__main__":
