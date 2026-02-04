@@ -8,7 +8,7 @@ def test_steel_thread():
     Verifies the Agent -> MCP -> DB connection (Steel Thread).
     Uses stdio communication to simulate a local agent (Claude Desktop).
     """
-    print("🧵 Starting Steel Thread Verification...")
+    print("Starting Steel Thread Verification...")
     
     # Path to the server script
     server_script = os.path.join("backend", "mcp_server.py")
@@ -44,7 +44,7 @@ def test_steel_thread():
         response_str = process.stdout.readline()
         response = json.loads(response_str)
         assert response["result"]["serverInfo"]["name"] == "FlowAI Core", "Server name mismatch"
-        print("   ✅ Server Initialized: FlowAI Core")
+        print("   [OK] Server Initialized: FlowAI Core")
         
         # 1b. Notifications: 'notifications/initialized'
         # The official spec usually expects this after initialize response, 
@@ -73,7 +73,7 @@ def test_steel_thread():
         tools = response["result"]["tools"]
         tool_names = [t["name"] for t in tools]
         assert "query_project_status" in tool_names, "Tool 'query_project_status' missing"
-        print(f"   ✅ Tools Found: {tool_names}")
+        print(f"   [OK] Tools Found: {tool_names}")
         
         # 3. Call Tool (Steel Thread Action)
         print("   -> Calling tool 'query_project_status'...")
@@ -102,12 +102,12 @@ def test_steel_thread():
         
         assert result_json["status"] == "success", "Tool execution failed"
         assert result_json["tenant_id"] == "tenant-007", "Tenant context lost"
-        print(f"   ✅ Tool Result Valid: {result_json}")
+        print(f"   [OK] Tool Result Valid: {result_json}")
         
-        print("\n🎉 STEEL THREAD VERIFIED! The Agent can successfully query the Core.")
+        print("\nSTEEL THREAD VERIFIED! The Agent can successfully query the Core.")
         
     except Exception as e:
-        print(f"\n❌ TEST FAILED: {str(e)}")
+        print(f"\n[FAIL] TEST FAILED: {str(e)}")
         process.kill()
         sys.exit(1)
     finally:

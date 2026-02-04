@@ -4,7 +4,7 @@ import uuid
 from typing import Optional, Dict, Any
 
 # Initialize FastMCP Server with name and dependencies
-mcp = FastMCP("FlowAI Core", dependencies=["pydantic", "httpx"])
+mcp = FastMCP("FlowAI Core")
 
 # --- Resources ---
 # Passive context reading (standard architecture)
