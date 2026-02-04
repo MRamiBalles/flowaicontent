@@ -54,7 +54,17 @@ async def generate_cloud_video(prompt: str, duration: int = 5, tenant_context: O
     Generates a professional video clip using high-end cloud models (Runway/Sora).
     Uses metadata from local vision analysis as the base prompt.
     """
-    # Simulate API call to Runway/Luma/Sora
+    # 1. Simulate Safety/Content Filter
+    if "violence" in prompt.lower() or "explicit" in prompt.lower():
+        # Agent-Friendly Error (Resilience Pattern 2026)
+        return json.dumps({
+            "status": "error",
+            "error_code": "CONTENT_SAFETY_VIOLATION",
+            "message": "Policy: Prompt contains restricted keywords. Please reformulate.",
+            "retryable": False
+        })
+
+    # 2. Simulate API call to Runway/Luma/Sora
     print(f"[CLOUD-AI] Generating video for tenant {tenant_context} with prompt: {prompt}")
     
     # Mock Response
@@ -67,9 +77,32 @@ async def generate_cloud_video(prompt: str, duration: int = 5, tenant_context: O
         "engine": "runway-gen3"
     })
 
+@mcp.tool()
+async def get_finops_status(tenant_context: str) -> str:
+    """
+    Allows the agent to check its current budget and rate limit status.
+    Pre-check before expensive operations.
+    """
+    from app.services.finops_service import finops_service
+    balance = finops_service.get_balance(tenant_context)
+    return json.dumps({
+        "tenant_id": tenant_context,
+        "balance_usd": balance,
+        "currency": "USD",
+        "can_afford_generation": balance >= 0.50
+    })
 
+@mcp.tool()
+async def seed_credits(tenant_context: str, amount: float) -> str:
+    """
+    ADMIN TOOL: Seeds credits for a tenant for testing purposes.
+    """
+    from app.services.finops_service import finops_service
+    finops_service.set_credits(tenant_context, amount)
+    return json.dumps({"status": "success", "tenant_id": tenant_context, "new_balance": amount})
 
 if __name__ == "__main__":
-    # Run via stdio by default simply by calling run()
-    # FastMCP handles the loop and JSON-RPC over stdin/stdout
     mcp.run()
+
+
+
