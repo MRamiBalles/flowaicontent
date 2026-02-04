@@ -19,3 +19,4 @@ passlib[bcrypt]==1.7.4
 httpx==0.25.1
 opentimelineio==0.15.0
 y-py==0.6.2
+fastmcp==0.1.1
