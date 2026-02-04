@@ -63,51 +63,55 @@ async def mcp_rpc_endpoint(request: dict):
 async def collaboration_websocket(websocket: WebSocket, project_id: str):
     """
     WebSocket endpoint for real-time multiplayer editing (Live OTIO).
-    Supports Human + AI agent interaction in the same session.
+    Protocol:
+    - Connect -> Server sends full state (Binary Blob).
+    - Client sends Update -> Server applies -> Broadcasts to others.
+    - Client sends Awareness -> Server broadcasts.
     """
     await websocket.accept()
     session = await collaboration_service.get_or_create_session(project_id)
     
     # Register connection
-    user_id = f"user_{id(websocket)}" # Mock user identification
-    session.active_users[user_id] = {"joined_at": datetime.utcnow().isoformat()}
+    user_id = str(uuid.uuid4())
+    # In production, we'd manage a list of sockets to broadcast
+    # For this mock, we assume 1 active socket per user for simplicity or just loopback
     
     try:
-        # Send initial state
-        await websocket.send_text(json.dumps({
-            "type": "sync_initial",
-            "timeline": session.to_json(),
-            "active_users": list(session.active_users.keys())
-        }))
+        # 1. Send Initial State (Sync Step 1)
+        # In real Yjs, this is a handshake. Here we just dump the doc.
+        initial_state = session.get_update()
+        await websocket.send_bytes(initial_state)
         
         while True:
-            data = await websocket.receive_text()
-            message = json.loads(data)
+            # Receive message (Binary = Sync, Text = Awareness/Signal)
+            message = await websocket.receive()
             
-            # Handle OTIO updates (Simplified CRDT-like sync)
-            if message["type"] == "edit_action":
-                # In a real 2026 app, this would use Yjs binary updates
-                # For this Steel Thread, we'll process basic edit commands
-                if message["action"] == "add_clip":
-                    session.add_clip(
-                        track_index=message.get("track", 0),
-                        name=message["name"],
-                        media_reference=message["url"],
-                        start_time=message["start"],
-                        duration=message["duration"]
-                    )
+            if "bytes" in message and message["bytes"]:
+                # Sync Update
+                update_data = message["bytes"]
+                session.apply_update(update_data)
                 
-                # Broadcast update to all (except sender in production)
-                # await broadcast_to_session(project_id, message)
-                await websocket.send_text(json.dumps({
-                    "type": "sync_update",
-                    "timeline": session.to_json()
-                }))
+                # In a real app, we would broadcast this 'update_data' to other connected sockets
+                # broadcast(update_data, exclude=websocket)
                 
+                # Acknowledge or Echo for verification
+                await websocket.send_text(json.dumps({"type": "ack", "bytes_processed": len(update_data)}))
+                
+            elif "text" in message and message["text"]:
+                # Awareness / Signaling
+                data = json.loads(message["text"])
+                msg_type = data.get("type")
+                
+                if msg_type == "awareness":
+                    # Propagate cursor/presence
+                    # broadcast(data, exclude=websocket)
+                    pass
+                elif msg_type == "ping":
+                    await websocket.send_text(json.dumps({"type": "pong"}))
+
     except WebSocketDisconnect:
-        if user_id in session.active_users:
-            del session.active_users[user_id]
         print(f"User {user_id} disconnected from project {project_id}")
+
 
 # --- Health Check ---
 @app.get("/health")
