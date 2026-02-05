@@ -26,6 +26,14 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+ import { 
+     parseWithSchema, 
+     brandDealApplicationSchema, 
+     brandDealUpdateSchema,
+     brandDealMessageSchema,
+     uuidSchema
+ } from "../_shared/validators.ts";
+ import { createErrorResponse } from "../_shared/error-sanitizer.ts";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -85,11 +93,16 @@ serve(async (req) => {
 
         switch (action) {
             case 'get_matching_campaigns': {
+                 // Validate limit parameter
+                 const limit = typeof data?.limit === 'number' 
+                     ? Math.min(Math.max(1, data.limit), 100) 
+                     : 10;
+ 
                 // Get campaigns matching this creator's profile
                 const { data: campaigns, error } = await supabase
                     .rpc('get_matching_campaigns', {
                         p_creator_id: user.id,
-                        p_limit: (data?.limit as number) || 10
+                         p_limit: limit
                     });
 
                 if (error) throw error;
@@ -104,15 +117,14 @@ serve(async (req) => {
             }
 
             case 'apply_to_campaign': {
-                if (!data?.campaign_id) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'campaign_id required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     brandDealApplicationSchema, 
+                     data, 
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { campaign_id, proposed_rate } = validation.data;
 
                 // Check if creator has a media kit
                 const { data: mediaKit } = await supabase
@@ -132,8 +144,8 @@ serve(async (req) => {
                 }
 
                 const result = await supabase.rpc('apply_to_campaign', {
-                    p_campaign_id: data.campaign_id as string,
-                    p_proposed_rate: data.proposed_rate as number,
+                     p_campaign_id: campaign_id,
+                     p_proposed_rate: proposed_rate,
                 });
 
                 if (result.error) throw result.error;
@@ -168,21 +180,24 @@ serve(async (req) => {
             }
 
             case 'get_campaign_applications': {
-                if (!data?.campaign_id) {
+                 // Validate campaign_id
+                 const campaignIdResult = uuidSchema.safeParse(data?.campaign_id);
+                 if (!campaignIdResult.success) {
                     return new Response(JSON.stringify({
                         success: false,
-                        error: 'campaign_id required'
+                         error: 'Valid campaign_id required'
                     }), {
                         status: 400,
                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                     });
                 }
+                 const campaignId = campaignIdResult.data;
 
                 // Verify user owns the brand for this campaign
                 const { data: campaign } = await supabase
                     .from('brand_campaigns')
                     .select('brand_id')
-                    .eq('id', data.campaign_id)
+                     .eq('id', campaignId)
                     .single();
 
                 if (!campaign) {
@@ -215,17 +230,17 @@ serve(async (req) => {
                 const { data: applications, error } = await supabase
                     .from('brand_deals')
                     .select(`
-            *,
-            creator:creator_id(email),
-            media_kit:creator_id(
-              display_name,
-              profile_image_url,
-              total_followers,
-              engagement_rate,
-              average_rating
-            )
-          `)
-                    .eq('campaign_id', data.campaign_id)
+                         *,
+                         creator:creator_id(email),
+                         media_kit:creator_id(
+                             display_name,
+                             profile_image_url,
+                             total_followers,
+                             engagement_rate,
+                             average_rating
+                         )
+                     `)
+                     .eq('campaign_id', campaignId)
                     .order('match_score', { ascending: false });
 
                 if (error) throw error;
@@ -240,21 +255,20 @@ serve(async (req) => {
             }
 
             case 'update_deal_status': {
-                if (!data?.deal_id || !data?.status) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'deal_id and status required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     brandDealUpdateSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { deal_id, status: newStatus } = validation.data;
 
                 // Get the deal
                 const { data: deal } = await supabase
                     .from('brand_deals')
                     .select('*, brand:brand_id(owner_user_id)')
-                    .eq('id', data.deal_id)
+                     .eq('id', deal_id)
                     .single();
 
                 if (!deal) {
@@ -293,10 +307,10 @@ serve(async (req) => {
                     published: ['completed'],
                 };
 
-                if (!validTransitions[deal.status]?.includes(data.status as string)) {
+                 if (!validTransitions[deal.status]?.includes(newStatus)) {
                     return new Response(JSON.stringify({
                         success: false,
-                        error: `Cannot transition from ${deal.status} to ${data.status}`
+                         error: `Cannot transition from ${deal.status} to ${newStatus}`
                     }), {
                         status: 400,
                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -305,25 +319,25 @@ serve(async (req) => {
 
                 // Update timestamps based on status
                 const updates: Record<string, unknown> = {
-                    status: data.status,
+                     status: newStatus,
                     updated_at: new Date().toISOString(),
                 };
 
-                if (data.status === 'accepted') updates.accepted_at = new Date().toISOString();
-                if (data.status === 'in_progress') updates.started_at = new Date().toISOString();
-                if (data.status === 'review') updates.submitted_at = new Date().toISOString();
-                if (data.status === 'approved') updates.approved_at = new Date().toISOString();
-                if (data.status === 'completed') updates.completed_at = new Date().toISOString();
+                 if (newStatus === 'accepted') updates.accepted_at = new Date().toISOString();
+                 if (newStatus === 'in_progress') updates.started_at = new Date().toISOString();
+                 if (newStatus === 'review') updates.submitted_at = new Date().toISOString();
+                 if (newStatus === 'approved') updates.approved_at = new Date().toISOString();
+                 if (newStatus === 'completed') updates.completed_at = new Date().toISOString();
 
                 const { error: updateError } = await supabase
                     .from('brand_deals')
                     .update(updates)
-                    .eq('id', data.deal_id);
+                     .eq('id', deal_id);
 
                 if (updateError) throw updateError;
 
                 // Update campaign counts if accepted
-                if (data.status === 'accepted') {
+                 if (newStatus === 'accepted') {
                     await supabase
                         .from('brand_campaigns')
                         .update({ accepted_count: deal.campaign?.accepted_count + 1 })
@@ -332,7 +346,7 @@ serve(async (req) => {
 
                 return new Response(JSON.stringify({
                     success: true,
-                    new_status: data.status,
+                     new_status: newStatus,
                 }), {
                     status: 200,
                     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -340,24 +354,23 @@ serve(async (req) => {
             }
 
             case 'send_message': {
-                if (!data?.deal_id || !data?.message) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'deal_id and message required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     brandDealMessageSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { deal_id, message: msgContent, attachments } = validation.data;
 
                 // Create message
-                const { data: message, error } = await supabase
+                 const { data: msgData, error } = await supabase
                     .from('deal_messages')
                     .insert({
-                        deal_id: data.deal_id as string,
+                         deal_id: deal_id,
                         sender_id: user.id,
-                        message: data.message as string,
-                        attachments: data.attachments || [],
+                         message: msgContent,
+                         attachments: attachments || [],
                     })
                     .select()
                     .single();
@@ -371,11 +384,11 @@ serve(async (req) => {
                         messages_count: supabase.rpc('increment', { row_count: 1 }),
                         last_message_at: new Date().toISOString()
                     })
-                    .eq('id', data.deal_id);
+                     .eq('id', deal_id);
 
                 return new Response(JSON.stringify({
                     success: true,
-                    message,
+                     message: msgData,
                 }), {
                     status: 201,
                     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -394,14 +407,6 @@ serve(async (req) => {
 
     } catch (error) {
         console.error('Brand deals error:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-
-        return new Response(JSON.stringify({
-            success: false,
-            error: message
-        }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+         return createErrorResponse(error, corsHeaders);
     }
 });

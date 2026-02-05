@@ -3,6 +3,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+ import { parseWithSchema, createLicenseSchema } from "../_shared/validators.ts";
+ import { createErrorResponse } from "../_shared/error-sanitizer.ts";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -63,51 +65,12 @@ serve(async (req) => {
             });
         }
 
-        const body: CreateLicenseRequest = await req.json();
-
-        // Validate required fields
-        if (!body.content_type || !body.content_id || !body.content_title) {
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'content_type, content_id, and content_title are required'
-            }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
-        }
-
-        if (!body.license_type) {
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'license_type is required'
-            }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
-        }
-
-        if (typeof body.price_cents !== 'number' || body.price_cents < 0) {
-            return new Response(JSON.stringify({
-                success: false,
-                error: 'price_cents must be a non-negative number'
-            }), {
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            });
-        }
-
-        // Validate royalty percentage for rights_managed
-        if (body.license_type === 'rights_managed') {
-            if (body.royalty_percentage === undefined || body.royalty_percentage < 0 || body.royalty_percentage > 50) {
-                return new Response(JSON.stringify({
-                    success: false,
-                    error: 'rights_managed licenses require royalty_percentage between 0 and 50'
-                }), {
-                    status: 400,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                });
-            }
-        }
+         const rawBody = await req.json();
+ 
+         // Validate input with Zod schema
+         const validation = parseWithSchema(createLicenseSchema, rawBody, corsHeaders);
+         if (!validation.success) return validation.response;
+         const body = validation.data;
 
         // Verify content ownership based on type
         let ownershipValid = false;
@@ -210,14 +173,6 @@ serve(async (req) => {
 
     } catch (error) {
         console.error('Create license error:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-
-        return new Response(JSON.stringify({
-            success: false,
-            error: message
-        }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+         return createErrorResponse(error, corsHeaders);
     }
 });

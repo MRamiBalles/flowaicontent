@@ -4,6 +4,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit } from "../_shared/rate-limiter.ts";
+ import {
+     parseWithSchema,
+     uuidSchema,
+     enterpriseInviteSchema,
+     enterpriseTenantUpdateSchema,
+     enterpriseApiKeySchema,
+     paginationSchema,
+ } from "../_shared/validators.ts";
+ import { createErrorResponse } from "../_shared/error-sanitizer.ts";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -149,10 +158,10 @@ serve(async (req) => {
             }
 
             case 'update_tenant': {
-                if (!tenant_id || !data) {
+                 if (!tenant_id) {
                     return new Response(JSON.stringify({
                         success: false,
-                        error: 'tenant_id and data required'
+                         error: 'tenant_id required'
                     }), {
                         status: 400,
                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -169,19 +178,14 @@ serve(async (req) => {
                     });
                 }
 
-                // Whitelist allowed fields
-                const allowedFields = [
-                    'name', 'logo_url', 'logo_dark_url', 'favicon_url',
-                    'primary_color', 'secondary_color', 'font_family',
-                    'support_email', 'billing_email'
-                ];
-
-                const updateData: Record<string, unknown> = {};
-                for (const field of allowedFields) {
-                    if (data[field] !== undefined) {
-                        updateData[field] = data[field];
-                    }
-                }
+                 // Validate input with Zod schema - only allows whitelisted fields
+                 const validation = parseWithSchema(
+                     enterpriseTenantUpdateSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const updateData: Record<string, unknown> = { ...validation.data };
 
                 updateData.updated_at = new Date().toISOString();
 
@@ -213,10 +217,10 @@ serve(async (req) => {
             }
 
             case 'invite_user': {
-                if (!tenant_id || !data?.email) {
+                 if (!tenant_id) {
                     return new Response(JSON.stringify({
                         success: false,
-                        error: 'tenant_id and email required'
+                         error: 'tenant_id required'
                     }), {
                         status: 400,
                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -233,6 +237,15 @@ serve(async (req) => {
                     });
                 }
 
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     enterpriseInviteSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { email, role, department, team, message } = validation.data;
+ 
                 // Check user limit
                 const { data: tenant } = await supabase
                     .from('enterprise_tenants')
@@ -261,12 +274,12 @@ serve(async (req) => {
                     .from('enterprise_invitations')
                     .insert({
                         tenant_id,
-                        email: data.email as string,
-                        role: (data.role as string) || 'member',
-                        department: data.department as string,
-                        team: data.team as string,
+                         email: email,
+                         role: role,
+                         department: department,
+                         team: team,
                         invited_by: user.id,
-                        message: data.message as string,
+                         message: message,
                     })
                     .select()
                     .single();
@@ -292,7 +305,7 @@ serve(async (req) => {
                     p_action: 'user.invited',
                     p_resource_type: 'invitation',
                     p_resource_id: invitation.id,
-                    p_details: { email: data.email, role: data.role || 'member' },
+                     p_details: { email, role },
                 });
 
                 return new Response(JSON.stringify({
@@ -306,16 +319,29 @@ serve(async (req) => {
             }
 
             case 'remove_user': {
-                if (!tenant_id || !data?.user_id) {
+                 if (!tenant_id) {
                     return new Response(JSON.stringify({
                         success: false,
-                        error: 'tenant_id and user_id required'
+                         error: 'tenant_id required'
                     }), {
                         status: 400,
                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                     });
                 }
 
+                 // Validate user_id
+                 const userIdResult = uuidSchema.safeParse(data?.user_id);
+                 if (!userIdResult.success) {
+                     return new Response(JSON.stringify({
+                         success: false,
+                         error: 'Valid user_id required'
+                     }), {
+                         status: 400,
+                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                     });
+                 }
+                 const targetUserId = userIdResult.data;
+ 
                 if (userRole !== 'owner' && userRole !== 'admin') {
                     return new Response(JSON.stringify({
                         success: false,
@@ -327,7 +353,7 @@ serve(async (req) => {
                 }
 
                 // Can't remove yourself
-                if (data.user_id === user.id) {
+                 if (targetUserId === user.id) {
                     return new Response(JSON.stringify({
                         success: false,
                         error: 'Cannot remove yourself'
@@ -342,7 +368,7 @@ serve(async (req) => {
                     .from('enterprise_users')
                     .update({ status: 'deactivated' })
                     .eq('tenant_id', tenant_id)
-                    .eq('user_id', data.user_id);
+                     .eq('user_id', targetUserId);
 
                 if (error) throw error;
 
@@ -351,7 +377,7 @@ serve(async (req) => {
                     p_tenant_id: tenant_id,
                     p_action: 'user.removed',
                     p_resource_type: 'user',
-                    p_resource_id: data.user_id as string,
+                     p_resource_id: targetUserId,
                 });
 
                 return new Response(JSON.stringify({
@@ -383,8 +409,11 @@ serve(async (req) => {
                     });
                 }
 
-                const limit = (data?.limit as number) || 50;
-                const offset = (data?.offset as number) || 0;
+                 // Validate pagination with safe defaults
+                 const paginationResult = paginationSchema.safeParse(data);
+                 const { limit, offset } = paginationResult.success 
+                     ? paginationResult.data 
+                     : { limit: 50, offset: 0 };
 
                 const { data: logs, error, count } = await supabase
                     .from('enterprise_audit_logs')
@@ -406,10 +435,10 @@ serve(async (req) => {
             }
 
             case 'create_api_key': {
-                if (!tenant_id || !data?.name) {
+                 if (!tenant_id) {
                     return new Response(JSON.stringify({
                         success: false,
-                        error: 'tenant_id and name required'
+                         error: 'tenant_id required'
                     }), {
                         status: 400,
                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -426,6 +455,15 @@ serve(async (req) => {
                     });
                 }
 
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     enterpriseApiKeySchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { name, description, scopes, expires_at } = validation.data;
+ 
                 // Generate API key
                 const apiKey = `fai_${crypto.randomUUID().replace(/-/g, '')}`;
                 const keyPrefix = apiKey.substring(0, 12);
@@ -443,12 +481,12 @@ serve(async (req) => {
                     .insert({
                         tenant_id,
                         created_by: user.id,
-                        name: data.name as string,
-                        description: data.description as string,
+                         name: name,
+                         description: description,
                         key_prefix: keyPrefix,
                         key_hash: keyHash,
-                        scopes: (data.scopes as string[]) || ['read'],
-                        expires_at: data.expires_at as string,
+                         scopes: scopes,
+                         expires_at: expires_at,
                     })
                     .select()
                     .single();
@@ -461,7 +499,7 @@ serve(async (req) => {
                     p_action: 'api_key.created',
                     p_resource_type: 'api_key',
                     p_resource_id: apiKeyRecord.id,
-                    p_details: { name: data.name, scopes: data.scopes || ['read'] },
+                     p_details: { name, scopes },
                 });
 
                 return new Response(JSON.stringify({
@@ -487,14 +525,6 @@ serve(async (req) => {
 
     } catch (error) {
         console.error('Enterprise admin error:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-
-        return new Response(JSON.stringify({
-            success: false,
-            error: message
-        }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+         return createErrorResponse(error, corsHeaders);
     }
 });
