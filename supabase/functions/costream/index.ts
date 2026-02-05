@@ -3,6 +3,15 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+ import {
+     parseWithSchema,
+     createCompanionSchema,
+     sessionActionSchema,
+     startSessionSchema,
+     sendMessageSchema,
+     generateAiResponseSchema,
+ } from "../_shared/validators.ts";
+ import { createErrorResponse } from "../_shared/error-sanitizer.ts";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -62,25 +71,24 @@ serve(async (req) => {
 
         switch (action) {
             case 'create_companion': {
-                if (!data?.name || !data?.personality) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'name and personality required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     createCompanionSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { name, personality, avatar_url, voice_id, custom_knowledge } = validation.data;
 
                 const { data: companion, error } = await supabase
                     .from('ai_stream_companions')
                     .insert({
                         user_id: user.id,
-                        name: data.name as string,
-                        personality: data.personality as string,
-                        avatar_url: data.avatar_url as string,
-                        voice_id: data.voice_id as string,
-                        custom_knowledge: data.custom_knowledge || [],
+                         name: name,
+                         personality: personality,
+                         avatar_url: avatar_url || null,
+                         voice_id: voice_id || null,
+                         custom_knowledge: custom_knowledge,
                     })
                     .select()
                     .single();
@@ -115,20 +123,19 @@ serve(async (req) => {
             }
 
             case 'start_session': {
-                if (!data?.companion_id) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'companion_id required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     startSessionSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { companion_id, title, platform } = validation.data;
 
                 const result = await supabase.rpc('start_costream_session', {
-                    p_companion_id: data.companion_id as string,
-                    p_title: data.title as string,
-                    p_platform: (data.platform as string) || 'custom',
+                     p_companion_id: companion_id,
+                     p_title: title || null,
+                     p_platform: platform,
                 });
 
                 if (result.error) throw result.error;
@@ -140,18 +147,17 @@ serve(async (req) => {
             }
 
             case 'end_session': {
-                if (!data?.session_id) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'session_id required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     sessionActionSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { session_id } = validation.data;
 
                 const result = await supabase.rpc('end_costream_session', {
-                    p_session_id: data.session_id as string,
+                     p_session_id: session_id,
                 });
 
                 if (result.error) throw result.error;
@@ -163,24 +169,23 @@ serve(async (req) => {
             }
 
             case 'send_message': {
-                if (!data?.session_id || !data?.message) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'session_id and message required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     sendMessageSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { session_id, message, sender_type, sender_name } = validation.data;
 
                 const { data: msg, error } = await supabase
                     .from('stream_chat_messages')
                     .insert({
-                        session_id: data.session_id as string,
-                        sender_type: (data.sender_type as string) || 'streamer',
+                         session_id: session_id,
+                         sender_type: sender_type,
                         sender_id: user.id,
-                        sender_name: data.sender_name || user.email?.split('@')[0] || 'Streamer',
-                        message: data.message as string,
+                         sender_name: sender_name || user.email?.split('@')[0] || 'Streamer',
+                         message: message,
                     })
                     .select()
                     .single();
@@ -191,7 +196,7 @@ serve(async (req) => {
                 await supabase
                     .from('costream_sessions')
                     .update({ total_messages: supabase.rpc('increment', { x: 1 }) })
-                    .eq('id', data.session_id);
+                     .eq('id', session_id);
 
                 return new Response(JSON.stringify({
                     success: true,
@@ -203,15 +208,14 @@ serve(async (req) => {
             }
 
             case 'generate_ai_response': {
-                if (!data?.session_id || !data?.prompt) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'session_id and prompt required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     generateAiResponseSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { session_id, prompt } = validation.data;
 
                 const startTime = Date.now();
 
@@ -219,7 +223,7 @@ serve(async (req) => {
                 const { data: session } = await supabase
                     .from('costream_sessions')
                     .select('*, companion:companion_id(*)')
-                    .eq('id', data.session_id)
+                     .eq('id', session_id)
                     .single();
 
                 if (!session) {
@@ -236,7 +240,7 @@ serve(async (req) => {
                 const { data: recentMessages } = await supabase
                     .from('stream_chat_messages')
                     .select('sender_name, message')
-                    .eq('session_id', data.session_id)
+                     .eq('session_id', session_id)
                     .order('created_at', { ascending: false })
                     .limit(session.companion?.context_memory_size || 10);
 
@@ -290,7 +294,7 @@ Respond naturally as if you're part of a live stream chat.`;
                 const { data: msg, error } = await supabase
                     .from('stream_chat_messages')
                     .insert({
-                        session_id: data.session_id as string,
+                         session_id: session_id,
                         sender_type: 'ai',
                         sender_name: session.companion?.name || 'AI',
                         message: aiResponse,
@@ -307,7 +311,7 @@ Respond naturally as if you're part of a live stream chat.`;
                 await supabase
                     .from('costream_sessions')
                     .update({ ai_responses: supabase.rpc('increment', { x: 1 }) })
-                    .eq('id', data.session_id);
+                     .eq('id', session_id);
 
                 return new Response(JSON.stringify({
                     success: true,
@@ -320,20 +324,19 @@ Respond naturally as if you're part of a live stream chat.`;
             }
 
             case 'get_session_stats': {
-                if (!data?.session_id) {
-                    return new Response(JSON.stringify({
-                        success: false,
-                        error: 'session_id required'
-                    }), {
-                        status: 400,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
+                 // Validate input with Zod schema
+                 const validation = parseWithSchema(
+                     sessionActionSchema,
+                     data,
+                     corsHeaders
+                 );
+                 if (!validation.success) return validation.response;
+                 const { session_id } = validation.data;
 
                 const { data: session, error } = await supabase
                     .from('costream_sessions')
                     .select('*, analytics:stream_analytics(*), companion:companion_id(name, avatar_url)')
-                    .eq('id', data.session_id)
+                     .eq('id', session_id)
                     .single();
 
                 if (error) throw error;
@@ -359,14 +362,6 @@ Respond naturally as if you're part of a live stream chat.`;
 
     } catch (error) {
         console.error('CoStream error:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-
-        return new Response(JSON.stringify({
-            success: false,
-            error: message
-        }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+         return createErrorResponse(error, corsHeaders);
     }
 });
