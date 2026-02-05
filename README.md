@@ -383,7 +383,7 @@ FlowAI implements **Hard Budget Gates** for all agent actions.
 2. Run `backend/mcp_server.py` to start the AI tool provider.
 3. Run `npm run dev` in the root to start the dashboard.
 4. Use the **Vision Analyzer** component to process video assets locally before sending them to the Cloud Generation pipeline.
-xpansion
+
 
 ---
 
