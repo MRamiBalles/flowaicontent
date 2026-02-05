@@ -120,8 +120,9 @@ async def test_golden_run_rpc():
         assert "rejected_insufficient_funds" in text
 
         print("\n" + "="*40)
-        print("🏆 GOLDEN RUN VERIFIED: FULL PIPELINE COMPLIANCE")
+        print("PASS: GOLDEN RUN VERIFIED: FULL PIPELINE COMPLIANCE")
         print("="*40)
+
 
     except Exception as e:
         print(f"   [ERROR]: {e}")
