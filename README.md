@@ -360,11 +360,30 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for gu
 - [ ] Brand deals platform
 - [ ] Advanced analytics dashboard
 
-### Q3 2025
-- [ ] Enterprise custom features
-- [ ] API for developers
-- [ ] White-label solutions
-- [ ] International expansion
+### 🚀 2026 Standards & Hydration Guide
+
+### Edge AI Hydration (WebGPU)
+To enable the **Local Vision Analyzer** (Phase 4), you must "hydrate" the frontend environment with the WebGPU vision engine:
+
+1.  **Install Dependencies**:
+    ```bash
+    npm install @huggingface/transformers
+    ```
+2.  **Hardware Requirements**: Ensure you are using a browser with WebGPU support (Chrome 113+, Edge 113+).
+3.  **Local Model Storage**: The first run will download ~50MB of model weights to your browser's IndexedDB.
+
+### Agentic Governance (FinOps)
+FlowAI implements **Hard Budget Gates** for all agent actions.
+- **Deductions**: Atomic credits are deducted *before* tool execution.
+- **Quotas**: Managed per `tenant_id`.
+- **Transparency**: Every AI-generated asset is tagged with metadata for data sovereignty compliance.
+
+### Developer Setup
+1. Clone the repo.
+2. Run `backend/mcp_server.py` to start the AI tool provider.
+3. Run `npm run dev` in the root to start the dashboard.
+4. Use the **Vision Analyzer** component to process video assets locally before sending them to the Cloud Generation pipeline.
+xpansion
 
 ---
 
