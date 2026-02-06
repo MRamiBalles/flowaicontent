@@ -127,6 +127,13 @@ export type Database = {
             referencedRelation: "api_keys"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "api_usage_logs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       brand_campaigns: {
@@ -2054,6 +2061,50 @@ export type Database = {
       }
     }
     Views: {
+      api_keys_safe: {
+        Row: {
+          created_at: string | null
+          developer_id: string | null
+          id: string | null
+          is_active: boolean | null
+          key_prefix: string | null
+          last_used_at: string | null
+          name: string | null
+          scopes: string[] | null
+          total_requests: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          developer_id?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          key_prefix?: string | null
+          last_used_at?: string | null
+          name?: string | null
+          scopes?: string[] | null
+          total_requests?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          developer_id?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          key_prefix?: string | null
+          last_used_at?: string | null
+          name?: string | null
+          scopes?: string[] | null
+          total_requests?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_developer_id_fkey"
+            columns: ["developer_id"]
+            isOneToOne: false
+            referencedRelation: "developer_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -2074,6 +2125,11 @@ export type Database = {
       }
     }
     Functions: {
+      check_voice_credits: {
+        Args: { p_credits_needed: number }
+        Returns: boolean
+      }
+      consume_voice_credits: { Args: { p_credits: number }; Returns: boolean }
       get_user_tenant: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
