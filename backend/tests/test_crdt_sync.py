@@ -69,7 +69,8 @@ def test_crdt_convergence():
     assert "Track 2 (from A)" in names_a
     assert "Track 3 (from B)" in names_a
 
-def test_otio_integration_with_crdt():
+@pytest.mark.asyncio
+async def test_otio_integration_with_crdt():
     """Verifies that OTIO conversion works with real pycrdt Docs"""
     project_id = "test-project"
     session = CollaborativeTimeline(project_id)
@@ -79,7 +80,6 @@ def test_otio_integration_with_crdt():
     assert len(timeline.tracks) == 1
     
     # Add a clip via Agent Action
-    import asyncio
     action = {
         "type": "add_clip",
         "name": "New Clip",
@@ -90,11 +90,15 @@ def test_otio_integration_with_crdt():
         "id": "clip-123"
     }
     
-    # Run the async handler
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(session.handle_agent_action(project_id, action)) # Note: method is in CollaborationService but logic is in CollaborativeTimeline mock-up? 
-    # Wait, handle_agent_action is in CollaborationService. 
-    # Let's use the service directly.
+    # Import service to test full flow
+    from app.services.collaboration_service import collaboration_service
+    await collaboration_service.handle_agent_action(project_id, action)
+    
+    # Verify result
+    session = await collaboration_service.get_or_create_session(project_id)
+    timeline = session.to_otio()
+    assert len(timeline.tracks[0]) == 1
+    assert timeline.tracks[0][0].name == "New Clip"
 
 @pytest.mark.asyncio
 async def test_collaboration_service_agent_flow():
