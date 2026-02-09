@@ -18,13 +18,13 @@ export const VisionAnalyzer = ({ onAnalysisComplete }: { onAnalysisComplete: (de
     setProgress(10);
 
     try {
-      // Real WebGPU Implementation (Hydrated Phase 2)
-      // Check for WebGPU support first
+      // Real WebGPU Implementation
       if (!navigator.gpu) {
         throw new Error("WebGPU not supported in this browser.");
       }
 
       // Initialize pipeline with progress callback
+      // NOTE: This will download the model (~50MB) to cache on first run
       const analyzer = await pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning', {
         device: 'webgpu',
         progress_callback: (p: any) => {
@@ -33,8 +33,6 @@ export const VisionAnalyzer = ({ onAnalysisComplete }: { onAnalysisComplete: (de
           }
         }
       });
-
-      // In a real app, we would take an image input. For now, we simulate an input or use a default asset.
       // Ideally, the component accepts an imageUrl prop.
       // Let's assume a default image for this "Hydration" step until the component is fully wired.
       const imageUrl = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/city-conf.jpg";
