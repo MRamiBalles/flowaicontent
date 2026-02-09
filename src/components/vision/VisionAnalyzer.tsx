@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, CloudLightning, Loader2 } from 'lucide-react';
 // Note: In production, install @huggingface/transformers
-// import { pipeline } from '@huggingface/transformers';
+import { pipeline } from '@huggingface/transformers';
 
 export const VisionAnalyzer = ({ onAnalysisComplete }: { onAnalysisComplete: (desc: string) => void }) => {
   const [loading, setLoading] = useState(false);
@@ -16,21 +16,36 @@ export const VisionAnalyzer = ({ onAnalysisComplete }: { onAnalysisComplete: (de
   const runLocalAnalysis = async () => {
     setLoading(true);
     setProgress(10);
-    
+
     try {
-      // Simulation of WebGPU / transformers.js logic
-      // const analyzer = await pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning', { device: 'webgpu' });
-      
-      // Artificial delay for UI feedback
-      for (let i = 20; i <= 100; i += 20) {
-        await new Promise(r => setTimeout(r, 400));
-        setProgress(i);
+      // Real WebGPU Implementation (Hydrated Phase 2)
+      // Check for WebGPU support first
+      if (!navigator.gpu) {
+        throw new Error("WebGPU not supported in this browser.");
       }
 
-      const mockDesc = "A cinematic shot of a sunset over the neon city skyline, high fidelity.";
-      setDescription(mockDesc);
-      onAnalysisComplete(mockDesc);
-      
+      // Initialize pipeline with progress callback
+      const analyzer = await pipeline('image-to-text', 'Xenova/vit-gpt2-image-captioning', {
+        device: 'webgpu',
+        progress_callback: (p: any) => {
+          if (p.status === 'progress') {
+            setProgress(Math.round(p.progress * 100));
+          }
+        }
+      });
+
+      // In a real app, we would take an image input. For now, we simulate an input or use a default asset.
+      // Ideally, the component accepts an imageUrl prop.
+      // Let's assume a default image for this "Hydration" step until the component is fully wired.
+      const imageUrl = "https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/city-conf.jpg";
+
+      const result = await analyzer(imageUrl);
+      // Result is typically [{ generated_text: "..." }]
+      const generatedText = (result as any)[0]?.generated_text || "Analysis failed to generate text.";
+
+      setDescription(generatedText);
+      onAnalysisComplete(generatedText);
+
       toast({
         title: "Edge AI Analysis Complete",
         description: "Vision metadata generated locally via WebGPU.",
@@ -71,8 +86,8 @@ export const VisionAnalyzer = ({ onAnalysisComplete }: { onAnalysisComplete: (de
                 "{description}"
               </div>
             )}
-            <Button 
-              onClick={runLocalAnalysis} 
+            <Button
+              onClick={runLocalAnalysis}
               className="w-full bg-cyan-600 hover:bg-cyan-500 text-white gap-2 text-xs h-8"
               disabled={loading}
             >
