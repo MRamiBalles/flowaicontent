@@ -73,7 +73,7 @@ def get_project_metadata(project_id: str) -> str:
 
 @mcp.tool()
 @mcp_error_handler
-@budget_gate(static_cost=0.005) # Enforce a small cost for querying status
+@budget_gate(static_cost=0.005, feature_tag="project_query") # Enforce a small cost for querying status
 async def query_project_status(project_id: str, tenant_context: Optional[str] = None) -> str:
     """
     Queries the detailed status of a project, enforcing tenant isolation.
@@ -95,7 +95,7 @@ async def query_project_status(project_id: str, tenant_context: Optional[str] = 
 
 @mcp.tool()
 @mcp_error_handler
-@budget_gate(static_cost=0.50) # Professional generation is expensive
+@budget_gate(static_cost=0.50, feature_tag="video_gen") # Professional generation is expensive
 async def generate_cloud_video(prompt: str, duration: int = 5, tenant_context: Optional[str] = None) -> str:
     """
     Generates a professional video clip using high-end cloud models (Runway/Sora).

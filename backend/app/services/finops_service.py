@@ -19,6 +19,9 @@ class FinOpsService:
         self._credits: Dict[str, float] = {}
         # Rate limit tracking: tenant_id -> [timestamps]
         self._request_history: Dict[str, list] = {}
+        # Cost tagging: tenant_id -> {feature_tag: total_cost}
+        self._usage_by_tag: Dict[str, Dict[str, float]] = {}
+        
         # Thread lock for atomic simulation in Python memory
         self._lock = threading.Lock()
         
@@ -30,9 +33,9 @@ class FinOpsService:
         with self._lock:
             self._credits[tenant_id] = amount
 
-    async def check_and_spend(self, tenant_id: str, cost_estimate: float) -> Tuple[BudgetStatus, Optional[str]]:
+    async def check_and_spend(self, tenant_id: str, cost_estimate: float, feature_tag: str = "general") -> Tuple[BudgetStatus, Optional[str]]:
         """
-        Atomic operation to check rules and deduct costs.
+        Atomic operation to check rules, deduct costs, and track usage by feature.
         In production: This would be a single SQL UPDATE with RETURNING.
         """
         with self._lock:
@@ -59,8 +62,19 @@ class FinOpsService:
             self._credits[tenant_id] -= cost_estimate
             new_balance = self._credits[tenant_id]
             
-            print(f"[FINOPS] Tenant {tenant_id} spent ${cost_estimate:.4f}. Balance: ${new_balance:.4f}")
+            # 3. Cost Attribution (Tagging)
+            if tenant_id not in self._usage_by_tag:
+                self._usage_by_tag[tenant_id] = {}
+            current_tag_usage = self._usage_by_tag[tenant_id].get(feature_tag, 0.0)
+            self._usage_by_tag[tenant_id][feature_tag] = current_tag_usage + cost_estimate
+            
+            print(f"[FINOPS] Tenant {tenant_id} spent ${cost_estimate:.4f} on [{feature_tag}]. Balance: ${new_balance:.4f}")
             return BudgetStatus.ALLOWED, None
+
+    def get_tag_usage(self, tenant_id: str, feature_tag: str) -> float:
+        """Get total spend for a specific feature tag."""
+        with self._lock:
+            return self._usage_by_tag.get(tenant_id, {}).get(feature_tag, 0.0)
 
     def get_balance(self, tenant_id: str) -> float:
         return self._credits.get(tenant_id, 0.0)

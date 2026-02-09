@@ -3,13 +3,14 @@ import json
 from typing import Any, Callable, Dict, Optional
 from app.services.finops_service import finops_service, BudgetStatus
 
-def budget_gate(static_cost: float = 0.0, cost_func: Optional[Callable[..., float]] = None):
+def budget_gate(static_cost: float = 0.0, cost_func: Optional[Callable[..., float]] = None, feature_tag: str = "general"):
     """
     Decorator to enforce FinOps Budget Gates on MCP tools.
     
     Args:
         static_cost: A fixed cost for the action.
         cost_func: A function that takes tool arguments and returns a dynamic cost estimate.
+        feature_tag: The category of the feature for cost attribution (e.g., 'video_gen', 'chat').
     """
     def decorator(func: Callable):
         @functools.wraps(func)
@@ -30,7 +31,7 @@ def budget_gate(static_cost: float = 0.0, cost_func: Optional[Callable[..., floa
                 cost = cost_func(**kwargs)
 
             # 3. Check and Spend Atomically
-            status, error_msg = await finops_service.check_and_spend(tenant_id, cost)
+            status, error_msg = await finops_service.check_and_spend(tenant_id, cost, feature_tag)
             
             if status != BudgetStatus.ALLOWED:
                 # Log audit event (Simulated)
