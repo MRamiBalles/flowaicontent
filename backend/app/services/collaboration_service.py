@@ -28,6 +28,7 @@ class CollaborativeTimeline:
         if len(y_tracks) == 0:
             # Create default OTIO structure
             timeline = otio.schema.Timeline(name=f"Project {project_id}")
+            timeline.tracks.append(otio.schema.Track(name="Default Track"))
             otio_to_yjs(timeline, self.doc)
             
         self.active_users: Dict[str, Any] = {} # user_id -> awareness state

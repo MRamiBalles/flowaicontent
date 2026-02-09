@@ -25,13 +25,15 @@ def otio_to_yjs(timeline: otio.schema.Timeline, doc: Doc):
             y_tracks.clear()
         
         for track in timeline.tracks:
-            # Create track map
+            # Create track map and append it immediately to integrate it into the doc
             y_track = Map({
                 "name": track.name,
                 "kind": track.kind,
                 "clips": Array()
             })
+            y_tracks.append(y_track)
             
+            # Now we can safely access y_track["clips"] because it's in the doc
             y_clips = y_track["clips"]
             for item in track:
                 if isinstance(item, otio.schema.Clip):
@@ -51,8 +53,6 @@ def otio_to_yjs(timeline: otio.schema.Timeline, doc: Doc):
                         "duration": duration
                     })
                     y_clips.append(y_clip)
-                    
-            y_tracks.append(y_track)
 
 def yjs_to_otio(doc: Doc) -> otio.schema.Timeline:
     """
