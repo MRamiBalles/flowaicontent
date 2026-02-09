@@ -46,7 +46,9 @@ class FinOpsService:
             history = [t for t in history if now - t < 1.0]
             
             if len(history) >= self.MAX_RPS:
-                return BudgetStatus.REJECTED_RATE_LIMIT, f"Rate limit exceeded: {self.MAX_RPS} RPS"
+                error_msg = f"Rate limit exceeded: {self.MAX_RPS} RPS"
+                self._trigger_alert(tenant_id, BudgetStatus.REJECTED_RATE_LIMIT, error_msg)
+                return BudgetStatus.REJECTED_RATE_LIMIT, error_msg
             
             # Update history
             history.append(now)
@@ -56,7 +58,9 @@ class FinOpsService:
             current_balance = self._credits.get(tenant_id, 0.0)
             
             if current_balance < cost_estimate:
-                return BudgetStatus.REJECTED_INSUFFICIENT_FUNDS, f"Insufficient funds: ${current_balance:.4f} < ${cost_estimate:.4f}"
+                error_msg = f"Insufficient funds: ${current_balance:.4f} < ${cost_estimate:.4f}"
+                self._trigger_alert(tenant_id, BudgetStatus.REJECTED_INSUFFICIENT_FUNDS, error_msg)
+                return BudgetStatus.REJECTED_INSUFFICIENT_FUNDS, error_msg
             
             # Atomic subtraction
             self._credits[tenant_id] -= cost_estimate
@@ -70,6 +74,14 @@ class FinOpsService:
             
             print(f"[FINOPS] Tenant {tenant_id} spent ${cost_estimate:.4f} on [{feature_tag}]. Balance: ${new_balance:.4f}")
             return BudgetStatus.ALLOWED, None
+
+    def _trigger_alert(self, tenant_id: str, status: BudgetStatus, message: str):
+        """
+        Proactive Alerting (2026 Strategy).
+        In production: This would push to a Redis/RabbitMQ queue for the Notification Service.
+        """
+        print(f"[ALERT] [FinOps] Critical block for Tenant {tenant_id}: {status.value} - {message}")
+        # Logic to send email/webhook/push notification would go here
 
     def get_tag_usage(self, tenant_id: str, feature_tag: str) -> float:
         """Get total spend for a specific feature tag."""

@@ -127,3 +127,46 @@ async def test_collaboration_service_agent_flow():
     assert len(track) == 1
     assert track[0].name == "CRDT Clip"
     assert track[0].metadata["flowai_id"] == "crdt-001"
+
+def test_crdt_chaos_partition():
+    """
+    Simulates a network partition:
+    1. Clients disconnect.
+    2. Concurrent 'offline' edits.
+    3. Reconnection and merge.
+    """
+    doc_human = Doc()
+    doc_agent = Doc()
+    
+    # Initialization
+    with doc_human.transaction():
+        doc_human["tracks"] = Array()
+    
+    with doc_agent.transaction():
+        doc_agent["tracks"] = Array()
+        
+    doc_agent.apply_update(doc_human.get_update())
+    
+    # 1. Human goes offline and adds a clip
+    with doc_human.transaction():
+        doc_human["tracks"].append(Map({"name": "Human Track", "clips": Array()}))
+    
+    # 2. Agent goes offline and adds metadata
+    with doc_agent.transaction():
+        doc_agent["tracks"].append(Map({"name": "Agent Track", "clips": Array()}))
+        
+    # 3. Reconnect and Merge Update A -> H
+    update_agent = doc_agent.get_update()
+    doc_human.apply_update(update_agent)
+    
+    # 4. Merge Update H -> A
+    update_human = doc_human.get_update()
+    doc_agent.apply_update(update_human)
+    
+    # Verify Convergence
+    names_h = sorted([t["name"] for t in doc_human["tracks"]])
+    names_a = sorted([t["name"] for t in doc_agent["tracks"]])
+    
+    assert names_h == names_a
+    assert "Human Track" in names_h
+    assert "Agent Track" in names_h
