@@ -1,14 +1,20 @@
-"""
-Content Moderation Service
-Handles safety checks for prompts and generated content using local AI models.
-"""
-
 import logging
+import os
 from typing import List, Dict, Any, Tuple
+
+# -----------------------------------------------------------------------------
+# CRITICAL FIX: Relocate Hugging Face Cache to D: Drive (900GB+ Free)
+# -----------------------------------------------------------------------------
+# Default C: cache is full. We force the cache to be within the project on D:
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+cache_dir = os.path.join(project_root, ".cache", "huggingface")
+os.makedirs(cache_dir, exist_ok=True)
+os.environ["HF_HOME"] = cache_dir
+logger = logging.getLogger(__name__)
+
+# Now import transformers (it will see the env var)
 import torch
 from transformers import pipeline
-
-logger = logging.getLogger(__name__)
 
 class ModerationService:
     def __init__(self):
