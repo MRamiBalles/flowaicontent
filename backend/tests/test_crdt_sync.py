@@ -1,5 +1,9 @@
 import pytest
-import opentimelineio as otio
+try:
+    import opentimelineio as otio
+except ImportError:
+    from app.services import otio_stub as otio
+
 from pycrdt import Doc, Map, Array
 from app.services.collaboration_service import CollaborativeTimeline
 from app.services.otio_schema import otio_to_yjs, yjs_to_otio

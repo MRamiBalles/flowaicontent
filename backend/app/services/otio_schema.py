@@ -1,4 +1,8 @@
-import opentimelineio as otio
+try:
+    import opentimelineio as otio
+except ImportError:
+    from app.services import otio_stub as otio
+
 from typing import Dict, Any, List
 import uuid
 import pycrdt

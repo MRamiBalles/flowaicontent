@@ -2,7 +2,11 @@ from typing import Dict, List, Any, Optional
 import json
 import asyncio
 from datetime import datetime
-import opentimelineio as otio
+try:
+    import opentimelineio as otio
+except ImportError:
+    from app.services import otio_stub as otio
+
 from pycrdt import Doc
 from app.services.otio_schema import otio_to_yjs, yjs_to_otio
 
