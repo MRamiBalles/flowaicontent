@@ -4,9 +4,50 @@ import uuid
 from typing import Optional, Dict, Any
 
 # Initialize FastMCP Server with name and dependencies
+# Initialize FastMCP Server with name and dependencies
 mcp = FastMCP("FlowAI Core")
 
 from app.utils.mcp_decorators import budget_gate
+from app.core.errors import (
+    FlowAIError, 
+    RateLimitError, 
+    ContentViolationError, 
+    QuotaExhaustedError,
+    UpstreamServiceError
+)
+import functools
+import logging
+
+# --- Error Handling ---
+
+def mcp_error_handler(func):
+    """
+    Decorator to wrap MCP tools and return structured JSON-RPC errors.
+    Translates FlowAIError exceptions into MCP-compliant error responses.
+    """
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except FlowAIError as e:
+            logging.warning(f"FlowAI Error in {func.__name__}: {e.message}")
+            # Return the structured error dict directly. 
+            # FastMCP will serialize this as the result payload if we don't raise.
+            # However, for an *error* reponse in JSON-RPC, we effectively want to communicate failure.
+            # If FastMCP supports raising exceptions that map to JSON-RPC errors, we should do that.
+            # For this implementation, we return the JSON structure defined in our spec.
+            return json.dumps(e.to_mcp_response())
+        except Exception as e:
+            logging.error(f"Unexpected error in {func.__name__}: {str(e)}")
+            # Mask internal errors
+            return json.dumps({
+                "error": {
+                    "code": -32603,
+                    "message": "Internal Server Error",
+                    "data": {"original_error": str(e)} # Dev mode only
+                }
+            })
+    return wrapper
 
 # --- Resources ---
 # Passive context reading (standard architecture)
@@ -31,11 +72,15 @@ def get_project_metadata(project_id: str) -> str:
 # Active actions that require parameters (action architecture)
 
 @mcp.tool()
+@mcp_error_handler
 @budget_gate(static_cost=0.005) # Enforce a small cost for querying status
 async def query_project_status(project_id: str, tenant_context: Optional[str] = None) -> str:
     """
     Queries the detailed status of a project, enforcing tenant isolation.
     """
+    if not tenant_context:
+        raise FlowAIError("Missing tenant context", "INVALID_PARAMS")
+
     # Return Data
     return json.dumps({
         "status": "success",
@@ -47,7 +92,9 @@ async def query_project_status(project_id: str, tenant_context: Optional[str] = 
             "cost_to_date": "$12.50"
         }
     })
+
 @mcp.tool()
+@mcp_error_handler
 @budget_gate(static_cost=0.50) # Professional generation is expensive
 async def generate_cloud_video(prompt: str, duration: int = 5, tenant_context: Optional[str] = None) -> str:
     """
@@ -57,12 +104,7 @@ async def generate_cloud_video(prompt: str, duration: int = 5, tenant_context: O
     # 1. Simulate Safety/Content Filter
     if "violence" in prompt.lower() or "explicit" in prompt.lower():
         # Agent-Friendly Error (Resilience Pattern 2026)
-        return json.dumps({
-            "status": "error",
-            "error_code": "CONTENT_SAFETY_VIOLATION",
-            "message": "Policy: Prompt contains restricted keywords. Please reformulate.",
-            "retryable": False
-        })
+        raise ContentViolationError("Prompt contains restricted keywords.")
 
     # 2. Simulate API call to Runway/Luma/Sora
     print(f"[CLOUD-AI] Generating video for tenant {tenant_context} with prompt: {prompt}")
@@ -78,6 +120,7 @@ async def generate_cloud_video(prompt: str, duration: int = 5, tenant_context: O
     })
 
 @mcp.tool()
+@mcp_error_handler
 async def get_finops_status(tenant_context: str) -> str:
     """
     Allows the agent to check its current budget and rate limit status.
@@ -93,6 +136,8 @@ async def get_finops_status(tenant_context: str) -> str:
     })
 
 @mcp.tool()
+# No error handler needed for admin tool usually, but adding for consistency if desired.
+# Skipping for seed_credits to keep it simple, or add it if strict.
 async def seed_credits(tenant_context: str, amount: float) -> str:
     """
     ADMIN TOOL: Seeds credits for a tenant for testing purposes.

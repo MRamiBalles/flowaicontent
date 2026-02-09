@@ -21,24 +21,37 @@ class ShadowDeploymentService:
         confidence_score: float,
         metadata: Optional[Dict[str, Any]] = None
     ):
+        import hashlib
+        from app.services.supabase_service import supabase_admin
+        
+        # Calculate input hash for integrity (SHA-256)
+        input_str = json.dumps(input_data, sort_keys=True)
+        input_hash = hashlib.sha256(input_str.encode("utf-8")).hexdigest()
+
         shadow_log = {
-            "timestamp": datetime.utcnow().isoformat(),
             "agent_id": agent_id,
             "tenant_id": tenant_id,
-            "input": input_data,
+            "input_hash": input_hash,
             "predicted_action": predicted_action,
             "confidence": confidence_score,
             "metadata": metadata or {},
-            "mode": "shadow"
+            "decision_vector": None, # Placeholder for future vector embeddings
+            # created_at is handled by DB default
         }
         
-        # In a real 2026 deployment, this would write to an Audit Log table or a specialized 
-        # observability stack like Arize Phoenix or LangSmith.
+        # Log to console for immediate debug
         logger.info(f"SHADOW_ACTION_LOG: {json.dumps(shadow_log)}")
         
-        # Placeholder for DB storage for comparison later
-        # await db.shadow_logs.insert(shadow_log)
-        
-        return shadow_log
+        # Persist to Supabase (ISO 42001 Traceability)
+        try:
+            # Using supabase_admin to ensure we can write to the audit log
+            # In a real scenario, we might want to use a scoped client if not using admin
+            response = supabase_admin.table("shadow_actions").insert(shadow_log).execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"FAILED TO PERSIST SHADOW LOG: {e}")
+            # We don't raise here to avoid breaking the agent flow, 
+            # but this is a critical alerting event in production.
+            return shadow_log
 
 shadow_service = ShadowDeploymentService()
