@@ -13,7 +13,11 @@ def otio_to_yjs(timeline: otio.schema.Timeline, doc: Doc):
     Converts an OTIO Timeline into a Y.Doc structure using pycrdt.
     Root: "tracks" (Array)
     """
-    y_tracks = doc.get_array("tracks")
+    if "tracks" not in doc:
+        with doc.transaction():
+            doc["tracks"] = Array()
+            
+    y_tracks = doc["tracks"]
     
     with doc.transaction():
         # Clear existing if any for overwrite sync
@@ -58,7 +62,7 @@ def yjs_to_otio(doc: Doc) -> otio.schema.Timeline:
     stack = otio.schema.Stack()
     timeline.tracks = stack
     
-    y_tracks = doc.get_array("tracks")
+    y_tracks = doc["tracks"]
     
     # pycrdt Array is iterable
     for y_track_map in y_tracks:

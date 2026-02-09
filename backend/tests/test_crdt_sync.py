@@ -18,7 +18,14 @@ def test_crdt_convergence():
     doc_b = Doc()
     
     # 2. Initial state on A
-    y_tracks_a = doc_a.get_array("tracks")
+    with doc_a.transaction():
+        doc_a["tracks"] = Array()
+    
+    # Pre-define roots on B to ensure access logic is consistent
+    with doc_b.transaction():
+        doc_b["tracks"] = Array()
+    
+    y_tracks_a = doc_a["tracks"]
     with doc_a.transaction():
         y_tracks_a.append(Map({"name": "Track A", "kind": "Video", "clips": Array()}))
 
@@ -27,17 +34,17 @@ def test_crdt_convergence():
     doc_b.apply_update(update_a)
     
     # Verify B has Track A
-    assert len(doc_b.get_array("tracks")) == 1
-    assert doc_b.get_array("tracks")[0]["name"] == "Track A"
+    assert len(doc_b["tracks"]) == 1
+    assert doc_b["tracks"][0]["name"] == "Track A"
 
     # 4. Concurrent Edits
     # Client A adds Track 2
-    y_tracks_a = doc_a.get_array("tracks")
+    y_tracks_a = doc_a["tracks"]
     with doc_a.transaction():
         y_tracks_a.append(Map({"name": "Track 2 (from A)", "kind": "Video", "clips": Array()}))
         
     # Client B adds Track 3
-    y_tracks_b = doc_b.get_array("tracks")
+    y_tracks_b = doc_b["tracks"]
     with doc_b.transaction():
         y_tracks_b.append(Map({"name": "Track 3 (from B)", "kind": "Audio", "clips": Array()}))
 
@@ -50,12 +57,12 @@ def test_crdt_convergence():
 
     # 6. Verify Convergence
     # Both should have 3 tracks
-    assert len(doc_a.get_array("tracks")) == 3
-    assert len(doc_b.get_array("tracks")) == 3
+    assert len(doc_a["tracks"]) == 3
+    assert len(doc_b["tracks"]) == 3
     
     # Extract names and sort to compare
-    names_a = sorted([t.get("name") for t in doc_a.get_array("tracks")])
-    names_b = sorted([t.get("name") for t in doc_b.get_array("tracks")])
+    names_a = sorted([t.get("name") for t in doc_a["tracks"]])
+    names_b = sorted([t.get("name") for t in doc_b["tracks"]])
     
     assert names_a == names_b
     assert "Track A" in names_a

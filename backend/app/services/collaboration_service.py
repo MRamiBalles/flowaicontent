@@ -7,7 +7,8 @@ try:
 except ImportError:
     from app.services import otio_stub as otio
 
-from pycrdt import Doc
+from pycrdt import Doc, Map, Array
+
 from app.services.otio_schema import otio_to_yjs, yjs_to_otio
 
 class CollaborativeTimeline:
@@ -19,8 +20,11 @@ class CollaborativeTimeline:
         self.project_id = project_id
         self.doc = Doc()
         
-        # Initialize with empty structure if new
-        y_tracks = self.doc.get_array("tracks")
+        if "tracks" not in self.doc:
+            with self.doc.transaction():
+                self.doc["tracks"] = Array()
+        
+        y_tracks = self.doc["tracks"]
         if len(y_tracks) == 0:
             # Create default OTIO structure
             timeline = otio.schema.Timeline(name=f"Project {project_id}")
