@@ -1,51 +1,54 @@
 import opentimelineio as otio
 from typing import Dict, Any, List
 import uuid
-# In production, import y_py as Y. Here we use our mock.
-from app.services.mock_yjs import YDoc, YMap, YArray
+import pycrdt
+from pycrdt import Doc, Map, Array
 
-def otio_to_yjs(timeline: otio.schema.Timeline, doc: YDoc):
+def otio_to_yjs(timeline: otio.schema.Timeline, doc: Doc):
     """
-    Converts an OTIO Timeline into a Y.Doc structure.
-    Root: "tracks" (YArray)
+    Converts an OTIO Timeline into a Y.Doc structure using pycrdt.
+    Root: "tracks" (Array)
     """
     y_tracks = doc.get_array("tracks")
     
-    # Clear existing if any (simplification for overwrite sync)
-    # y_tracks.delete(0, len(y_tracks)) 
-    
-    for track in timeline.tracks:
-        y_track = YMap()
-        y_track["name"] = track.name
-        y_track["kind"] = track.kind
+    with doc.transaction():
+        # Clear existing if any for overwrite sync
+        if len(y_tracks) > 0:
+            y_tracks.clear()
         
-        y_clips = YArray()
-        for item in track:
-            if isinstance(item, otio.schema.Clip):
-                y_clip = YMap()
-                # Generate stable UUID if not present in metadata
-                clip_id = item.metadata.get("flowai_id") or str(uuid.uuid4())
-                y_clip["_id"] = clip_id
-                y_clip["name"] = item.name
-                y_clip["media_url"] = item.media_reference.target_url if item.media_reference else ""
-                
-                # Time range (RationalTime)
-                tr = item.source_range
-                if tr:
-                    y_clip["start"] = tr.start_time.value / tr.start_time.rate
-                    y_clip["duration"] = tr.duration.value / tr.duration.rate
-                else:
-                    y_clip["start"] = 0.0
-                    y_clip["duration"] = 5.0 # Default
-                
-                y_clips.append(y_clip)
-                
-        y_track["clips"] = y_clips
-        y_tracks.append(y_track)
+        for track in timeline.tracks:
+            # Create track map
+            y_track = Map({
+                "name": track.name,
+                "kind": track.kind,
+                "clips": Array()
+            })
+            
+            y_clips = y_track["clips"]
+            for item in track:
+                if isinstance(item, otio.schema.Clip):
+                    # Generate stable UUID if not present
+                    clip_id = item.metadata.get("flowai_id") or str(uuid.uuid4())
+                    
+                    # Time range calculation
+                    tr = item.source_range
+                    start = tr.start_time.value / tr.start_time.rate if tr else 0.0
+                    duration = tr.duration.value / tr.duration.rate if tr else 5.0
+                    
+                    y_clip = Map({
+                        "_id": clip_id,
+                        "name": item.name,
+                        "media_url": item.media_reference.target_url if item.media_reference else "",
+                        "start": start,
+                        "duration": duration
+                    })
+                    y_clips.append(y_clip)
+                    
+            y_tracks.append(y_track)
 
-def yjs_to_otio(doc: YDoc) -> otio.schema.Timeline:
+def yjs_to_otio(doc: Doc) -> otio.schema.Timeline:
     """
-    Reconstructs an OTIO Timeline from Y.Doc state.
+    Reconstructs an OTIO Timeline from Doc state using pycrdt.
     """
     timeline = otio.schema.Timeline(name="Collaborative Timeline")
     stack = otio.schema.Stack()
@@ -53,30 +56,32 @@ def yjs_to_otio(doc: YDoc) -> otio.schema.Timeline:
     
     y_tracks = doc.get_array("tracks")
     
-    # In MockYArray, iterating gives the items
-    for i in range(len(y_tracks)):
-        y_track_map = y_tracks[i] # YMap
-        # Convert YMap to dict for easier access if using Mock
-        t_data = y_track_map.to_json() if hasattr(y_track_map, 'to_json') else y_track_map
+    # pycrdt Array is iterable
+    for y_track_map in y_tracks:
+        # y_track_map is a Map instance
+        track = otio.schema.Track(
+            name=y_track_map.get("name", "Track"), 
+            kind=y_track_map.get("kind", "Video")
+        )
         
-        track = otio.schema.Track(name=t_data.get("name", "Track"), kind=t_data.get("kind", "Video"))
-        
-        y_clips = t_data.get("clips", [])
-        for c_data in y_clips:
-            clip = otio.schema.Clip(name=c_data.get("name", "Clip"))
-            clip.media_reference = otio.schema.ExternalReference(target_url=c_data.get("media_url", ""))
-            
-            # Reconstruction of metadata
-            clip.metadata["flowai_id"] = c_data.get("_id")
-            
-            start = float(c_data.get("start", 0.0))
-            duration = float(c_data.get("duration", 1.0))
-            
-            clip.source_range = otio.opentime.TimeRange(
-                start_time=otio.opentime.RationalTime(start * 24, 24),
-                duration=otio.opentime.RationalTime(duration * 24, 24)
-            )
-            track.append(clip)
+        y_clips = y_track_map.get("clips")
+        if y_clips:
+            for c_data in y_clips:
+                # c_data is a Map
+                clip = otio.schema.Clip(name=c_data.get("name", "Clip"))
+                clip.media_reference = otio.schema.ExternalReference(target_url=c_data.get("media_url", ""))
+                
+                # Reconstruction of metadata
+                clip.metadata["flowai_id"] = c_data.get("_id")
+                
+                start = float(c_data.get("start", 0.0))
+                duration = float(c_data.get("duration", 1.0))
+                
+                clip.source_range = otio.opentime.TimeRange(
+                    start_time=otio.opentime.RationalTime(start * 24, 24),
+                    duration=otio.opentime.RationalTime(duration * 24, 24)
+                )
+                track.append(clip)
             
         stack.append(track)
         
