@@ -1,5 +1,16 @@
 import pytest
 from unittest.mock import MagicMock, patch
+import sys
+
+# MOCK missing dependencies (supabase) due to environment constraints
+mock_supabase = MagicMock()
+sys.modules["supabase"] = mock_supabase
+
+import os
+os.environ["SUPABASE_URL"] = "https://mock.supabase.co"
+os.environ["SUPABASE_ANON_KEY"] = "mock-anon-key"
+os.environ["SUPABASE_SERVICE_ROLE_KEY"] = "mock-service-key"
+
 from app.services.agent_ops.shadow_deployment import shadow_service
 import app.services.supabase_service # Ensure module is loaded for patch
 import json
