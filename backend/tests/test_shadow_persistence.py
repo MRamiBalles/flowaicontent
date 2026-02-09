@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from app.services.agent_ops.shadow_deployment import shadow_service
+import app.services.supabase_service # Ensure module is loaded for patch
 import json
 
 @pytest.mark.asyncio
