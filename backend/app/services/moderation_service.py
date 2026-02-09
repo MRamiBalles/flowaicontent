@@ -12,23 +12,10 @@ logger = logging.getLogger(__name__)
 
 class ModerationService:
     def __init__(self):
-        # Initialize Semantic Classifier (DistilBERT fine-tuned for toxicity)
-        # Using a small, efficient model suitable for CPU inference
         self.model_name = "unitary/unbiased-toxic-roberta" 
-        try:
-            logger.info(f"Loading moderation model: {self.model_name}")
-            self.classifier = pipeline(
-                "text-classification", 
-                model=self.model_name, 
-                tokenizer=self.model_name,
-                top_k=None, # Return all scores
-                device=-1 # CPU
-            )
-            self.use_model = True
-        except Exception as e:
-            logger.error(f"Failed to load moderation model: {e}")
-            logger.warning("Falling back to keyword-based moderation.")
-            self.use_model = False
+        self.classifier = None
+        self.use_model = False
+        self._model_loaded = False
 
         # Fallback keyword blocklist
         self.blocked_keywords = [
@@ -47,6 +34,28 @@ class ModerationService:
             "identity_hate": 0.6
         }
 
+    def _load_model(self):
+        """Lazy load the model to avoid import-time costs and errors"""
+        if self._model_loaded:
+            return
+
+        try:
+            logger.info(f"Loading moderation model: {self.model_name}")
+            self.classifier = pipeline(
+                "text-classification", 
+                model=self.model_name, 
+                tokenizer=self.model_name,
+                top_k=None, # Return all scores
+                device=-1 # CPU
+            )
+            self.use_model = True
+        except Exception as e:
+            logger.error(f"Failed to load moderation model: {e}")
+            logger.warning("Falling back to keyword-based moderation.")
+            self.use_model = False
+        finally:
+            self._model_loaded = True
+
     def check_prompt(self, prompt: str) -> Tuple[bool, str, Dict[str, float]]:
         """
         Check if a prompt contains unsafe content using semantic analysis.
@@ -63,7 +72,11 @@ class ModerationService:
                 return False, f"Prompt contains blocked keyword: {keyword}", {"keyword_match": 1.0}
 
         # 2. Semantic Analysis
-        if self.use_model:
+        # Lazy load on first use
+        if not self._model_loaded:
+            self._load_model()
+
+        if self.use_model and self.classifier:
             try:
                 # Run inference
                 results = self.classifier(prompt)[0] # List of {label, score}
@@ -74,8 +87,6 @@ class ModerationService:
                 # Check against thresholds
                 violations = []
                 for label, score in scores.items():
-                    # Map model labels to our risk categories if needed
-                    # The unitary model returns: toxic, severe_toxic, obsolete, threat, insult, identity_hate
                     if label in self.risk_thresholds and score > self.risk_thresholds[label]:
                         violations.append(f"{label} ({score:.2f})")
 
@@ -88,8 +99,6 @@ class ModerationService:
 
             except Exception as e:
                 logger.error(f"Error during semantic moderation: {e}")
-                # Fallback to safe if AI fails but keywords passed? 
-                # Or fail secure? Let's fail secure for high compliance.
                 return False, "Moderation service unavailable", {}
 
         return True, "Safe (Keyword Verified)", {}
