@@ -187,8 +187,11 @@ const Auth = () => {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
-                    className="bg-background"
+                    className={errors.fullName ? "bg-background border-destructive" : "bg-background"}
                   />
+                  {errors.fullName && (
+                    <p className="text-sm text-destructive">{errors.fullName}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
@@ -219,21 +222,6 @@ const Auth = () => {
                   />
                   {errors.password && (
                     <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="full-name">Full Name</Label>
-                  <Input
-                    id="full-name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    className={errors.fullName ? "bg-background border-destructive" : "bg-background"}
-                  />
-                  {errors.fullName && (
-                    <p className="text-sm text-destructive">{errors.fullName}</p>
                   )}
                 </div>
                 <Button type="submit" disabled={loading} className="w-full">

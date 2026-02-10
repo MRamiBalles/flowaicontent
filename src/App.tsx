@@ -46,6 +46,13 @@ const Syndication = lazy(() => import("./pages/Syndication"));
 const ExtensionMarketplace = lazy(() => import("./pages/ExtensionMarketplace"));
 const MultiStreamHub = lazy(() => import("./pages/MultiStreamHub"));
 const LinearVideoPlatform = lazy(() => import("./pages/LinearVideoPlatform"));
+const AchievementsPage = lazy(() => import("./pages/AchievementsPage").then(m => ({ default: m.AchievementsPage })));
+const ReferralPage = lazy(() => import("./pages/ReferralPage").then(m => ({ default: m.ReferralPage })));
+const SeasonPassPage = lazy(() => import("./pages/SeasonPassPage").then(m => ({ default: m.SeasonPassPage })));
+const StylePacksMarketplace = lazy(() => import("./pages/StylePacksMarketplace").then(m => ({ default: m.StylePacksMarketplace })));
+const SuperClipsPage = lazy(() => import("./pages/SuperClipsPage").then(m => ({ default: m.SuperClipsPage })));
+const TokenPurchasePage = lazy(() => import("./pages/TokenPurchasePage").then(m => ({ default: m.TokenPurchasePage })));
+const DeveloperAPIPage = lazy(() => import("./pages/DeveloperAPIPage").then(m => ({ default: m.DeveloperAPIPage })));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 
@@ -101,6 +108,13 @@ const App = () => (
                   <Route path="/extensions" element={<ExtensionMarketplace />} />
                   <Route path="/multistream" element={<MultiStreamHub />} />
                   <Route path="/linear-platform" element={<LinearVideoPlatform />} />
+                  <Route path="/achievements" element={<AchievementsPage />} />
+                  <Route path="/referrals" element={<ReferralPage />} />
+                  <Route path="/season-pass" element={<SeasonPassPage />} />
+                  <Route path="/style-packs" element={<StylePacksMarketplace />} />
+                  <Route path="/super-clips" element={<SuperClipsPage />} />
+                  <Route path="/tokens" element={<TokenPurchasePage />} />
+                  <Route path="/developer-api" element={<DeveloperAPIPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
