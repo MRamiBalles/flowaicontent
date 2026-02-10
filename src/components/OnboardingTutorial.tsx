@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -69,10 +70,18 @@ export function OnboardingTutorial() {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem("flowai_onboarding_completed");
-    if (!hasSeenTutorial) {
-      setOpen(true);
-    }
+    // Only show tutorial for authenticated users who haven't completed it
+    const checkAndShow = async () => {
+      const hasSeenTutorial = localStorage.getItem("flowai_onboarding_completed");
+      if (hasSeenTutorial) return;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setOpen(true);
+      }
+    };
+
+    checkAndShow();
   }, []);
 
   const handleNext = () => {
