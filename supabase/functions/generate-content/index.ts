@@ -1,7 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 import { corsHeaders } from '../_shared/cors.ts'
+import { createErrorResponse } from '../_shared/error-sanitizer.ts'
 
 /**
  * Sanitize user input before sending to AI
@@ -93,6 +95,14 @@ const detectPromptInjection = (text: string): { isInjection: boolean; patterns: 
  * - Model: google/gemini-2.5-flash
  * - Returns platform-specific content (Twitter, LinkedIn, Instagram)
  */
+
+// Input validation schema
+const generateContentSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(200, "Title must be under 200 characters"),
+  content: z.string().trim().min(10, "Content must be at least 10 characters").max(10000, "Content must be under 10,000 characters"),
+  projectId: z.string().uuid("Invalid project ID").optional().nullable(),
+});
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -119,15 +129,22 @@ serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const { title, content, projectId } = await req.json();
-
-    if (!title || !content) {
+    // Validate request body with Zod
+    let validatedData;
+    try {
+      const body = await req.json();
+      validatedData = generateContentSchema.parse(body);
+    } catch (validationError) {
+      const errorMsg = validationError instanceof z.ZodError 
+        ? validationError.errors[0].message 
+        : 'Invalid request format';
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: title and content' }),
+        JSON.stringify({ error: 'Validation error', message: errorMsg }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const { title, content, projectId } = validatedData;
 
     console.log('Checking rate limit for user:', user.id);
 
@@ -308,11 +325,17 @@ Transform the above content into platform-specific posts. Return ONLY the JSON o
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         );
+        
+        // Use sanitized error message (don't expose AI Gateway internals)
+        const errorMessage = err instanceof Error && err.message.includes('AI Gateway')
+          ? 'Content generation service temporarily unavailable'
+          : (err instanceof Error ? err.message : 'Unknown error');
+        
         await supabaseAdmin
           .from('generation_jobs')
           .update({
             status: 'failed',
-            error: err instanceof Error ? err.message : 'Unknown error'
+            error: errorMessage
           })
           .eq('id', job.id);
       }
@@ -338,12 +361,10 @@ Transform the above content into platform-specific posts. Return ONLY the JSON o
 
   } catch (error) {
     console.error('Unexpected error in generate-content:', error);
-    return new Response(
-      JSON.stringify({
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Content generation failed',
+      500,
+      corsHeaders
     );
   }
 });
