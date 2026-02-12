@@ -27,11 +27,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createErrorResponse } from "./_shared/error-sanitizer.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
+
+// Validation schemas for webhook data
+const checkoutSessionSchema = z.object({
+    metadata: z.record(z.string()).optional(),
+    subscription: z.string().optional(),
+    customer: z.string().optional(),
+});
+
+const invoiceSchema = z.object({
+    subscription: z.string().optional(),
+});
+
+const subscriptionSchema = z.object({
+    id: z.string(),
+    status: z.string(),
+    current_period_start: z.number(),
+    current_period_end: z.number(),
+});
 
 serve(async (req) => {
     if (req.method === "OPTIONS") {
@@ -107,41 +127,61 @@ serve(async (req) => {
             // User completed checkout and subscribed
             case 'checkout.session.completed': {
                 const session = event.data.object as Stripe.Checkout.Session;
+                
+                // Validate session data
+                const sessionValidation = checkoutSessionSchema.safeParse(session);
+                if (!sessionValidation.success) {
+                    console.error('Invalid checkout session data:', sessionValidation.error);
+                    break;
+                }
+
                 const userId = session.metadata?.user_id; // Set during checkout creation
                 const subscriptionId = session.subscription as string;
                 const customerId = session.customer as string;
 
-                if (userId && subscriptionId) {
-                    // Create or update subscription record
-                    // upsert ensures idempotency if webhook fires multiple times
-                    const { error: subError } = await supabaseClient
-                        .from('subscriptions')
-                        .upsert({
-                            user_id: userId,
-                            stripe_subscription_id: subscriptionId,
-                            stripe_customer_id: customerId,
-                            status: 'active',
-                            current_period_start: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        }, {
-                            onConflict: 'user_id' // Update if subscription exists
-                        });
+                // Validate required fields
+                if (!userId || !subscriptionId) {
+                    console.error('Missing required fields: userId or subscriptionId');
+                    break;
+                }
 
-                    if (subError) {
-                        console.error('Failed to update subscription:', subError);
-                    } else {
-                        console.log(`User ${userId} subscribed successfully: ${subscriptionId}`);
-                    }
+                // Create or update subscription record
+                // upsert ensures idempotency if webhook fires multiple times
+                const { error: subError } = await supabaseClient
+                    .from('subscriptions')
+                    .upsert({
+                        user_id: userId,
+                        stripe_subscription_id: subscriptionId,
+                        stripe_customer_id: customerId,
+                        status: 'active',
+                        current_period_start: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'user_id' // Update if subscription exists
+                    });
+
+                if (subError) {
+                    console.error('Failed to update subscription:', subError);
+                } else {
+                    console.log(`User ${userId} subscribed successfully: ${subscriptionId}`);
                 }
                 break;
             }
 
             case 'invoice.payment_succeeded': {
                 const invoice = event.data.object as Stripe.Invoice;
+                
+                // Validate invoice data
+                const invoiceValidation = invoiceSchema.safeParse(invoice);
+                if (!invoiceValidation.success) {
+                    console.error('Invalid invoice data:', invoiceValidation.error);
+                    break;
+                }
+
                 const subscriptionId = invoice.subscription as string;
 
                 if (subscriptionId) {
-                    await supabaseClient
+                    const { error } = await supabaseClient
                         .from('subscriptions')
                         .update({
                             status: 'active',
@@ -149,18 +189,30 @@ serve(async (req) => {
                         })
                         .eq('stripe_subscription_id', subscriptionId);
 
-                    console.log(`Payment succeeded for subscription: ${subscriptionId}`);
+                    if (error) {
+                        console.error('Failed to update subscription status:', error);
+                    } else {
+                        console.log(`Payment succeeded for subscription: ${subscriptionId}`);
+                    }
                 }
                 break;
             }
 
             case 'invoice.payment_failed': {
                 const invoice = event.data.object as Stripe.Invoice;
+                
+                // Validate invoice data
+                const invoiceValidation = invoiceSchema.safeParse(invoice);
+                if (!invoiceValidation.success) {
+                    console.error('Invalid invoice data:', invoiceValidation.error);
+                    break;
+                }
+
                 const subscriptionId = invoice.subscription as string;
 
                 if (subscriptionId) {
                     // Mark subscription as past_due
-                    await supabaseClient
+                    const { error } = await supabaseClient
                         .from('subscriptions')
                         .update({
                             status: 'past_due',
@@ -168,7 +220,11 @@ serve(async (req) => {
                         })
                         .eq('stripe_subscription_id', subscriptionId);
 
-                    console.log(`Payment failed for subscription: ${subscriptionId}`);
+                    if (error) {
+                        console.error('Failed to update subscription status:', error);
+                    } else {
+                        console.log(`Payment failed for subscription: ${subscriptionId}`);
+                    }
                 }
                 break;
             }
@@ -176,7 +232,14 @@ serve(async (req) => {
             case 'customer.subscription.updated': {
                 const subscription = event.data.object as Stripe.Subscription;
 
-                await supabaseClient
+                // Validate subscription data
+                const subscriptionValidation = subscriptionSchema.safeParse(subscription);
+                if (!subscriptionValidation.success) {
+                    console.error('Invalid subscription data:', subscriptionValidation.error);
+                    break;
+                }
+
+                const { error } = await supabaseClient
                     .from('subscriptions')
                     .update({
                         status: subscription.status,
@@ -186,14 +249,25 @@ serve(async (req) => {
                     })
                     .eq('stripe_subscription_id', subscription.id);
 
-                console.log(`Subscription updated: ${subscription.id} -> ${subscription.status}`);
+                if (error) {
+                    console.error('Failed to update subscription:', error);
+                } else {
+                    console.log(`Subscription updated: ${subscription.id} -> ${subscription.status}`);
+                }
                 break;
             }
 
             case 'customer.subscription.deleted': {
                 const subscription = event.data.object as Stripe.Subscription;
 
-                await supabaseClient
+                // Validate subscription data
+                const subscriptionValidation = subscriptionSchema.safeParse(subscription);
+                if (!subscriptionValidation.success) {
+                    console.error('Invalid subscription data:', subscriptionValidation.error);
+                    break;
+                }
+
+                const { error } = await supabaseClient
                     .from('subscriptions')
                     .update({
                         status: 'canceled',
@@ -201,7 +275,11 @@ serve(async (req) => {
                     })
                     .eq('stripe_subscription_id', subscription.id);
 
-                console.log(`Subscription canceled: ${subscription.id}`);
+                if (error) {
+                    console.error('Failed to update subscription:', error);
+                } else {
+                    console.log(`Subscription canceled: ${subscription.id}`);
+                }
                 break;
             }
 
@@ -215,10 +293,9 @@ serve(async (req) => {
 
     } catch (error) {
         console.error('Webhook error:', error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        return new Response(JSON.stringify({ error: errorMessage }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return createErrorResponse(error, corsHeaders, {
+            functionName: 'stripe-webhooks',
+            action: 'process_event'
+        }, 400);
     }
 });
