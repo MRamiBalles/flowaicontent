@@ -7,10 +7,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ExternalLink, Video, Wallet } from "lucide-react";
-import { useAccount } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useUser } from "@/hooks/useUser";
 import { AppLayout } from "@/components/layout/AppLayout";
+
+function useAccountSafe() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { useAccount } = require("wagmi");
+    return useAccount() as { address?: string; isConnected: boolean };
+  } catch {
+    return { address: undefined, isConnected: false };
+  }
+}
+
+function SafeConnectButton() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { ConnectButton } = require("@rainbow-me/rainbowkit");
+    return <ConnectButton />;
+  } catch {
+    return <p className="text-sm text-muted-foreground">Web3 wallet not configured</p>;
+  }
+}
 
 export default function MintNFT() {
   const [title, setTitle] = useState("");
@@ -19,8 +37,8 @@ export default function MintNFT() {
   const [isMinting, setIsMinting] = useState(false);
   const [mintResult, setMintResult] = useState<any>(null);
   const { toast } = useToast();
-  const { address, isConnected } = useAccount();
   const { user, isAdmin } = useUser();
+  const { address, isConnected } = useAccountSafe();
 
   const handleMint = async () => {
     if (!isConnected || !address) {
@@ -99,7 +117,7 @@ export default function MintNFT() {
                 <div className="flex flex-col items-center gap-4 py-8">
                   <Wallet className="h-12 w-12 text-muted-foreground" />
                   <p className="text-muted-foreground">Connect your wallet to mint NFTs</p>
-                  <ConnectButton />
+                  <SafeConnectButton />
                 </div>
               ) : (
                 <>
