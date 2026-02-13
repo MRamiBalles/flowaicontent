@@ -7,13 +7,8 @@ const getApiUrl = (): string => {
     return envUrl;
   }
   
-  if (import.meta.env.DEV) {
-    console.warn('[API] VITE_API_URL not set, using localhost fallback for development');
-    return 'http://localhost:8000/api/v1';
-  }
-  
-  // In production without env var, throw error to prevent silent failures
-  throw new Error('VITE_API_URL environment variable must be set for production builds');
+  console.warn('[API] VITE_API_URL not set, using localhost fallback');
+  return 'http://localhost:8000/api/v1';
 };
 
 export const API_URL = getApiUrl();
