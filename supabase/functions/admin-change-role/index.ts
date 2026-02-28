@@ -9,21 +9,20 @@
  * - admin: Full platform access
  * 
  * Security:
+ * - Validates newRole against allowed enum values
+ * - Validates userId as UUID format
  * - Prevent self-demotion (admins can't remove their own admin role)
  * - Atomic operation: delete old role, insert new role
  * - Audit log records all role changes
- * 
- * Process:
- * 1. Verify admin authentication
- * 2. Check for self-demotion
- * 3. Delete existing role from user_roles
- * 4. Insert new role
- * 5. Log action to admin_audit_logs
+ * - Error messages are sanitized (no internal details leaked)
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 import { corsHeaders } from '../_shared/cors.ts'
+
+const ALLOWED_ROLES = ['user', 'moderator', 'admin'] as const;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 serve(async (req: Request) => {
     if (req.method === 'OPTIONS') {
@@ -42,7 +41,10 @@ serve(async (req: Request) => {
         } = await supabaseClient.auth.getUser()
 
         if (!user) {
-            throw new Error('Not authenticated')
+            return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 401,
+            })
         }
 
         // Check if user is admin using secure RPC
@@ -53,18 +55,47 @@ serve(async (req: Request) => {
             });
 
         if (roleError || !isAdmin) {
-            throw new Error('Unauthorized: Admin access required')
+            return new Response(JSON.stringify({ error: 'Unauthorized: Admin access required' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 403,
+            })
         }
 
-        const { userId, newRole } = await req.json()
+        const body = await req.json()
+        const { userId, newRole } = body
 
+        // Validate required fields
         if (!userId || !newRole) {
-            throw new Error('Missing userId or newRole')
+            return new Response(JSON.stringify({ error: 'Missing userId or newRole' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 400,
+            })
+        }
+
+        // Validate userId is a valid UUID
+        if (typeof userId !== 'string' || !UUID_REGEX.test(userId)) {
+            return new Response(JSON.stringify({ error: 'Invalid userId format' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 400,
+            })
+        }
+
+        // Validate newRole against allowed enum values
+        if (!ALLOWED_ROLES.includes(newRole)) {
+            return new Response(JSON.stringify({ 
+                error: `Invalid role. Allowed: ${ALLOWED_ROLES.join(', ')}` 
+            }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 400,
+            })
         }
 
         // Prevent self-demotion
         if (userId === user.id && newRole !== 'admin') {
-            throw new Error('Cannot demote yourself')
+            return new Response(JSON.stringify({ error: 'Cannot demote yourself' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 400,
+            })
         }
 
         const supabaseAdmin = createClient(
@@ -107,10 +138,12 @@ serve(async (req: Request) => {
             status: 200,
         })
 
-    } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message }), {
+    } catch (error: unknown) {
+        // Sanitize error - never leak internal details
+        console.error('admin-change-role error:', error)
+        return new Response(JSON.stringify({ error: 'An internal error occurred' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+            status: 500,
         })
     }
 })

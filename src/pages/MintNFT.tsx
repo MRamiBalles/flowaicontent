@@ -10,35 +10,48 @@ import { Loader2, ExternalLink, Video, Wallet } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { AppLayout } from "@/components/layout/AppLayout";
 
-function useAccountSafe() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { useAccount } = require("wagmi");
-    return useAccount() as { address?: string; isConnected: boolean };
-  } catch {
-    return { address: undefined, isConnected: false };
-  }
+/**
+ * Check if Web3 provider (WagmiProvider) is available.
+ * This avoids calling hooks outside their provider context.
+ */
+const isWeb3Configured = !!import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+
+/**
+ * Inner component that uses wagmi hooks - only rendered when Web3 is configured.
+ * This ensures useAccount is always called within WagmiProvider.
+ */
+function MintNFTWithWallet({ user, isAdmin }: { user: any; isAdmin: boolean }) {
+  // These imports are safe here because this component only renders when Web3Provider wraps the app
+  const { useAccount } = require("wagmi");
+  const { ConnectButton } = require("@rainbow-me/rainbowkit");
+  const { address, isConnected } = useAccount();
+
+  return (
+    <MintNFTContent
+      user={user}
+      isAdmin={isAdmin}
+      address={address}
+      isConnected={isConnected}
+      ConnectButton={ConnectButton}
+    />
+  );
 }
 
-function SafeConnectButton() {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { ConnectButton } = require("@rainbow-me/rainbowkit");
-    return <ConnectButton />;
-  } catch {
-    return <p className="text-sm text-muted-foreground">Web3 wallet not configured</p>;
-  }
+interface MintNFTContentProps {
+  user: any;
+  isAdmin: boolean;
+  address?: string;
+  isConnected: boolean;
+  ConnectButton?: React.ComponentType;
 }
 
-export default function MintNFT() {
+function MintNFTContent({ user, isAdmin, address, isConnected, ConnectButton }: MintNFTContentProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [videoId, setVideoId] = useState("");
   const [isMinting, setIsMinting] = useState(false);
   const [mintResult, setMintResult] = useState<any>(null);
   const { toast } = useToast();
-  const { user, isAdmin } = useUser();
-  const { address, isConnected } = useAccountSafe();
 
   const handleMint = async () => {
     if (!isConnected || !address) {
@@ -117,7 +130,9 @@ export default function MintNFT() {
                 <div className="flex flex-col items-center gap-4 py-8">
                   <Wallet className="h-12 w-12 text-muted-foreground" />
                   <p className="text-muted-foreground">Connect your wallet to mint NFTs</p>
-                  <SafeConnectButton />
+                  {ConnectButton ? <ConnectButton /> : (
+                    <p className="text-sm text-muted-foreground">Web3 wallet not configured</p>
+                  )}
                 </div>
               ) : (
                 <>
@@ -262,5 +277,23 @@ export default function MintNFT() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function MintNFT() {
+  const { user, isAdmin } = useUser();
+
+  // If Web3 is configured, render with wallet hooks inside WagmiProvider context
+  if (isWeb3Configured) {
+    return <MintNFTWithWallet user={user} isAdmin={isAdmin} />;
+  }
+
+  // Fallback: render without Web3 capabilities
+  return (
+    <MintNFTContent
+      user={user}
+      isAdmin={isAdmin}
+      isConnected={false}
+    />
   );
 }
