@@ -9,6 +9,11 @@
  * - deduct_credits: Consume credits for AI operations
  * - add_credits: Admin-only credit top-up
  * 
+ * Security:
+ * - Input validation with strict type checking
+ * - Error sanitization (no internal details leaked)
+ * - Admin-only access for viewing other users' balances
+ * 
  * @module functions/billing-engine
  */
 
@@ -25,23 +30,20 @@ const corsHeaders = {
 };
 
 // ============================================================
-// TYPE DEFINITIONS
+// VALIDATION HELPERS
 // ============================================================
 
-/**
- * Request body for billing operations.
- */
-interface BillingRequest {
-    /** Action to perform */
-    action: 'get_balance' | 'deduct_credits' | 'add_credits';
-    /** Target user ID (admin only for other users) */
-    userId?: string;
-    /** Credit amount for deduct/add */
-    amount?: number;
-    /** Service identifier for audit trail */
-    service?: string;
-    /** Additional metadata (job IDs, etc.) */
-    metadata?: Record<string, unknown>;
+const VALID_ACTIONS = ['get_balance', 'deduct_credits', 'add_credits'] as const;
+type ValidAction = typeof VALID_ACTIONS[number];
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_AMOUNT = 1_000_000;
+const MAX_SERVICE_LENGTH = 100;
+
+function sanitizedResponse(body: Record<string, unknown>, status: number) {
+    return new Response(JSON.stringify(body), {
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 }
 
 // ============================================================
@@ -61,24 +63,53 @@ serve(async (req) => {
 
         // Auth check
         const authHeader = req.headers.get('Authorization');
-        if (!authHeader) throw new Error('Missing Authorization header');
+        if (!authHeader) {
+            return sanitizedResponse({ success: false, error: 'Authorization required' }, 401);
+        }
 
         const token = authHeader.replace('Bearer ', '');
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-        if (authError || !user) throw new Error('Invalid token');
+        if (authError || !user) {
+            return sanitizedResponse({ success: false, error: 'Invalid token' }, 401);
+        }
 
-        const { action, amount, service, metadata, userId } = await req.json();
+        // Parse and validate request body
+        let body: Record<string, unknown>;
+        try {
+            body = await req.json();
+        } catch {
+            return sanitizedResponse({ success: false, error: 'Invalid JSON body' }, 400);
+        }
 
-        // Handling Actions
+        const { action, amount, service, metadata, userId } = body;
+
+        // Validate action
+        if (!action || !VALID_ACTIONS.includes(action as ValidAction)) {
+            return sanitizedResponse({ 
+                success: false, 
+                error: `Invalid action. Allowed: ${VALID_ACTIONS.join(', ')}` 
+            }, 400);
+        }
+
+        // ============================================================
+        // GET BALANCE
+        // ============================================================
         if (action === 'get_balance') {
-            const targetUserId = userId || user.id;
+            const targetUserId = (typeof userId === 'string' && UUID_REGEX.test(userId)) 
+                ? userId 
+                : user.id;
 
             // Security check: only allow viewing other's balance if admin
             if (targetUserId !== user.id) {
-                const { data: caller } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single();
+                const { data: caller } = await supabase
+                    .from('user_roles')
+                    .select('role')
+                    .eq('user_id', user.id)
+                    .single();
+                    
                 if (caller?.role !== 'admin' && caller?.role !== 'super_admin') {
-                    throw new Error('Unauthorized to view other users balance');
+                    return sanitizedResponse({ success: false, error: 'Unauthorized' }, 403);
                 }
             }
 
@@ -88,15 +119,36 @@ serve(async (req) => {
                 .eq('user_id', targetUserId)
                 .single();
 
-            return new Response(JSON.stringify({
+            return sanitizedResponse({
                 success: true,
                 balance: data?.balance || 0
-            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }, 200);
         }
 
+        // ============================================================
+        // DEDUCT CREDITS
+        // ============================================================
         if (action === 'deduct_credits') {
-            if (!amount || amount <= 0) throw new Error('Invalid amount');
-            if (!service) throw new Error('Service name required');
+            // Validate amount
+            if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) {
+                return sanitizedResponse({ 
+                    success: false, 
+                    error: `Invalid amount. Must be a positive number up to ${MAX_AMOUNT}` 
+                }, 400);
+            }
+
+            // Validate service name
+            if (typeof service !== 'string' || service.length === 0 || service.length > MAX_SERVICE_LENGTH) {
+                return sanitizedResponse({ 
+                    success: false, 
+                    error: 'Service name required (max 100 characters)' 
+                }, 400);
+            }
+
+            // Validate metadata if provided
+            if (metadata !== undefined && (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata))) {
+                return sanitizedResponse({ success: false, error: 'Invalid metadata format' }, 400);
+            }
 
             // Check balance first
             const { data: creditData } = await supabase
@@ -108,23 +160,20 @@ serve(async (req) => {
             const currentBalance = creditData?.balance || 0;
 
             if (currentBalance < amount) {
-                return new Response(JSON.stringify({
+                return sanitizedResponse({
                     success: false,
                     error: 'Insufficient funds',
                     current_balance: currentBalance,
                     required: amount
-                }), {
-                    status: 402, // Payment Required
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-                });
+                }, 402);
             }
 
-            // Processing Deduction via Transaction Log (Trigger handles balance update)
+            // Processing Deduction via Transaction Log
             const { error } = await supabase
                 .from('credit_transactions')
                 .insert({
                     user_id: user.id,
-                    amount: -amount, // Negative for deduction
+                    amount: -amount,
                     transaction_type: service,
                     description: `Used for ${service}`,
                     metadata: metadata || {}
@@ -132,23 +181,19 @@ serve(async (req) => {
 
             if (error) throw error;
 
-            return new Response(JSON.stringify({
+            return sanitizedResponse({
                 success: true,
                 deducted: amount,
                 new_balance: currentBalance - amount
-            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }, 200);
         }
 
-        throw new Error(`Unknown action: ${action}`);
+        // Fallback (should not reach here due to validation above)
+        return sanitizedResponse({ success: false, error: 'Unknown action' }, 400);
 
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        return new Response(JSON.stringify({
-            success: false,
-            error: message
-        }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+        // Sanitize error - never leak internal details
+        console.error('billing-engine error:', error);
+        return sanitizedResponse({ success: false, error: 'An internal error occurred' }, 500);
     }
 });
