@@ -8,6 +8,7 @@ import { Web3Provider } from "@/components/web3/Web3Provider";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { LanguageProvider } from "@/i18n/LanguageProvider";
+import { ThemeProvider } from "next-themes";
 
 // Lazy load all route components for better performance
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -59,6 +60,7 @@ import { RequireOnboarding } from "@/components/auth/RequireOnboarding";
 const queryClient = new QueryClient();
 
 const App = () => (
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
   <LanguageProvider>
     <Web3Provider>
       <QueryClientProvider client={queryClient}>
@@ -66,7 +68,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <OnboardingTutorial />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -125,6 +127,7 @@ const App = () => (
       </QueryClientProvider>
     </Web3Provider>
   </LanguageProvider>
+  </ThemeProvider>
 );
 
 export default App;
