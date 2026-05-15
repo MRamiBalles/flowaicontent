@@ -30,12 +30,18 @@ async def generate_video(
     """Start a video generation task"""
     user_id = current_user["id"]
     
-    # Check user credits/tokens
-    # TODO: Check user credits/tokens
+    # Credit check: verify user has enough credits for generation
+    user_credits = current_user.get("credits", 0)
+    generation_cost = 5  # credits per generation
+    if user_credits < generation_cost:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Insufficient credits. Required: {generation_cost}, available: {user_credits}"
+        )
     
-    # Check content moderation
+    # Content moderation
     from app.services.moderation_service import moderation_service
-    is_safe, reason = moderation_service.check_prompt(request.prompt)
+    is_safe, reason, _scores = moderation_service.check_prompt(request.prompt)
     if not is_safe:
         raise HTTPException(status_code=400, detail=f"Content moderation failed: {reason}")
     
@@ -69,6 +75,18 @@ async def get_generation_status(
     }
     
     return response
+
+@router.get("/record/{record_id}")
+async def get_generation_record(
+    record_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Retrieve a generation record by ID"""
+    from app.services.video_generation_service import video_generation_service
+    record = video_generation_service.get_record(record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Generation record not found")
+    return record
 
 @router.get("/styles")
 async def get_styles():
