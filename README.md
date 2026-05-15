@@ -347,14 +347,14 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for gu
 
 ## 🗺️ Roadmap
 
-### Q1 2025
+### Roadmap 2026
 - [x] Core AI content generation
 - [x] Voice cloning & TTS integration
 - [x] Token staking & DAO governance
 - [x] Stripe payment integration
 - [ ] Mobile app (React Native)
 
-### Q2 2025
+### Roadmap 2027
 - [ ] NFT marketplace for content
 - [ ] Co-streaming features
 - [ ] Brand deals platform
@@ -394,12 +394,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 ## 👥 Team
+Built by the FlowAI Team
 
-Built with ❤️ by the FlowAI Team
-
-- **Technical Lead**: [Your Name]
-- **Product**: [Product Manager]
-- **Design**: [Designer Name]
+- **Technical Lead**: Manuel Ramírez Ballesteros
+- **Product**: FlowAI Product Team
+- **Design**: FlowAI UI/UX Team
 
 ---
 
